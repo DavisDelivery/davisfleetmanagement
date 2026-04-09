@@ -23,7 +23,6 @@
 <body>
 <div id="root"><div id="loading"><div class="spin"></div>Loading Fleet Management...</div></div>
 <script>
-// ══ Firebase Config ══
 const firebaseConfig = {
   apiKey: "AIzaSyCaaHZ0GuBoxl696-PzlgBQLPEad1xyiqw",
   authDomain: "davisfleetmanagement.firebaseapp.com",
@@ -34,29 +33,20 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
-// ══ Storage shim — same API as Claude artifact storage, backed by Firestore ══
 window.storage = {
   async get(key) { try { const doc = await db.collection("kv").doc(key).get(); if (!doc.exists) throw new Error("not found"); return { key, value: doc.data().v }; } catch (e) { throw e; } },
   async set(key, value) { try { await db.collection("kv").doc(key).set({ v: value, ts: new Date().toISOString() }); return { key, value }; } catch (e) { return null; } },
   async delete(key) { try { await db.collection("kv").doc(key).delete(); return { key, deleted: true }; } catch (e) { return null; } },
   async list(prefix) { try { const snap = await db.collection("kv").get(); const keys = []; snap.forEach(doc => { if (!prefix || doc.id.startsWith(prefix)) keys.push(doc.id); }); return { keys }; } catch (e) { return { keys: [] }; } }
 };
-
-// ══ Load App.jsx, strip imports/exports for browser, compile with Babel, mount ══
-fetch('App.jsx')
-  .then(r => { if (!r.ok) throw new Error('Failed to load App.jsx'); return r.text(); })
-  .then(code => {
-    code = code.replace(/^import\s+\{[^}]+\}\s+from\s+["']react["'];?\s*\n/gm, '');
-    code = code.replace(/export\s+default\s+function\s+App/g, 'function App');
-    const fullCode = 'const { useState, useEffect, useCallback, useMemo } = React;\n' + code +
-      '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(App));';
-    const compiled = Babel.transform(fullCode, { presets: ['react'] }).code;
-    (new Function(compiled))();
-  })
-  .catch(err => {
-    document.getElementById('root').innerHTML = '<div style="padding:40px;color:#c0392b;font-size:16px;">Error loading app: ' + err.message + '</div>';
-  });
+</script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo } = React;
+</script>
+<script type="text/babel" src="App.jsx"></script>
+<script type="text/babel">
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App));
 </script>
 </body>
 </html>
