@@ -250,14 +250,7 @@ Known truck numbers in this fleet: ${truckIds}
 Always match to the closest fleet number. Use the TOTAL line (including tax) for the total amount. For the date, use DATE INVOICE (not DATE SHIPPED). Return ONLY the JSON object.`}
             ]}]};
 
-        // Try Netlify proxy first (deployed site), fall back to direct API (artifact)
-        let resp;
-        try{
-          resp=await fetch("/api/scan-invoice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(msgBody)});
-          if(!resp.ok)throw new Error("proxy failed");
-        }catch(e){
-          resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,...msgBody})});
-        }
+        const resp=await fetch("https://davisdeliveryrouting.netlify.app/.netlify/functions/scan-invoice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(msgBody)});
 
         const data=await resp.json();
         const text=data.content?.find(c=>c.type==="text")?.text||"";
