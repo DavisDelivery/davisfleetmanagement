@@ -1,3 +1,5 @@
+import type { Config } from "@netlify/functions";
+
 export default async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -22,7 +24,7 @@ export default async (req: Request) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
+        max_tokens: 4096,
         messages: body.messages,
       }),
     });
@@ -40,6 +42,10 @@ export default async (req: Request) => {
   }
 };
 
-export const config = {
+export const config: Config = {
   path: "/api/scan-invoice",
+  rateLimit: {
+    windowSize: 60,
+    limit: 20,
+  },
 };
