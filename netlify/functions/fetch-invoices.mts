@@ -20,7 +20,7 @@ export default async (req: Request) => {
 
     const dateFilter = afterDate ? ` after:${afterDate}` : "";
     const searchQuery = vendor === "peach state"
-      ? `(from:ar@peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:rfreeland@davisdelivery.com OR subject:"Parts 20407" OR subject:"Peach State" OR subject:"Peachstate") has:attachment${dateFilter}`
+      ? `(from:ar@peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com OR subject:"Parts 20407" OR subject:"Peach State" OR subject:"Peachstate") has:attachment${dateFilter}`
       : `from:${vendor} has:attachment invoice${dateFilter}`;
 
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
