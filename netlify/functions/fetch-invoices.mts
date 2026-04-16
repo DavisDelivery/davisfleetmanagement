@@ -17,10 +17,10 @@ export default async (req: Request) => {
     const body = await req.json();
     const vendor = body.vendor || "peach state";
     const afterDate = body.afterDate || "";
-    
+
     const dateFilter = afterDate ? ` after:${afterDate}` : "";
-    const searchQuery = vendor === "peach state" 
-      ? `from:ar@peachstatetrucks.com OR (from:ryan@davisdelivery.com subject:"Parts 20407") has:attachment${dateFilter}`
+    const searchQuery = vendor === "peach state"
+      ? `(from:ar@peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:rfreeland@davisdelivery.com OR subject:"Parts 20407" OR subject:"Peach State" OR subject:"Peachstate") has:attachment${dateFilter}`
       : `from:${vendor} has:attachment invoice${dateFilter}`;
 
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -38,10 +38,7 @@ export default async (req: Request) => {
             type: "mcp",
             server_label: "gmail",
             server_url: "https://gmail.mcp.claude.com/mcp",
-            allowed_tools: [
-              "gmail_search_messages",
-              "gmail_read_message",
-            ],
+            allowed_tools: ["gmail_search_messages", "gmail_read_message"],
           },
         ],
         messages: [
@@ -50,11 +47,11 @@ export default async (req: Request) => {
             content: `Search my Gmail for vendor invoices using this query: ${searchQuery}
 
 For each email found:
-1. Search for the emails using gmail_search_messages with query "${searchQuery}" and maxResults 10
+1. Search using gmail_search_messages with query "${searchQuery}" and maxResults 10
 2. For each email result, read the full message using gmail_read_message
 3. Extract invoice details from the email body and attachment info
 
-After reading all emails, return a JSON array of invoice summaries found. Each object should have:
+After reading all emails, return a JSON array of invoice summaries. Each object should have:
 {
   "emailId": "the message ID",
   "emailDate": "YYYY-MM-DD",
@@ -64,15 +61,54 @@ After reading all emails, return a JSON array of invoice summaries found. Each o
   "invoiceHints": "any invoice numbers or amounts visible in the email body"
 }
 
-Return ONLY the JSON array, no markdown, no backticks, no explanation.`,
+Return ONLY the JSON array, no markdown, no backticks, no explanation. If no emails found, return [].`,
           },
         ],
       }),
     });
 
-    const text = await resp.text();
-    return new Response(text, {
-      status: resp.status,
+    if (!resp.ok) {
+      const errText = await resp.text();
+      return new Response(JSON.stringify({ error: `API error ${resp.status}: ${errText.substring(0, 300)}` }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const data = await resp.json();
+
+    // Extract text from content blocks (ignore tool_use/tool_result blocks)
+    let allText = "";
+    if (data.content && Array.isArray(data.content)) {
+      for (const block of data.content) {
+        if (block.type === "text" && block.text) {
+          allText += block.text + "\n";
+        }
+      }
+    }
+
+    // Try to find a JSON array in the text
+    const match = allText.match(/\[[\s\S]*\]/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed)) {
+          return new Response(JSON.stringify({ results: parsed }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      } catch (e) {
+        // Fall through
+      }
+    }
+
+    // Couldn't parse - return raw text
+    return new Response(JSON.stringify({
+      rawText: allText || "No text content in response",
+      message: allText ? null : "Claude did not return any text. The Gmail MCP server may not be connected, or no emails matched the search.",
+    }), {
+      status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: unknown) {
