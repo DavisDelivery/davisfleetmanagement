@@ -46,6 +46,9 @@ export default async (req: Request) => {
       searchQuery = `(from:peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com OR "peach state" OR "peachstate" OR "Parts 20407") has:attachment${dateFilter}`;
     } else if (vendor === "fuelfox atlanta" || vendor === "fuelfox") {
       searchQuery = `(from:fuelfox.com OR "fuelfox" OR "fuel fox") has:attachment${dateFilter}`;
+    } else if (vendor === "quick fuel" || vendor === "quickfuel") {
+      // Broad search — we don't yet know the exact sending domain. Match quickfuel.com, "quick fuel", or subjects/body mentions
+      searchQuery = `(from:quickfuel.com OR "quick fuel" OR "quickfuel" OR "quik fuel") has:attachment${dateFilter}`;
     } else {
       // Generic vendor — just search for the name anywhere + attachment
       searchQuery = `"${vendor}" has:attachment${dateFilter}`;
