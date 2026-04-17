@@ -38,11 +38,18 @@ export default async (req: Request) => {
     }
     const accessToken = tokenData.access_token;
 
-    // Build search query
+    // Build search query per vendor — broader matching
     const dateFilter = afterDate ? ` after:${afterDate}` : "";
-    const searchQuery = vendor === "peach state"
-      ? `(from:ar@peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com OR subject:"Parts 20407" OR subject:"Peach State" OR subject:"Peachstate") has:attachment${dateFilter}`
-      : `from:${vendor} has:attachment invoice${dateFilter}`;
+    let searchQuery;
+    if (vendor === "peach state" || vendor === "peach state freightliner") {
+      // Match direct from Peach State OR forwards from Ryan (any Davis domain) OR anything mentioning Peach State
+      searchQuery = `(from:peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com OR "peach state" OR "peachstate" OR "Parts 20407") has:attachment${dateFilter}`;
+    } else if (vendor === "fuelfox atlanta" || vendor === "fuelfox") {
+      searchQuery = `(from:fuelfox.com OR "fuelfox" OR "fuel fox") has:attachment${dateFilter}`;
+    } else {
+      // Generic vendor — just search for the name anywhere + attachment
+      searchQuery = `"${vendor}" has:attachment${dateFilter}`;
+    }
 
     // Search messages
     const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(searchQuery)}&maxResults=20`;
