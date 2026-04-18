@@ -24,11 +24,20 @@ export default async (req: Request) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
+        max_tokens: 16384,
         messages: body.messages,
       }),
     });
     const text = await resp.text();
+    if (!resp.ok) {
+      return new Response(JSON.stringify({
+        error: `Anthropic API ${resp.status}`,
+        details: text.substring(0, 500),
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     return new Response(text, {
       status: resp.status,
       headers: { "Content-Type": "application/json" },
@@ -36,7 +45,7 @@ export default async (req: Request) => {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Proxy error";
     return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+      status: 200,
       headers: { "Content-Type": "application/json" },
     });
   }
@@ -46,6 +55,6 @@ export const config: Config = {
   path: "/api/scan-invoice",
   rateLimit: {
     windowSize: 60,
-    limit: 20,
+    limit: 100,
   },
 };
