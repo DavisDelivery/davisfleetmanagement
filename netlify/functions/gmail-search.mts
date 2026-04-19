@@ -47,8 +47,10 @@ export default async (req: Request) => {
     } else if (vendor === "fuelfox atlanta" || vendor === "fuelfox") {
       searchQuery = `(from:fuelfox.com OR "fuelfox" OR "fuel fox") has:attachment${dateFilter}`;
     } else if (vendor === "quick fuel" || vendor === "quickfuel") {
-      // Quick Fuel invoices come from Flyers Energy billing
-      searchQuery = `(from:4flyers.com OR from:ebilling@4flyers.com OR "quick fuel" OR "flyers energy" OR "CFS-") has:attachment${dateFilter}`;
+      // Quick Fuel invoices come ONLY from ebilling@4flyers.com. No text matches — they
+      // pull in unrelated emails (NuVizz reports, Uline invoices, etc.) that happen to
+      // mention terms like "CFS-" or "flyers" somewhere in the body.
+      searchQuery = `from:ebilling@4flyers.com has:attachment${dateFilter}`;
     } else {
       // Generic vendor — just search for the name anywhere + attachment
       searchQuery = `"${vendor}" has:attachment${dateFilter}`;
