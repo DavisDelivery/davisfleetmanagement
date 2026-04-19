@@ -21,6 +21,9 @@ export default async (req: Request) => {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
+        // pdfs-2024-09-25 enables native PDF document support (type: "document") so we
+        // can send whole multi-page invoices at once instead of per-page images.
+        "anthropic-beta": "pdfs-2024-09-25",
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
