@@ -45,9 +45,15 @@ export default async (req: Request) => {
       return json({ error: "Attachment fetch failed: " + JSON.stringify(attData).substring(0, 200) }, 400);
     }
 
-    // Gmail returns base64url — convert to standard base64
-    const b64 = (attData.data || "").replace(/-/g, "+").replace(/_/g, "/");
-    return json({ data: b64, size: attData.size || 0 });
+    // Gmail returns base64url — convert to standard base64 and strip any stray chars.
+    // The [^A-Za-z0-9+/] class removes whitespace, newlines, =, and anything else that
+    // would cause atob() to throw "String did not match the expected pattern" on the client.
+    const raw = attData.data || "";
+    const b64 = raw.replace(/-/g, "+").replace(/_/g, "/").replace(/[^A-Za-z0-9+/]/g, "");
+    if (!b64) {
+      return json({ error: "Gmail returned empty attachment data", rawLength: raw.length }, 500);
+    }
+    return json({ data: b64, size: attData.size || 0, cleanLength: b64.length });
   } catch (err: any) {
     return json({ error: err.message || "Proxy error" }, 500);
   }
