@@ -56,8 +56,8 @@ export default async (req: Request) => {
       searchQuery = `"${vendor}" has:attachment${dateFilter}`;
     }
 
-    // Search messages
-    const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(searchQuery)}&maxResults=20`;
+    // Search messages — cap at 100 so a full year of weekly/biweekly invoices fit
+    const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(searchQuery)}&maxResults=100`;
     const searchResp = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -73,7 +73,7 @@ export default async (req: Request) => {
     }
 
     // Fetch details for each message (in parallel)
-    const results = await Promise.all(messages.slice(0, 20).map(async (msg: any) => {
+    const results = await Promise.all(messages.slice(0, 100).map(async (msg: any) => {
       try {
         const detailResp = await fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,
