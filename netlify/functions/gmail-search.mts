@@ -42,10 +42,18 @@ export default async (req: Request) => {
     const dateFilter = afterDate ? ` after:${afterDate}` : "";
     let searchQuery;
     if (vendor === "peach state" || vendor === "peach state freightliner") {
-      // Match direct from Peach State OR forwards from Ryan (any Davis domain) OR anything mentioning Peach State
-      searchQuery = `(from:peachstatetrucks.com OR from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com OR "peach state" OR "peachstate" OR "Parts 20407") has:attachment${dateFilter}`;
+      // v2.9.5: tightened — loose text matches ("peach state", "peachstate") and
+      // unfiltered Ryan forwards caught unrelated emails (Uline billing, NuVizz
+      // reports, etc.). Real Peach State invoices come from:
+      //   (a) ar@peachstatetrucks.com or peachstatetrucks.com domain
+      //   (b) forwarded by Ryan AND the subject contains "Parts 20407"
+      //       (Peach State's account-reference phrase for Davis Delivery)
+      // A forwarded email has "Fwd:" in subject AND is from Ryan's address.
+      searchQuery = `((from:peachstatetrucks.com) OR ((from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com) AND subject:"Parts 20407")) has:attachment${dateFilter}`;
     } else if (vendor === "fuelfox atlanta" || vendor === "fuelfox") {
-      searchQuery = `(from:fuelfox.com OR "fuelfox" OR "fuel fox") has:attachment${dateFilter}`;
+      // FuelFox invoices come from QuickBooks on their behalf, NOT fuelfox.com
+      // Subject line always contains "FuelFox Atlanta" for invoice emails.
+      searchQuery = `(from:quickbooks@notification.intuit.com subject:"FuelFox Atlanta") has:attachment${dateFilter}`;
     } else if (vendor === "quick fuel" || vendor === "quickfuel") {
       // Quick Fuel invoices come ONLY from ebilling@4flyers.com. No text matches — they
       // pull in unrelated emails (NuVizz reports, Uline invoices, etc.) that happen to
