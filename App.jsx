@@ -1,4 +1,4 @@
-const APP_VERSION = "2.9.5";
+const APP_VERSION = "2.10.0";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -154,6 +154,8 @@ function App(){
   const[attendWeeks,setAttendWeeks]=useState({});
   // Cost tracking / Invoice scanner
   const[costEntries,setCostEntries]=useState([]);
+  // v2.10.0: Core charge tracking (Peach State and other vendors that charge cores)
+  const[cores,setCores]=useState([]); // {id, date, truckId, invoiceNum, corePart, amount, status:"outstanding"|"returned", returnedDate, returnedCreditInvoice, vendor}
   const[scanQueue,setScanQueue]=useState([]); // {id, file, dataUrl, status, parsed}
   const[scanning,setScanning]=useState(false);
   const[gmailResults,setGmailResults]=useState(null);
@@ -178,7 +180,7 @@ function App(){
   // Load data
   useEffect(()=>{(async()=>{
     try{
-      const[tR,dR,aR,sR,rR,cR,rtR]=await Promise.all([
+      const[tR,dR,aR,sR,rR,cR,rtR,coresR]=await Promise.all([
         window.storage.get("fl-trucks").catch(()=>null),
         window.storage.get("fl-drivers").catch(()=>null),
         window.storage.get(`fl-asgn-${wk}`).catch(()=>null),
@@ -186,6 +188,7 @@ function App(){
         window.storage.get("fl-repairs").catch(()=>null),
         window.storage.get("fl-costs").catch(()=>null),
         window.storage.get("fl-retired").catch(()=>null),
+        window.storage.get("fl-cores").catch(()=>null), // v2.10.0
       ]);
       setTrucks(tR?JSON.parse(tR.value):[...ST,...TR]);
       setDrivers(dR?JSON.parse(dR.value):[...ID]);
@@ -194,6 +197,7 @@ function App(){
       setRepairs(rR?JSON.parse(rR.value):[]);
       setCostEntries(cR?JSON.parse(cR.value):[]);
       setRetiredTrucks(rtR?JSON.parse(rtR.value):[]);
+      setCores(coresR?JSON.parse(coresR.value):[]); // v2.10.0
     }catch(e){setTrucks([...ST,...TR]);setDrivers([...ID]);}
     setLoaded(true);
   })();},[wk]);
@@ -249,6 +253,23 @@ function App(){
   const saveTStat=useCallback(s=>{setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv]);
   const saveRepairs=useCallback(r=>{setRepairs(r);sv("fl-repairs",r);},[sv]);
   const saveCosts=useCallback(c=>{setCostEntries(c);sv("fl-costs",c);},[sv]);
+  // v2.10.0: core charge tracker
+  const saveCores=useCallback(c=>{setCores(c);sv("fl-cores",c);},[sv]);
+
+  // v2.10.0: manually mark a core as returned (for cases where auto-reconcile missed it)
+  const markCoreReturned=(coreId)=>{
+    const today=new Date().toISOString().split("T")[0];
+    const note=prompt("Credit memo # or note (optional):","");
+    saveCores(cores.map(c=>c.id===coreId?{...c,status:"returned",returnedDate:today,returnedCreditInvoice:note||"(manual)"}:c));
+  };
+  const unreturnCore=(coreId)=>{
+    if(!confirm("Move this core back to Outstanding?"))return;
+    saveCores(cores.map(c=>c.id===coreId?{...c,status:"outstanding",returnedDate:null,returnedCreditInvoice:null}:c));
+  };
+  const deleteCore=(coreId)=>{
+    if(!confirm("Delete this core record? This does NOT delete the associated cost entry."))return;
+    saveCores(cores.filter(c=>c.id!==coreId));
+  };
 
   // ── FuelFox: redistribute Invoice overhead (tax+fee) into Service Log truck entries ──
   // Matches by date: Invoice dated 04/16/2026 → Service Log entries with date 2026-04-16
@@ -322,7 +343,7 @@ function App(){
   };
 
   // ── Invoice Scanner AI ──
-  const COST_CATS=["Parts","Tires","Labor","Fuel","Oil","Body/Paint","Electrical","Inspection","Towing","Registration","Insurance","Inventory","Other"];
+  const COST_CATS=["Parts","Tires","Labor","Fuel","Oil","Body/Paint","Electrical","Inspection","Towing","Registration","Insurance","Inventory","Core","Credit","Other"];
 
   // Normalize vendor names so "Peach State Freightliner" and "Peach State Freightliner, LLC" become the same
   const normalizeVendor=(name)=>{
@@ -821,10 +842,11 @@ Each invoice object should have:
   "vendor": "vendor/shop name",
   "date": "YYYY-MM-DD",
   "invoiceNum": "invoice number or null",
-  "total": number (the TOTAL amount including tax),
+  "total": number (the TOTAL amount including tax — NEGATIVE for credits/returns),
   "category": "one of: ${COST_CATS.join(", ")}",
   "lineItems": [{"desc": "description", "amount": number}],
-  "notes": "brief summary of work/parts"
+  "notes": "brief summary of work/parts",
+  "corePart": "OPTIONAL — only for category='Core'. Best guess at part type (turbo, starter, alternator, DPF, injector, etc.) or 'unknown'"
 }
 
 CRITICAL RULES FOR FINDING THE TRUCK NUMBER:
@@ -832,6 +854,48 @@ CRITICAL RULES FOR FINDING THE TRUCK NUMBER:
 - If PO# is "INVENTORY" or blank or there is no truck indicated, set truckId to "INVENTORY".
 - For other vendors: look for Unit #, Truck #, Vehicle #, or any 4-digit reference matching the fleet.
 - If you truly cannot determine a truck, use "INVENTORY" (NOT null, NOT "UNKNOWN").
+
+SPECIAL RULE FOR PEACH STATE CREDIT MEMOS / RETURNS (v2.10.0):
+- A credit memo / return is any Peach State document where ANY of these are true:
+    (a) Header clearly says "CREDIT MEMO", "RM", "Return Memo", "Credit Invoice", or "Return"
+    (b) The invoice TOTAL at the bottom is a negative number (shown with a minus sign, parentheses, or "CR" suffix)
+    (c) All line items are negative / labeled as returns
+- When you detect a credit memo:
+    - Set total to a NEGATIVE number (e.g., -482.50). NEVER return it as positive.
+    - Set category to "Credit"
+    - Keep truckId from PO# using the same last-4-digits rule
+    - Set notes to include "CREDIT MEMO" or "RETURN" at the start
+    - Each line item amount should ALSO be negative to match
+
+SPECIAL RULE FOR PEACH STATE CORE CHARGES (v2.10.0):
+- A "core" is a deposit charged on rebuildable parts (turbo, starter, alternator, injector, DPF, EGR valve, compressor, etc.) that gets refunded when the old part is returned.
+- On a regular NEW-purchase invoice, a core charge appears as a line item with description containing one of: "CORE CHARGE", "CORE DEPOSIT", "CORE DEP", "CORE FEE", or just "CORE" with a positive amount.
+- When you see core charges on a NEW purchase invoice, SPLIT INTO TWO SEPARATE INVOICE OBJECTS:
+    OBJECT 1 (the parts):
+      - truckId, vendor, date, invoiceNum as normal
+      - category: "Parts"
+      - total: the invoice total MINUS all core charge line items
+      - lineItems: all line items EXCEPT the core charge rows
+      - notes: brief summary
+    OBJECT 2 (the core charge):
+      - Same truckId, vendor, date
+      - invoiceNum: "<original invoice #>-CORE"  (MUST be unique; suffix with -CORE)
+      - category: "Core"
+      - total: sum of core charge line items (positive)
+      - lineItems: only the core charge rows
+      - corePart: best guess at the part type being cored (e.g., "turbo", "starter", "alternator", "DPF", "injector"). If unclear, use "unknown".
+      - notes: "Core charge — OUTSTANDING. Return old part to recover deposit."
+- If a credit memo contains a line like "CORE RETURN", "CORE CREDIT", "CORE REFUND", or "CORE" with a negative amount:
+    - Set category to "Core" (NOT "Credit")
+    - total: negative (e.g., -250.00)
+    - invoiceNum: "<credit memo #>-CORERETURN"
+    - corePart: best guess at part type
+    - notes: "Core returned — credit received"
+- EXAMPLES:
+    - Invoice with parts $1,200 + core $250 → return TWO objects: Parts $1,200 and Core $250
+    - Credit memo for $250 labeled "Core Return - Turbo" → return ONE object: Core -$250 with corePart "turbo"
+    - Credit memo with no core mention, just a refund → return ONE object: Credit (negative total)
+- SANITY CHECK: If you split an invoice into Parts + Core, the sum of the two totals MUST equal the original invoice total.
 
 SPECIAL RULE FOR QUICK FUEL / FLYERS ENERGY INVOICES (from "ebilling@4flyers.com" or containing "Flyers Energy"):
 - These are weekly fuel card invoices from "Flyers Energy, LLC" (vendor should be "Quick Fuel"). Invoice # format: "CFS-XXXXXXX".
@@ -1043,6 +1107,9 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     const fp=(c)=>`${(c.vendor||"").toLowerCase()}|${c.invoiceNum||""}|${Math.round((c.total||0)*100)}`;
     const existingFingerprints=new Set(costEntries.filter(c=>c.invoiceNum).map(fp));
     const newEntries=[];
+    // v2.10.0: core tracker accumulators
+    const newCoreRecords=[];           // new entries to append to cores[]
+    const coreReconciliations=[];      // {coreId} — existing cores to flip to returned
     const skippedItems=[]; // track WHY each was skipped for transparency
     let uploadErrors=0;
     const items=scanQueue.filter(q=>q.status==="parsed"&&q.parsed&&!q.parsed.error);
@@ -1103,14 +1170,18 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       let truckId=q.parsed.truckId;
       if(!truckId||truckId==="null"||truckId==="UNKNOWN")truckId="INVENTORY";
 
+      const entryCategory=q.parsed.category||(truckId==="INVENTORY"?"Inventory":"Other");
+      const entryTotal=q.parsed.total||0;
+      const entryDate=q.parsed.date||new Date().toISOString().split("T")[0];
+
       newEntries.push({
         id:Date.now()+Math.random(),
         truckId,
         vendor:q.parsed.vendor||"Unknown",
-        date:q.parsed.date||new Date().toISOString().split("T")[0],
+        date:entryDate,
         invoiceNum:invNum,
-        total:q.parsed.total||0,
-        category:q.parsed.category||(truckId==="INVENTORY"?"Inventory":"Other"),
+        total:entryTotal,
+        category:entryCategory,
         lineItems:q.parsed.lineItems||[],
         notes:q.parsed.notes||"",
         sourceFile:q.file,
@@ -1120,16 +1191,106 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         // Fuel-specific fields (auto-compute pricePerGallon if not provided but we have gallons)
         gallons:q.parsed.gallons!=null?Number(q.parsed.gallons):null,
         pricePerGallon:q.parsed.pricePerGallon!=null?Number(q.parsed.pricePerGallon):(q.parsed.gallons&&q.parsed.total?Number((q.parsed.total/q.parsed.gallons).toFixed(4)):null),
+        // v2.10.0: remember corePart for traceability (Peach State Core entries)
+        corePart:q.parsed.corePart||null,
         addedAt:new Date().toISOString(),
       });
+
+      // v2.10.0: If this is a Core-category entry, mirror into the cores tracker.
+      // Positive total = new outstanding core (deposit charged on rebuildable part).
+      // Negative total = core returned, auto-reconcile against the oldest matching outstanding record.
+      if(entryCategory==="Core"){
+        const corePart=(q.parsed.corePart||"unknown").toLowerCase().trim();
+        const amountAbs=Math.abs(entryTotal);
+        if(entryTotal>0){
+          // New outstanding core
+          newCoreRecords.push({
+            id:Date.now()+Math.random(),
+            date:entryDate,
+            truckId,
+            invoiceNum:invNum,
+            corePart,
+            amount:amountAbs,
+            vendor:q.parsed.vendor||"Unknown",
+            status:"outstanding",
+            returnedDate:null,
+            returnedCreditInvoice:null,
+            notes:q.parsed.notes||"",
+            addedAt:new Date().toISOString(),
+          });
+        }else if(entryTotal<0){
+          // Core return credit — find oldest matching outstanding
+          // Match priority: (1) same truck + same corePart + amount within $5
+          //                 (2) same truck + any corePart + amount within $5
+          //                 (3) any truck + same corePart + amount within $5
+          const nowPool=[...cores.filter(c=>c.status==="outstanding"),...newCoreRecords.filter(c=>c.status==="outstanding")];
+          const amtMatch=(c)=>Math.abs(c.amount-amountAbs)<=5;
+          let match=nowPool.find(c=>c.truckId===truckId&&c.corePart===corePart&&amtMatch(c));
+          if(!match)match=nowPool.find(c=>c.truckId===truckId&&amtMatch(c));
+          if(!match)match=nowPool.find(c=>c.corePart===corePart&&amtMatch(c));
+          if(match){
+            // Found a match — mark it returned. Mutate in the right array.
+            const updater=(c)=>c.id===match.id?{...c,status:"returned",returnedDate:entryDate,returnedCreditInvoice:invNum}:c;
+            if(cores.find(c=>c.id===match.id)){
+              coreReconciliations.push({coreId:match.id,action:"reconcile-existing"});
+            }else{
+              // It's in newCoreRecords (unlikely — same batch). Mutate in place.
+              const ix=newCoreRecords.findIndex(c=>c.id===match.id);
+              if(ix>=0)newCoreRecords[ix]=updater(newCoreRecords[ix]);
+            }
+          }else{
+            // No match — still record the return as a standalone entry so it's auditable
+            newCoreRecords.push({
+              id:Date.now()+Math.random(),
+              date:entryDate,
+              truckId,
+              invoiceNum:invNum,
+              corePart,
+              amount:amountAbs,
+              vendor:q.parsed.vendor||"Unknown",
+              status:"returned-unmatched", // credit received but no matching outstanding core found
+              returnedDate:entryDate,
+              returnedCreditInvoice:invNum,
+              notes:(q.parsed.notes||"")+" [No matching outstanding core found — review manually]",
+              addedAt:new Date().toISOString(),
+            });
+          }
+        }
+      }
     }
     if(newEntries.length>0){
       const next=[...newEntries,...costEntries];
       saveCosts(next);
     }
+    // v2.10.0: save core tracker updates
+    if(newCoreRecords.length>0||coreReconciliations.length>0){
+      let nextCores=[...cores];
+      // Apply reconciliations (flip outstanding → returned)
+      if(coreReconciliations.length>0){
+        const reconcileIds=new Set(coreReconciliations.map(r=>r.coreId));
+        // Find the invoice num / date from newEntries for each reconciliation
+        // (we just use the most recent negative Core entry per matched coreId — good enough)
+        nextCores=nextCores.map(c=>{
+          if(!reconcileIds.has(c.id))return c;
+          // Find the negative Core entry that matched this
+          const negEntry=newEntries.find(e=>e.category==="Core"&&e.total<0&&e.truckId===c.truckId&&Math.abs(Math.abs(e.total)-c.amount)<=5);
+          return {...c,status:"returned",returnedDate:negEntry?.date||new Date().toISOString().split("T")[0],returnedCreditInvoice:negEntry?.invoiceNum||null};
+        });
+      }
+      // Append new core records
+      if(newCoreRecords.length>0)nextCores=[...newCoreRecords,...nextCores];
+      saveCores(nextCores);
+    }
     setScanning(false);
     const msgs=[];
     if(newEntries.length>0)msgs.push(`Saved ${newEntries.length} invoice${newEntries.length>1?"s":""}.`);
+    // v2.10.0: core tracker summary
+    const newOutstanding=newCoreRecords.filter(c=>c.status==="outstanding").length;
+    const reconciled=coreReconciliations.length;
+    const unmatched=newCoreRecords.filter(c=>c.status==="returned-unmatched").length;
+    if(newOutstanding>0)msgs.push(`🔧 ${newOutstanding} new outstanding core${newOutstanding>1?"s":""} to return.`);
+    if(reconciled>0)msgs.push(`✅ ${reconciled} core${reconciled>1?"s":""} auto-reconciled (return credit matched).`);
+    if(unmatched>0)msgs.push(`⚠️ ${unmatched} core return${unmatched>1?"s":""} had no matching outstanding record — review the Cores tab.`);
     if(skippedItems.length>0){
       const byReason={};
       skippedItems.forEach(s=>{byReason[s.reason]=(byReason[s.reason]||0)+1;});
@@ -1588,8 +1749,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           <div style={{borderLeft:`2px solid ${C.brand}33`,paddingLeft:10}}><div style={{fontSize:13,fontWeight:700,color:C.dark,lineHeight:1.2}}>Fleet</div><div style={{fontSize:13,fontWeight:700,color:C.dark,lineHeight:1.2}}>Management</div><div style={{fontSize:8,color:"#94a3b8",marginTop:1}}>v{APP_VERSION}</div></div>
         </div>
         <div style={s.tabs}>
-          {[["dispatch","Dispatch"],["dashboard","Dashboard"],["board","Weekly Board"],["fleet","Fleet"],["maint","Maintenance"],["costs","Costs"],["drivers","Drivers"],["attend","Attendance"]].map(([k,l])=>
-            <button key={k} onClick={()=>setTab(k)} style={tab===k?{...s.tab,...s.tabOn}:s.tab}>{l}{k==="maint"&&stats.openRepairs>0?<span style={s.badge}>{stats.openRepairs}</span>:null}</button>
+          {[["dispatch","Dispatch"],["dashboard","Dashboard"],["board","Weekly Board"],["fleet","Fleet"],["maint","Maintenance"],["costs","Costs"],["cores","Cores"],["drivers","Drivers"],["attend","Attendance"]].map(([k,l])=>
+            <button key={k} onClick={()=>setTab(k)} style={tab===k?{...s.tab,...s.tabOn}:s.tab}>{l}{k==="maint"&&stats.openRepairs>0?<span style={s.badge}>{stats.openRepairs}</span>:null}{k==="cores"&&cores.filter(c=>c.status==="outstanding").length>0?<span style={s.badge}>{cores.filter(c=>c.status==="outstanding").length}</span>:null}</button>
           )}
         </div>
       </div></div>
@@ -2005,6 +2166,109 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             </div>;
           })}
         </div>}
+
+        {/* ══ CORES (v2.10.0) ══ */}
+        {tab==="cores"&&(()=>{
+          const outstanding=cores.filter(c=>c.status==="outstanding");
+          const returned=cores.filter(c=>c.status==="returned");
+          const unmatched=cores.filter(c=>c.status==="returned-unmatched");
+          const today=new Date();
+          const daysOld=(d)=>{try{return Math.floor((today-new Date(d))/86400000);}catch{return 0;}};
+          const totalOutstanding=outstanding.reduce((sum,c)=>sum+(c.amount||0),0);
+          const byAge=[...outstanding].sort((a,b)=>daysOld(b.date)-daysOld(a.date));
+
+          return <div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,color:"#6b7785",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Cores Outstanding</div>
+              <div style={{fontSize:24,fontWeight:700,color:outstanding.length>0?C.red:C.green}}>{outstanding.length} cores · ${totalOutstanding.toFixed(2)}</div>
+              <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Deposits owed back from Peach State (and other vendors) for rebuildable parts not yet returned.</div>
+            </div>
+
+            {/* OUTSTANDING */}
+            <div style={{marginBottom:20}}>
+              <div style={{...s.secT,color:C.red,display:"flex",alignItems:"center",gap:8}}>
+                <span>🔧 Outstanding ({outstanding.length})</span>
+              </div>
+              {outstanding.length===0?(
+                <div style={{padding:"16px",background:"#f0fdf4",borderRadius:8,color:C.green,fontSize:13,textAlign:"center"}}>
+                  ✓ All cores returned. You're current.
+                </div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {byAge.map(c=>{
+                    const age=daysOld(c.date);
+                    const urgent=age>=60;
+                    const warn=age>=30&&age<60;
+                    const bg=urgent?"#fef2f2":warn?"#fffbeb":"#fff";
+                    const ringColor=urgent?C.red:warn?C.accent:"#e2e8f0";
+                    return <div key={c.id} style={{background:bg,border:`1px solid ${ringColor}`,borderRadius:8,padding:"10px 12px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
+                        <div style={{flex:1,minWidth:200}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                            <span style={{fontWeight:700,fontSize:14,color:"#1e293b"}}>Truck {c.truckId}</span>
+                            <span style={{fontSize:12,padding:"2px 8px",background:C.light,color:C.brand,borderRadius:4,fontWeight:600}}>{c.corePart||"unknown"}</span>
+                            {urgent&&<span style={{fontSize:10,padding:"2px 6px",background:C.red,color:"#fff",borderRadius:3,fontWeight:700}}>{age}d OLD</span>}
+                            {warn&&<span style={{fontSize:10,padding:"2px 6px",background:C.accent,color:"#fff",borderRadius:3,fontWeight:700}}>{age}d</span>}
+                            {!urgent&&!warn&&<span style={{fontSize:10,color:"#94a3b8"}}>{age}d ago</span>}
+                          </div>
+                          <div style={{fontSize:11,color:"#6b7785",marginTop:4}}>
+                            {c.date} · {c.vendor} · Inv {c.invoiceNum||"—"}
+                          </div>
+                          {c.notes&&<div style={{fontSize:11,color:"#94a3b8",marginTop:3,fontStyle:"italic"}}>{c.notes}</div>}
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{fontSize:18,fontWeight:700,color:C.brand}}>${c.amount.toFixed(2)}</div>
+                          <button onClick={()=>markCoreReturned(c.id)} style={{padding:"6px 12px",fontSize:11,fontWeight:700,background:C.green,color:"#fff",border:"none",borderRadius:6,cursor:"pointer",whiteSpace:"nowrap"}}>✓ Returned</button>
+                          <button onClick={()=>deleteCore(c.id)} title="Delete" style={{padding:"6px 8px",fontSize:11,background:"#fff",color:C.red,border:`1px solid ${C.red}`,borderRadius:6,cursor:"pointer"}}>✕</button>
+                        </div>
+                      </div>
+                    </div>;
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* UNMATCHED RETURNS — credits received but no outstanding core to reconcile */}
+            {unmatched.length>0&&<div style={{marginBottom:20}}>
+              <div style={{...s.secT,color:C.accent}}>⚠️ Return Credits Without Matching Core ({unmatched.length})</div>
+              <div style={{fontSize:11,color:"#6b7785",marginBottom:8}}>These credit memos arrived but no outstanding core matched them. Usually means the core was already marked returned, or the original charge predates this tracker.</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {unmatched.map(c=>(
+                  <div key={c.id} style={{background:"#fffbeb",border:`1px solid ${C.accent}55`,borderRadius:8,padding:"10px 12px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
+                      <div style={{flex:1,minWidth:200}}>
+                        <div style={{fontWeight:700,fontSize:13}}>Truck {c.truckId} · {c.corePart||"unknown"}</div>
+                        <div style={{fontSize:11,color:"#6b7785",marginTop:2}}>{c.date} · {c.vendor} · Credit inv {c.returnedCreditInvoice||c.invoiceNum||"—"}</div>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{fontSize:16,fontWeight:700,color:C.green}}>+${c.amount.toFixed(2)}</div>
+                        <button onClick={()=>deleteCore(c.id)} style={{padding:"6px 8px",fontSize:11,background:"#fff",color:C.red,border:`1px solid ${C.red}`,borderRadius:6,cursor:"pointer"}}>✕</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>}
+
+            {/* RETURNED (collapsed by default) */}
+            {returned.length>0&&<details style={{marginTop:12}}>
+              <summary style={{fontSize:14,fontWeight:700,color:C.green,cursor:"pointer",padding:"8px 0"}}>✓ Returned ({returned.length}) — ${returned.reduce((s,c)=>s+(c.amount||0),0).toFixed(2)} recovered</summary>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
+                {[...returned].sort((a,b)=>(b.returnedDate||"").localeCompare(a.returnedDate||"")).map(c=>(
+                  <div key={c.id} style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,padding:"8px 12px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                      <div style={{flex:1,minWidth:200}}>
+                        <div style={{fontSize:12,fontWeight:600}}>Truck {c.truckId} · {c.corePart||"unknown"} · ${c.amount.toFixed(2)}</div>
+                        <div style={{fontSize:10,color:"#6b7785"}}>Charged {c.date} · Returned {c.returnedDate||"—"} · Credit {c.returnedCreditInvoice||"—"}</div>
+                      </div>
+                      <button onClick={()=>unreturnCore(c.id)} title="Move back to outstanding" style={{padding:"4px 8px",fontSize:10,background:"#fff",color:"#6b7785",border:"1px solid #d1d9e0",borderRadius:4,cursor:"pointer"}}>↩ Undo</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>}
+          </div>;
+        })()}
 
         {/* ══ DRIVERS ══ */}
         {tab==="drivers"&&<div>
