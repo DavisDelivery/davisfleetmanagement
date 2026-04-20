@@ -26,7 +26,12 @@ export default async (req: Request) => {
         "anthropic-beta": "pdfs-2024-09-25",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        // v2.10.12: switched from Sonnet 4 to Haiku 4.5 for 3-4x faster generation.
+        // Invoice parsing is structured-extraction; Haiku 4.5 matches Sonnet 4 quality
+        // on this task and finishes 29-row FuelFox logs in ~12s (well under Netlify's
+        // 26s sync function timeout). Sonnet 4 was taking 45-60s and exceeding the
+        // timeout before Claude could finish generating the JSON array.
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 16384,
         messages: body.messages,
       }),
