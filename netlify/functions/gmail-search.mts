@@ -16,6 +16,7 @@ export default async (req: Request) => {
     const refreshToken = body.refresh_token;
     const vendor = body.vendor || "peach state";
     const afterDate = body.afterDate || "";
+    const beforeDate = body.beforeDate || ""; // v2.10.13: optional end date for custom range
 
     if (!refreshToken) {
       return json({ error: "No refresh_token provided. Gmail not connected." }, 400);
@@ -39,7 +40,10 @@ export default async (req: Request) => {
     const accessToken = tokenData.access_token;
 
     // Build search query per vendor — broader matching
-    const dateFilter = afterDate ? ` after:${afterDate}` : "";
+    // v2.10.13: dateFilter now supports both after: and before: for custom ranges
+    const afterPart = afterDate ? ` after:${afterDate}` : "";
+    const beforePart = beforeDate ? ` before:${beforeDate}` : "";
+    const dateFilter = afterPart + beforePart;
     let searchQuery;
     if (vendor === "peach state" || vendor === "peach state freightliner") {
       // v2.9.5: tightened — loose text matches ("peach state", "peachstate") and
