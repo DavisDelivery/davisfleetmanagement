@@ -33,6 +33,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+window.db = db; // expose for real-time onSnapshot listeners in App.jsx
 window.storage = {
   async get(key) { try { const doc = await db.collection("kv").doc(key).get(); if (!doc.exists) throw new Error("not found"); return { key, value: doc.data().v }; } catch (e) { throw e; } },
   async set(key, value) { try { await db.collection("kv").doc(key).set({ v: value, ts: new Date().toISOString() }); return { key, value }; } catch (e) { return null; } },

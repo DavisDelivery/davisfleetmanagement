@@ -254,14 +254,32 @@ const OOS_REASONS = ["Mechanical Repair","Planned Maintenance","Tires","Body/Pai
 // ── INIT ─────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const [repairData, truckData] = await Promise.all([
-      fsGet("fl-repairs"),
-      fsGet("fl-trucks")
-    ]);
-    repairs = repairData || [];
+    // Load trucks once (trucks don't change often)
+    const truckData = await fsGet("fl-trucks");
     trucks = truckData || [];
     populateTruckDropdown();
-    render();
+
+    // Set up real-time listener for repairs — fires immediately with current
+    // data AND every time the fleet app or any other client writes to fl-repairs.
+    // This means notes/closures from the fleet app show up here instantly too.
+    db.collection("kv").doc("fl-repairs").onSnapshot(snap => {
+      if (!snap.exists) {
+        repairs = [];
+        render();
+        return;
+      }
+      try {
+        repairs = JSON.parse(snap.data().v) || [];
+        render();
+      } catch(e) {
+        console.error("fl-repairs parse error:", e);
+      }
+    }, err => {
+      document.getElementById("loading-screen").innerHTML =
+        `<div style="color:var(--red);font-family:var(--mono);font-size:13px;text-align:center">
+          Connection lost.<br><span style="color:var(--muted);">${err.message}</span>
+        </div>`;
+    });
   } catch (e) {
     document.getElementById("loading-screen").innerHTML =
       `<div style="color:var(--red);font-family:var(--mono);font-size:13px;text-align:center">
