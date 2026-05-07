@@ -176,9 +176,12 @@
       <div class="form-grid">
         <div class="form-field">
           <label class="form-label">Truck #</label>
-          <select class="form-select" id="new-truck">
+          <select class="form-select" id="new-truck" onchange="document.getElementById('new-truck-manual').value=''">
             <option value="">Select truck...</option>
           </select>
+          <input class="form-input" id="new-truck-manual" placeholder="Or type truck # manually (e.g. 0608)"
+            style="margin-top:6px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:1px;"
+            onchange="document.getElementById('new-truck').value=''">
         </div>
         <div class="form-field">
           <label class="form-label">Reason</label>
@@ -253,39 +256,44 @@ const OOS_REASONS = ["Mechanical Repair","Planned Maintenance","Tires","Body/Pai
 
 // ── INIT ─────────────────────────────────────────────────────────────
 async function init() {
-  try {
-    // Load trucks once (trucks don't change often)
-    const truckData = await fsGet("fl-trucks");
-    trucks = truckData || [];
-    populateTruckDropdown();
-
-    // Set up real-time listener for repairs — fires immediately with current
-    // data AND every time the fleet app or any other client writes to fl-repairs.
-    // This means notes/closures from the fleet app show up here instantly too.
-    db.collection("kv").doc("fl-repairs").onSnapshot(snap => {
-      if (!snap.exists) {
-        repairs = [];
-        render();
-        return;
-      }
+  // Set up real-time listener for trucks (fires immediately + on changes)
+  db.collection("kv").doc("fl-trucks").onSnapshot(snap => {
+    if (!snap.exists) {
+      console.warn("fl-trucks document does not exist in Firebase");
+      trucks = [];
+    } else {
       try {
-        repairs = JSON.parse(snap.data().v) || [];
-        render();
+        trucks = JSON.parse(snap.data().v) || [];
       } catch(e) {
-        console.error("fl-repairs parse error:", e);
+        console.error("fl-trucks parse error:", e);
+        trucks = [];
       }
-    }, err => {
-      document.getElementById("loading-screen").innerHTML =
-        `<div style="color:var(--red);font-family:var(--mono);font-size:13px;text-align:center">
-          Connection lost.<br><span style="color:var(--muted);">${err.message}</span>
-        </div>`;
-    });
-  } catch (e) {
+    }
+    populateTruckDropdown();
+  }, err => {
+    console.error("fl-trucks listener error:", err);
+  });
+
+  // Set up real-time listener for repairs — fires immediately with current
+  // data AND every time the fleet app or any other client writes to fl-repairs.
+  db.collection("kv").doc("fl-repairs").onSnapshot(snap => {
+    if (!snap.exists) {
+      repairs = [];
+      render();
+      return;
+    }
+    try {
+      repairs = JSON.parse(snap.data().v) || [];
+      render();
+    } catch(e) {
+      console.error("fl-repairs parse error:", e);
+    }
+  }, err => {
     document.getElementById("loading-screen").innerHTML =
       `<div style="color:var(--red);font-family:var(--mono);font-size:13px;text-align:center">
-        Failed to load data.<br><span style="color:var(--muted);">${e.message}</span>
+        Connection lost.<br><span style="color:var(--muted);">${err.message}</span>
       </div>`;
-  }
+  });
 }
 
 // ── SAVE ─────────────────────────────────────────────────────────────
@@ -572,7 +580,8 @@ async function closeRepair(id) {
 }
 
 async function logNewRepair() {
-  const truckId = document.getElementById("new-truck").value;
+  const truckId = document.getElementById("new-truck").value ||
+                  document.getElementById("new-truck-manual").value.trim().toUpperCase();
   const reason = document.getElementById("new-reason").value;
   const shop = document.getElementById("new-shop").value.trim();
   const est = document.getElementById("new-est").value;
@@ -603,6 +612,7 @@ async function logNewRepair() {
   if (!ok) return; // error toast already shown by saveRepairs
   // Reset form
   document.getElementById("new-truck").value = "";
+  document.getElementById("new-truck-manual").value = "";
   document.getElementById("new-shop").value = "";
   document.getElementById("new-est").value = "";
   document.getElementById("new-notes").value = "";
