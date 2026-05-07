@@ -289,8 +289,18 @@ async function init() {
 }
 
 // ── SAVE ─────────────────────────────────────────────────────────────
-async function saveRepairs() {
-  await fsSet("fl-repairs", repairs);
+// Returns true on success, false on failure.
+async function saveRepairs(arr) {
+  try {
+    // Always pass the array explicitly — never rely on the module-level
+    // `repairs` reference which can be overwritten by onSnapshot mid-await.
+    await fsSet("fl-repairs", arr !== undefined ? arr : repairs);
+    return true;
+  } catch(e) {
+    console.error("saveRepairs failed:", e);
+    showToast("⚠ Save failed: " + (e.message || "Firebase write error"), "var(--red)");
+    return false;
+  }
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -486,19 +496,17 @@ function renderHistory(closed) {
 
 // ── ACTIONS ───────────────────────────────────────────────────────────
 async function updateReason(id, value) {
-  const r = repairs.find(x => x.id == id);
-  if (!r) return;
-  r.reason = value;
-  await saveRepairs();
-  showToast("Reason updated");
+  const updated = repairs.map(r => r.id == id ? {...r, reason: value} : r);
+  const ok = await saveRepairs(updated);
+  if (ok) showToast("Reason updated");
 }
 
 async function updateShop(id, value) {
   const r = repairs.find(x => x.id == id);
   if (!r || value === (r.shop || "")) return;
-  r.shop = value;
-  await saveRepairs();
-  showToast("Shop saved");
+  const updated = repairs.map(r2 => r2.id == id ? {...r2, shop: value} : r2);
+  const ok = await saveRepairs(updated);
+  if (ok) showToast("Shop saved");
 }
 
 async function addNote(id) {
@@ -507,20 +515,20 @@ async function addNote(id) {
   if (!text) return;
   const r = repairs.find(x => x.id == id);
   if (!r) return;
-  // Migrate legacy notes string
-  if (!r.notesLog && r.notes) {
-    r.notesLog = [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }];
-    r.notes = "";
-  }
-  if (!r.notesLog) r.notesLog = [];
-  r.notesLog.push({ ts: new Date().toISOString(), text });
-  await saveRepairs();
+  const existingLog = r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
+  const newEntry = { ts: new Date().toISOString(), text };
+  const updated = repairs.map(r2 => r2.id == id
+    ? { ...r2, notesLog: [...existingLog, newEntry], notes: "" }
+    : r2
+  );
+  const ok = await saveRepairs(updated);
+  if (!ok) return;
   inp.value = "";
-  // Re-render just the notes log
+  // Re-render just the notes log with the updated entry list
+  const newLog = [...existingLog, newEntry];
   const logEl = document.getElementById(`log-${id}`);
   if (logEl) {
-    const log = r.notesLog;
-    logEl.innerHTML = log.map((e, i) =>
+    logEl.innerHTML = newLog.map((e, i) =>
       `<div class="note-entry">
         <span class="note-ts">${shortTs(e.ts)}</span>
         <span class="note-text">${escHtml(e.text)}</span>
@@ -534,36 +542,33 @@ async function addNote(id) {
 async function deleteNote(id, idx) {
   const r = repairs.find(x => x.id == id);
   if (!r || !r.notesLog) return;
-  r.notesLog.splice(idx, 1);
-  await saveRepairs();
-  // Re-render the log
+  const newLog = r.notesLog.filter((_, i) => i !== idx);
+  const updated = repairs.map(r2 => r2.id == id ? {...r2, notesLog: newLog} : r2);
+  const ok = await saveRepairs(updated);
+  if (!ok) return;
   const logEl = document.getElementById(`log-${id}`);
   if (logEl) {
-    const log = r.notesLog;
-    if (log.length === 0) {
-      logEl.innerHTML = `<div class="empty-notes">No notes yet.</div>`;
-    } else {
-      logEl.innerHTML = log.map((e, i) =>
-        `<div class="note-entry">
-          <span class="note-ts">${shortTs(e.ts)}</span>
-          <span class="note-text">${escHtml(e.text)}</span>
-          <button class="note-del" onclick="deleteNote('${id}',${i})" title="Delete note">✕</button>
-        </div>`
-      ).join("");
-    }
+    logEl.innerHTML = newLog.length === 0
+      ? `<div class="empty-notes">No notes yet.</div>`
+      : newLog.map((e, i) =>
+          `<div class="note-entry">
+            <span class="note-ts">${shortTs(e.ts)}</span>
+            <span class="note-text">${escHtml(e.text)}</span>
+            <button class="note-del" onclick="deleteNote('${id}',${i})" title="Delete note">✕</button>
+          </div>`
+        ).join("");
   }
   showToast("Note deleted");
 }
 
 async function closeRepair(id) {
   if (!confirm("Mark this repair as completed?")) return;
-  const r = repairs.find(x => x.id == id);
-  if (!r) return;
-  r.status = "closed";
-  r.dateClosed = new Date().toISOString();
-  await saveRepairs();
-  showToast("✓ Repair closed", "var(--green)");
-  render();
+  const updated = repairs.map(r => r.id == id
+    ? {...r, status: "closed", dateClosed: new Date().toISOString()}
+    : r
+  );
+  const ok = await saveRepairs(updated);
+  if (ok) showToast("✓ Repair closed", "var(--green)");
 }
 
 async function logNewRepair() {
@@ -573,6 +578,9 @@ async function logNewRepair() {
   const est = document.getElementById("new-est").value;
   const notes = document.getElementById("new-notes").value.trim();
   if (!truckId) { showToast("Select a truck first", "var(--red)"); return; }
+  const btn = document.querySelector(".btn-log");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
   const rec = {
     id: Date.now(),
     truckId,
@@ -586,8 +594,13 @@ async function logNewRepair() {
     status: "open",
     cost: 0
   };
-  repairs.unshift(rec);
-  await saveRepairs();
+  // Build the new array explicitly — don't rely on module-level `repairs`
+  // which can be overwritten by onSnapshot mid-await.
+  const newRepairs = [rec, ...repairs];
+  const ok = await saveRepairs(newRepairs);
+  btn.disabled = false;
+  btn.textContent = "Log Repair";
+  if (!ok) return; // error toast already shown by saveRepairs
   // Reset form
   document.getElementById("new-truck").value = "";
   document.getElementById("new-shop").value = "";
@@ -595,7 +608,6 @@ async function logNewRepair() {
   document.getElementById("new-notes").value = "";
   showToast("Repair logged ✓", "var(--green)");
   switchTab("open");
-  render();
 }
 
 function populateTruckDropdown() {
