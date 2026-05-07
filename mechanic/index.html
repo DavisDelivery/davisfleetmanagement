@@ -175,13 +175,15 @@
       <div class="section-label" style="margin-bottom:14px">Log New Repair</div>
       <div class="form-grid">
         <div class="form-field">
-          <label class="form-label">Truck #</label>
+          <label class="form-label">Truck # <span id="truck-count" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px;">— loading...</span></label>
           <select class="form-select" id="new-truck" onchange="document.getElementById('new-truck-manual').value=''">
             <option value="">Select truck...</option>
           </select>
           <input class="form-input" id="new-truck-manual" placeholder="Or type truck # manually (e.g. 0608)"
             style="margin-top:6px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:1px;"
             onchange="document.getElementById('new-truck').value=''">
+          <button type="button" onclick="reloadTrucks()" style="margin-top:6px;padding:6px 12px;font-size:11px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:var(--mono);">⟳ Reload truck list</button>
+          <div id="truck-debug" style="margin-top:6px;font-size:10px;font-family:var(--mono);color:var(--muted);display:none;"></div>
         </div>
         <div class="form-field">
           <label class="form-label">Reason</label>
@@ -622,6 +624,7 @@ async function logNewRepair() {
 
 function populateTruckDropdown() {
   const sel = document.getElementById("new-truck");
+  const countEl = document.getElementById("truck-count");
   sel.innerHTML = `<option value="">Select truck...</option>`;
   // Box trucks first, then tractors
   const sorted = [
@@ -637,6 +640,50 @@ function populateTruckDropdown() {
     opt.textContent = `#${t.id} — ${type} ${mk}${model}`;
     sel.appendChild(opt);
   });
+  if (countEl) {
+    if (trucks.length === 0) {
+      countEl.textContent = "— no trucks loaded";
+      countEl.style.color = "var(--red)";
+    } else {
+      countEl.textContent = `(${trucks.length} trucks)`;
+      countEl.style.color = "var(--green)";
+    }
+  }
+}
+
+// Manual force-reload — bypasses snapshot cache and re-fetches directly
+async function reloadTrucks() {
+  const dbg = document.getElementById("truck-debug");
+  dbg.style.display = "block";
+  dbg.style.color = "var(--muted)";
+  dbg.textContent = "Reloading from Firebase...";
+  try {
+    const doc = await db.collection("kv").doc("fl-trucks").get();
+    if (!doc.exists) {
+      dbg.style.color = "var(--red)";
+      dbg.textContent = "✗ Firestore document kv/fl-trucks does not exist. The fleet app needs to save trucks first.";
+      return;
+    }
+    const raw = doc.data().v;
+    if (!raw) {
+      dbg.style.color = "var(--red)";
+      dbg.textContent = "✗ Document exists but .v field is empty. Document data: " + JSON.stringify(doc.data()).substring(0, 200);
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      dbg.style.color = "var(--red)";
+      dbg.textContent = "✗ Parsed value is not an array. Type: " + typeof parsed + ". Sample: " + JSON.stringify(parsed).substring(0, 100);
+      return;
+    }
+    trucks = parsed;
+    populateTruckDropdown();
+    dbg.style.color = "var(--green)";
+    dbg.textContent = `✓ Loaded ${trucks.length} trucks. First: ${trucks[0] ? `#${trucks[0].id} (${trucks[0].mk || "?"})` : "none"}`;
+  } catch(e) {
+    dbg.style.color = "var(--red)";
+    dbg.textContent = "✗ Error: " + (e.message || e);
+  }
 }
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────────
