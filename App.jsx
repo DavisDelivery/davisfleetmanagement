@@ -2644,6 +2644,20 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   }catch(e){alert("List failed: "+e.message);}
                 }} style={{padding:"6px 12px",fontSize:11,fontWeight:700,background:"#6366f1",color:"#fff",border:"none",borderRadius:4,cursor:"pointer"}}>🔎 List ALL Firebase keys</button>
                 <button onClick={async()=>{
+                  const out=document.getElementById("sync-trucks-out");
+                  out.style.display="block";
+                  out.innerHTML=`<div style="color:#64748b">Syncing ${trucks.length} trucks to Firebase...</div>`;
+                  window.__lastStorageError=null;
+                  const result=await window.storage.set("fl-trucks",JSON.stringify(trucks));
+                  if(result){
+                    out.innerHTML=`<div style="color:#16a34a">✓ Pushed ${trucks.length} trucks to fl-trucks in Firebase. Mechanic portal dropdown should populate within ~1 second.</div>`;
+                  }else{
+                    const err=window.__lastStorageError||"(no error captured)";
+                    out.innerHTML=`<div style="color:#dc2626">✗ Push FAILED: ${err}</div>`;
+                  }
+                }} style={{padding:"6px 12px",fontSize:11,fontWeight:700,background:"#0ea5e9",color:"#fff",border:"none",borderRadius:4,cursor:"pointer"}}>🚚 Sync trucks to Firebase ({trucks.length})</button>
+                <div id="sync-trucks-out" style={{display:"none",marginTop:6,padding:"6px 10px",background:"#f1f5f9",borderRadius:4,fontSize:11,fontFamily:"monospace",lineHeight:1.5}}></div>
+                <button onClick={async()=>{
                   const out=document.getElementById("probe-out");
                   out.style.display="block";
                   out.innerHTML="<div style='color:#64748b'>Probing known keys directly (bypasses list query)...</div>";
