@@ -36,7 +36,7 @@ const db = firebase.firestore();
 window.db = db; // expose for real-time onSnapshot listeners in App.jsx
 window.storage = {
   async get(key) { try { const doc = await db.collection("kv").doc(key).get(); if (!doc.exists) throw new Error("not found"); return { key, value: doc.data().v }; } catch (e) { throw e; } },
-  async set(key, value) { try { await db.collection("kv").doc(key).set({ v: value, ts: new Date().toISOString() }); return { key, value }; } catch (e) { return null; } },
+  async set(key, value) { try { await db.collection("kv").doc(key).set({ v: value, ts: new Date().toISOString() }); return { key, value }; } catch (e) { console.error("storage.set failed for key=", key, "error=", e); window.__lastStorageError = e.message || String(e); return null; } },
   async delete(key) { try { await db.collection("kv").doc(key).delete(); return { key, deleted: true }; } catch (e) { return null; } },
   async list(prefix) { try { const snap = await db.collection("kv").get(); const keys = []; snap.forEach(doc => { if (!prefix || doc.id.startsWith(prefix)) keys.push(doc.id); }); return { keys }; } catch (e) { return { keys: [] }; } }
 };
