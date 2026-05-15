@@ -1,4 +1,4 @@
-const APP_VERSION = "2.10.43";
+const APP_VERSION = "2.10.44";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -181,6 +181,7 @@ function App(){
   const[costFilter,setCostFilter]=useState("all"); // "all" or truck id
   const[costCatFilter,setCostCatFilter]=useState("all");
   const[costSearch,setCostSearch]=useState(""); // v2.10.42: free-text search across costs
+  const[pdfPreview,setPdfPreview]=useState(null); // v2.10.44: in-app PDF preview modal {url, label}
   const[showCostDetail,setShowCostDetail]=useState(null); // cost entry id
   const[showQuickFuelReport,setShowQuickFuelReport]=useState(false);
   const[showFuelCompareReport,setShowFuelCompareReport]=useState(false); // v2.10.1
@@ -312,35 +313,19 @@ function App(){
   };
 
   // v2.10.41: Resolve the best clickable source URL for an invoice record.
-  // Tries in order: 1) direct fileUrl (PDF on Drive), 2) Gmail message link from gmailRef,
-  // 3) fallback — find a cost entry with matching invoiceNum and use ITS fileUrl/gmailRef.
-  // v2.10.42: 4) Final fallback — Gmail search URL for the invoice number. This handles
-  // orphan records (cores with no matching cost entry, manually-entered invoices, etc).
-  // Clicking always does *something* useful even when no exact source is tracked.
-  // Returns a URL string, or null if no invoice number at all.
+  // v2.10.44: PURE in-app only — no Gmail fallbacks. Returns the in-app file URL
+  // (/api/invoice-file?key=...) for the stored PDF, or null if no PDF exists.
+  // Resolution: 1) record's own fileUrl (PDF in Netlify Blobs), 2) fileUrl from
+  // a matching cost entry (covers cores that share an invoice with a cost entry).
+  // If neither path yields a stored file → returns null → invoice renders as plain text.
   const findInvoiceSourceUrl=(record)=>{
     if(!record)return null;
-    const tryRec=(r)=>{
-      if(!r)return null;
-      if(r.fileUrl)return r.fileUrl;
-      if(r.gmailRef&&typeof r.gmailRef==="string"&&r.gmailRef.startsWith("gmail:")){
-        const msgId=r.gmailRef.split(":")[1];
-        if(msgId)return `https://mail.google.com/mail/u/0/#inbox/${msgId}`;
-      }
-      return null;
-    };
-    const direct=tryRec(record);
-    if(direct)return direct;
-    // Fallback: look up cost entry by invoice number (covers cores, which don't have gmailRef)
+    if(record.fileUrl)return record.fileUrl;
+    // Fallback for cores: find a cost entry with matching invoiceNum and use its fileUrl
     const invNum=record.returnedCreditInvoice||record.invoiceNum;
     if(!invNum)return null;
-    const matchingEntry=costEntries.find(c=>c.invoiceNum===invNum);
-    const viaMatching=tryRec(matchingEntry);
-    if(viaMatching)return viaMatching;
-    // Final fallback: Gmail search for the invoice number. Strip any -CORE / -truckId
-    // suffixes we add internally (so the search hits the real invoice). Encode for URL.
-    const cleanInv=invNum.replace(/-(CORE|CORERETURN)$/i,"").replace(/-\d+$/,"");
-    return `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(cleanInv)}`;
+    const matchingEntry=costEntries.find(c=>c.invoiceNum===invNum&&c.fileUrl);
+    return matchingEntry?matchingEntry.fileUrl:null;
   };
 
   // ── FuelFox: redistribute Invoice overhead (tax+fee) into Service Log truck entries ──
@@ -3968,7 +3953,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                                   const url=findInvoiceSourceUrl(c);
                                   const inv=c.invoiceNum||"—";
                                   return url
-                                    ?<a href={url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{color:C.brand,textDecoration:"underline",fontWeight:600}} title="Open invoice source">{inv}</a>
+                                    ?<button onClick={e=>{e.stopPropagation();setPdfPreview({url,label:`Inv ${inv} — ${c.vendor}`});}} style={{background:"none",border:"none",color:C.brand,textDecoration:"underline",fontWeight:600,cursor:"pointer",padding:0,font:"inherit"}} title="View invoice PDF in app">{inv}</button>
                                     :inv;
                                 })()}
                               </div>
@@ -4000,8 +3985,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                               const url=findInvoiceSourceUrl(c);
                               const inv=c.returnedCreditInvoice||c.invoiceNum||"—";
                               return url
-                                ?<a href={url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{color:C.brand,textDecoration:"underline",fontWeight:600}} title="Open invoice source">{inv}</a>
-                                :inv;
+                                ?<button onClick={e=>{e.stopPropagation();setPdfPreview({url,label:`Credit ${inv} — ${c.vendor}`});}} style={{background:"none",border:"none",color:C.brand,textDecoration:"underline",fontWeight:600,cursor:"pointer",padding:0,font:"inherit"}} title="View credit invoice PDF in app">{inv}</button>
+                                :<span title="No PDF stored for this invoice — was likely added manually or before file storage existed">{inv}</span>;
                             })()}</div>
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -4027,7 +4012,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                               const url=findInvoiceSourceUrl(c);
                               const inv=c.returnedCreditInvoice||"—";
                               return url
-                                ?<a href={url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{color:C.brand,textDecoration:"underline",fontWeight:600}} title="Open invoice source">{inv}</a>
+                                ?<button onClick={e=>{e.stopPropagation();setPdfPreview({url,label:`Credit ${inv} — ${c.vendor}`});}} style={{background:"none",border:"none",color:C.brand,textDecoration:"underline",fontWeight:600,cursor:"pointer",padding:0,font:"inherit"}} title="View credit invoice PDF in app">{inv}</button>
                                 :inv;
                             })()}</div>
                           </div>
@@ -4067,6 +4052,22 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               {scanPreview.parsed&&!scanPreview.parsed.error&&<div style={{padding:"10px 16px",borderTop:"1px solid #e2e8f0",background:"#fff",fontSize:11,color:"#6b7785"}}>
                 <strong style={{color:"#1e293b"}}>{scanPreview.parsed.vendor}</strong> · Inv #{scanPreview.parsed.invoiceNum||"?"} · Truck #{scanPreview.parsed.truckId} · ${scanPreview.parsed.total?.toLocaleString()||0}
               </div>}
+            </div>
+          </div>}
+          {/* v2.10.44: In-app PDF preview modal — invoices open here, never in a new tab */}
+          {pdfPreview&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1100,padding:16}} onClick={()=>setPdfPreview(null)}>
+            <div style={{background:"#fff",borderRadius:10,width:"100%",maxWidth:1100,height:"94vh",display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+              <div style={{padding:"12px 16px",borderBottom:"1px solid #e2e8f0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#1e293b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{pdfPreview.label||"Invoice PDF"}</div>
+                  <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>Stored in app · Click outside to close</div>
+                </div>
+                <div style={{display:"flex",gap:8,flexShrink:0}}>
+                  <a href={pdfPreview.url} download style={{padding:"6px 12px",fontSize:12,fontWeight:600,background:"#f1f5f9",color:"#1e293b",border:"1px solid #e2e8f0",borderRadius:6,textDecoration:"none",cursor:"pointer"}}>⬇ Download</a>
+                  <button onClick={()=>setPdfPreview(null)} style={{padding:"6px 12px",fontSize:12,fontWeight:600,background:"#fff",color:"#1e293b",border:"1px solid #e2e8f0",borderRadius:6,cursor:"pointer"}}>✕ Close</button>
+                </div>
+              </div>
+              <iframe src={pdfPreview.url} style={{flex:1,width:"100%",border:"none",background:"#f1f5f9"}} title="Invoice PDF"/>
             </div>
           </div>}
           {showCostDetail&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}} onClick={()=>setShowCostDetail(null)}>
@@ -4122,7 +4123,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   </div>
                 </div>}
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:16,paddingTop:12,borderTop:"1px solid #e2e8f0"}}>
-                  {showCostDetail.fileUrl?<a href={showCostDetail.fileUrl} target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:"center",padding:"10px",background:C.brand,color:"#fff",borderRadius:6,textDecoration:"none",fontWeight:700,fontSize:13}}>📄 View PDF</a>:<div style={{flex:1,padding:"10px",background:"#f8fafc",color:"#94a3b8",borderRadius:6,textAlign:"center",fontSize:11,fontStyle:"italic"}}>No PDF attached (pre-v2.6.4 or bulk-imported)</div>}
+                  {showCostDetail.fileUrl?<button onClick={()=>setPdfPreview({url:showCostDetail.fileUrl,label:`Inv ${showCostDetail.invoiceNum||""} — ${showCostDetail.vendor||""}`})} style={{flex:1,textAlign:"center",padding:"10px",background:C.brand,color:"#fff",border:"none",borderRadius:6,fontWeight:700,fontSize:13,cursor:"pointer"}}>📄 View PDF</button>:<div style={{flex:1,padding:"10px",background:"#f8fafc",color:"#94a3b8",borderRadius:6,textAlign:"center",fontSize:11,fontStyle:"italic"}}>No PDF attached (pre-v2.6.4 or bulk-imported)</div>}
                   {(showCostDetail.truckId==="INVENTORY"||!showCostDetail.truckId||showCostDetail.truckId==="UNKNOWN")&&!showCostDetail.allocatedToTruck&&<button onClick={()=>{setAllocModal(showCostDetail);setShowCostDetail(null);}} style={{padding:"10px 14px",background:C.green,color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:13}}>Allocate →</button>}
                   <button onClick={()=>{if(confirm("Delete this invoice?")){saveCosts(costEntries.filter(c=>c.id!==showCostDetail.id));setShowCostDetail(null);}}} style={{padding:"10px 14px",background:"#fff",color:C.red,border:`1px solid ${C.red}`,borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:13}}>Delete</button>
                 </div>
@@ -4873,11 +4874,11 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   if(!c.invoiceNum)return "—";
                   const url=findInvoiceSourceUrl(c);
                   return url
-                    ?<a href={url} target="_blank" rel="noopener noreferrer" style={{color:C.brand,textDecoration:"underline",fontWeight:600}} title="Open invoice source">{c.invoiceNum}</a>
+                    ?<button onClick={()=>setPdfPreview({url,label:`Inv ${c.invoiceNum} — ${c.vendor||""}`})} style={{background:"none",border:"none",color:C.brand,textDecoration:"underline",fontWeight:600,cursor:"pointer",padding:0,font:"inherit"}} title="View invoice PDF in app">{c.invoiceNum}</button>
                     :c.invoiceNum;
                 })()}</td>
                 <td style={{...s.ltd,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis"}}>{c.notes||"—"}</td>
-                <td style={s.ltd} onClick={(e)=>e.stopPropagation()}>{c.fileUrl?<a href={c.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:C.brand,fontSize:16,textDecoration:"none"}} title="View PDF">📄</a>:<span style={{color:"#cbd5e1"}}>—</span>}</td>
+                <td style={s.ltd} onClick={(e)=>e.stopPropagation()}>{c.fileUrl?<button onClick={()=>setPdfPreview({url:c.fileUrl,label:`Inv ${c.invoiceNum||""} — ${c.vendor||""}`})} style={{background:"none",border:"none",color:C.brand,fontSize:16,cursor:"pointer",padding:0}} title="View PDF in app">📄</button>:<span style={{color:"#cbd5e1"}}>—</span>}</td>
                 <td style={s.ltd} onClick={(e)=>e.stopPropagation()}><button style={s.xBtn} onClick={()=>deleteCost(c.id)}>×</button></td>
               </tr>
             )}
@@ -5000,7 +5001,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               </div>
               <div style={{fontSize:10,color:"#94a3b8"}}>
                 {c.date}{c.invoiceNum&&` · Inv #${c.invoiceNum}`}{c.notes&&` · ${c.notes}`}
-                {c.fileUrl&&<> · <a href={c.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:C.brand,fontWeight:600,textDecoration:"none"}}>📄 View PDF</a></>}
+                {c.fileUrl&&<> · <button onClick={()=>setPdfPreview({url:c.fileUrl,label:`Inv ${c.invoiceNum||""} — ${c.vendor||""}`})} style={{background:"none",border:"none",color:C.brand,fontWeight:600,cursor:"pointer",padding:0,font:"inherit"}}>📄 View PDF</button></>}
               </div>
             </div>
           )}
