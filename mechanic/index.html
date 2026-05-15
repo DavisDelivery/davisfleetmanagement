@@ -336,14 +336,23 @@ function ageChip(iso) {
   if (d >= 7)  return `<span class="age-chip mid">${d}d</span>`;
   return `<span class="age-chip fresh">${d}d</span>`;
 }
+function prettyMake(mk, type) {
+  // Normalize legacy abbreviations
+  const map = { FRTLN: "Freightliner", INTL: "International", HINO: "Hino" };
+  let m = (map[mk] || mk || "").trim();
+  // Avoid duplication when make == type label (e.g. tractor with mk="Tractor" → "Tractor Tractor")
+  const typeLabel = type === "tractor" ? "tractor" : "box";
+  if (m.toLowerCase() === typeLabel || m.toLowerCase() === "tractor" && type === "tractor") return "";
+  return m;
+}
 function truckLabel(id) {
   const t = trucks.find(x => x.id === id);
   if (!t) return `Truck #${id}`;
-  const mk = t.mk || "";
-  const model = t.model ? ` ${t.model}` : "";
+  const mk = prettyMake(t.mk, t.type);
   const type = t.type === "tractor" ? "Tractor" : "Box";
   const tr = t.tr === "A" ? "Auto" : "Man";
-  return `${type} · ${mk}${model} · ${tr}`;
+  const year = t.year ? ` ${t.year}` : "";
+  return `${type}${mk ? " · " + mk : ""}${year} · ${tr}`;
 }
 function reasonSelectHtml(repairId, currentReason) {
   const opts = OOS_REASONS.map(r =>
@@ -632,12 +641,13 @@ function populateTruckDropdown() {
     ...trucks.filter(t => t.type === "tractor").sort((a, b) => a.id.localeCompare(b.id))
   ];
   sorted.forEach(t => {
-    const mk = t.mk || "";
-    const model = t.model ? ` ${t.model}` : "";
+    const mk = prettyMake(t.mk, t.type);
     const type = t.type === "tractor" ? "Tractor" : "Box";
+    const year = t.year ? ` ${t.year}` : "";
     const opt = document.createElement("option");
     opt.value = t.id;
-    opt.textContent = `#${t.id} — ${type} ${mk}${model}`;
+    // v2.10.46: skip duplicated make (e.g. tractor with mk="Tractor"); show year if set
+    opt.textContent = `#${t.id} — ${type}${mk ? " " + mk : ""}${year}`;
     sel.appendChild(opt);
   });
   if (countEl) {
