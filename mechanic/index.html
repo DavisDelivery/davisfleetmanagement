@@ -84,6 +84,13 @@
   .note-text { font-size: 12px; color: var(--text); flex: 1; line-height: 1.5; }
   .note-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
   .note-del:hover { color: var(--red); }
+  .note-edit { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+  .note-edit:hover { color: var(--brand); }
+  .note-edit-input { flex: 1; background: var(--surface); border: 1px solid var(--brand); border-radius: 4px; padding: 6px 8px; font: inherit; font-size: 12px; color: var(--text); resize: vertical; min-height: 36px; line-height: 1.5; outline: none; }
+  .note-save { background: var(--brand); border: none; color: #fff; cursor: pointer; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; line-height: 1; }
+  .note-save:hover { filter: brightness(1.1); }
+  .note-cancel { background: none; border: 1px solid var(--muted); color: var(--muted); cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; line-height: 1; }
+  .note-cancel:hover { color: var(--text); border-color: var(--text); }
   .empty-notes { font-size: 11px; color: var(--muted); font-style: italic; }
 
   /* NOTE INPUT */
@@ -360,6 +367,23 @@ function reasonSelectHtml(repairId, currentReason) {
   ).join("");
   return `<select class="reason-select" onchange="updateReason('${repairId}', this.value)">${opts}</select>`;
 }
+// v2.10.47: single source of truth for note-entry HTML. Used by initial render,
+// add, delete, and edit so the markup never drifts between code paths.
+function noteEntryHtml(repairId, entry, idx) {
+  return `<div class="note-entry" id="note-${repairId}-${idx}">
+    <span class="note-ts">${shortTs(entry.ts)}</span>
+    <span class="note-text" id="nt-${repairId}-${idx}">${escHtml(entry.text)}</span>
+    <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit note">✎</button>
+    <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete note">✕</button>
+  </div>`;
+}
+function renderNotesLog(repairId, log) {
+  const logEl = document.getElementById(`log-${repairId}`);
+  if (!logEl) return;
+  logEl.innerHTML = log.length === 0
+    ? `<div class="empty-notes">No notes yet.</div>`
+    : log.map((e, i) => noteEntryHtml(repairId, e, i)).join("");
+}
 function notesLogHtml(repairId, notesLog, legacyNote) {
   // Build unified log: migrate legacy string if no notesLog
   let log = notesLog || [];
@@ -367,18 +391,9 @@ function notesLogHtml(repairId, notesLog, legacyNote) {
     const r = repairs.find(x => x.id == repairId);
     log = [{ ts: r?.dateIn || new Date().toISOString(), text: legacyNote }];
   }
-  let inner = "";
-  if (log.length === 0) {
-    inner = `<div class="empty-notes">No notes yet.</div>`;
-  } else {
-    inner = log.map((e, i) =>
-      `<div class="note-entry">
-        <span class="note-ts">${shortTs(e.ts)}</span>
-        <span class="note-text">${escHtml(e.text)}</span>
-        <button class="note-del" onclick="deleteNote('${repairId}',${i})" title="Delete note">✕</button>
-      </div>`
-    ).join("");
-  }
+  const inner = log.length === 0
+    ? `<div class="empty-notes">No notes yet.</div>`
+    : log.map((e, i) => noteEntryHtml(repairId, e, i)).join("");
   return `<div class="notes-log" id="log-${repairId}">${inner}</div>`;
 }
 function escHtml(s) {
@@ -536,25 +551,15 @@ async function addNote(id) {
   if (!r) return;
   const existingLog = r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
   const newEntry = { ts: new Date().toISOString(), text };
+  const newLog = [...existingLog, newEntry];
   const updated = repairs.map(r2 => r2.id == id
-    ? { ...r2, notesLog: [...existingLog, newEntry], notes: "" }
+    ? { ...r2, notesLog: newLog, notes: "" }
     : r2
   );
   const ok = await saveRepairs(updated);
   if (!ok) return;
   inp.value = "";
-  // Re-render just the notes log with the updated entry list
-  const newLog = [...existingLog, newEntry];
-  const logEl = document.getElementById(`log-${id}`);
-  if (logEl) {
-    logEl.innerHTML = newLog.map((e, i) =>
-      `<div class="note-entry">
-        <span class="note-ts">${shortTs(e.ts)}</span>
-        <span class="note-text">${escHtml(e.text)}</span>
-        <button class="note-del" onclick="deleteNote('${id}',${i})" title="Delete note">✕</button>
-      </div>`
-    ).join("");
-  }
+  renderNotesLog(id, newLog);
   showToast("Note added ✓");
 }
 
@@ -565,19 +570,60 @@ async function deleteNote(id, idx) {
   const updated = repairs.map(r2 => r2.id == id ? {...r2, notesLog: newLog} : r2);
   const ok = await saveRepairs(updated);
   if (!ok) return;
-  const logEl = document.getElementById(`log-${id}`);
-  if (logEl) {
-    logEl.innerHTML = newLog.length === 0
-      ? `<div class="empty-notes">No notes yet.</div>`
-      : newLog.map((e, i) =>
-          `<div class="note-entry">
-            <span class="note-ts">${shortTs(e.ts)}</span>
-            <span class="note-text">${escHtml(e.text)}</span>
-            <button class="note-del" onclick="deleteNote('${id}',${i})" title="Delete note">✕</button>
-          </div>`
-        ).join("");
-  }
+  renderNotesLog(id, newLog);
   showToast("Note deleted");
+}
+
+// v2.10.47: edit note. Click ✎ → text becomes an inline textarea with
+// Save/Cancel buttons. Enter saves (Shift+Enter newline), Escape cancels.
+function startEditNote(id, idx) {
+  const r = repairs.find(x => x.id == id);
+  if (!r) return;
+  const log = r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
+  const entry = log[idx];
+  if (!entry) return;
+  const wrap = document.getElementById(`note-${id}-${idx}`);
+  if (!wrap) return;
+  // Swap row to edit mode
+  wrap.innerHTML = `
+    <span class="note-ts">${shortTs(entry.ts)}</span>
+    <textarea class="note-edit-input" id="ne-${id}-${idx}"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveEditNote('${id}',${idx})}else if(event.key==='Escape'){event.preventDefault();cancelEditNote('${id}',${idx})}"
+    >${escHtml(entry.text)}</textarea>
+    <button class="note-save" onclick="saveEditNote('${id}',${idx})" title="Save (Enter)">✓</button>
+    <button class="note-cancel" onclick="cancelEditNote('${id}',${idx})" title="Cancel (Esc)">✕</button>
+  `;
+  const ta = document.getElementById(`ne-${id}-${idx}`);
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+
+async function saveEditNote(id, idx) {
+  const ta = document.getElementById(`ne-${id}-${idx}`);
+  if (!ta) return;
+  const newText = ta.value.trim();
+  const r = repairs.find(x => x.id == id);
+  if (!r) return;
+  const log = r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
+  if (!log[idx]) return;
+  if (newText === "") {
+    if (!confirm("Empty note — delete it instead?")) return;
+    return deleteNote(id, idx);
+  }
+  // Preserve original ts; optionally tag editedAt for audit trail
+  const editedEntry = { ...log[idx], text: newText, editedAt: new Date().toISOString() };
+  const newLog = log.map((e, i) => i === idx ? editedEntry : e);
+  const updated = repairs.map(r2 => r2.id == id ? {...r2, notesLog: newLog} : r2);
+  const ok = await saveRepairs(updated);
+  if (!ok) return;
+  renderNotesLog(id, newLog);
+  showToast("Note updated ✓");
+}
+
+function cancelEditNote(id, idx) {
+  const r = repairs.find(x => x.id == id);
+  if (!r) return;
+  const log = r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
+  renderNotesLog(id, log);
 }
 
 async function closeRepair(id) {
