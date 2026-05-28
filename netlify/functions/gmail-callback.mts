@@ -1,4 +1,5 @@
 import type { Config } from "@netlify/functions";
+import { getStore } from "@netlify/blobs";
 
 export default async (req: Request) => {
   const clientId = Netlify.env.get("GOOGLE_CLIENT_ID");
@@ -50,11 +51,22 @@ export default async (req: Request) => {
     userEmail = profile.emailAddress || "unknown";
   } catch {}
 
-  // Store refresh token in Firestore via REST API (using Firebase Web API key for public writes)
-  // We'll write it through the client-side after redirect, via a script on the success page
-  // More secure: store server-side in Netlify Blobs
+  // v2.10.48: ALSO save refresh token to Netlify Blobs so the scheduled
+  // server-side sync function can use it without needing a browser session.
+  try {
+    const store = getStore("gmail-sync");
+    await store.setJSON("token", {
+      refresh_token: tokenData.refresh_token,
+      email: userEmail,
+      connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  } catch (e: any) {
+    // Don't fail the OAuth flow if Blobs save fails; client-side still gets the token below.
+    console.error("[gmail-callback] Blobs save failed:", e?.message);
+  }
 
-  // Return HTML page that posts token data back to the app via postMessage, then closes
+  // Return HTML page that ALSO saves the token to Firestore for the client (existing path).
   return htmlResponse(`
 <!DOCTYPE html>
 <html>
