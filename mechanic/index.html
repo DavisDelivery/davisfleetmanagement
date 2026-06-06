@@ -626,14 +626,51 @@ function cancelEditNote(id, idx) {
   renderNotesLog(id, log);
 }
 
+// v2.10.50: week-key helpers (mirror App.jsx gM/wK) so closing a repair can
+// clear the truck's daily OOS status in the current week's fl-stat doc.
+function gMon(d){const x=new Date(d);const day=x.getDay();const diff=x.getDate()-day+(day===0?-6:1);return new Date(x.setDate(diff));}
+function weekKey(d){const m=gMon(d);return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-${String(m.getDate()).padStart(2,'0')}`;}
+const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri"];
+
 async function closeRepair(id) {
   if (!confirm("Mark this repair as completed?")) return;
+  const repair = repairs.find(r => r.id == id);
   const updated = repairs.map(r => r.id == id
     ? {...r, status: "closed", dateClosed: new Date().toISOString()}
     : r
   );
   const ok = await saveRepairs(updated);
-  if (ok) showToast("✓ Repair closed", "var(--green)");
+  if (!ok) return;
+
+  // v2.10.50: ALSO clear the truck's OOS/repair daily status for today → Friday in
+  // the current week, mirroring the fleet app's closeRepair. Without this, the daily
+  // status board keeps showing the truck OOS even though the repair is done — which
+  // made trucks reappear as OOS the next day and triggered phantom repair tickets
+  // when the dispatcher copied assignments forward.
+  if (repair && repair.truckId) {
+    try {
+      const wk = weekKey(new Date());
+      const statKey = `fl-stat-${wk}`;
+      const stat = (await fsGet(statKey)) || {};
+      const now = new Date();
+      const todayIdx = Math.min(Math.max(now.getDay() - 1, 0), 4); // Mon=0..Fri=4 (Sun/Sat clamp)
+      let cleared = false;
+      for (let i = todayIdx; i < 5; i++) {
+        const k = `${repair.truckId}-${DAY_NAMES[i]}`;
+        const cur = (stat[k] || "").toLowerCase();
+        if (cur === "oos" || cur === "bd" || cur.includes("repair") ||
+            cur.includes("interstate") || cur.includes("shop") || cur.includes("mech")) {
+          stat[k] = "HERE";
+          cleared = true;
+        }
+      }
+      if (cleared) await fsSet(statKey, stat);
+    } catch (e) {
+      // Non-fatal — ticket is already closed; status clear is best-effort.
+      console.error("[closeRepair] status clear failed:", e);
+    }
+  }
+  showToast("✓ Repair closed — truck cleared for service", "var(--green)");
 }
 
 async function logNewRepair() {
