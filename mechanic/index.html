@@ -642,11 +642,11 @@ async function closeRepair(id) {
   const ok = await saveRepairs(updated);
   if (!ok) return;
 
-  // v2.10.50: ALSO clear the truck's OOS/repair daily status for today → Friday in
-  // the current week, mirroring the fleet app's closeRepair. Without this, the daily
-  // status board keeps showing the truck OOS even though the repair is done — which
-  // made trucks reappear as OOS the next day and triggered phantom repair tickets
-  // when the dispatcher copied assignments forward.
+  // v2.10.51: ALSO clear the truck's OOS/repair daily status for TODAY ONLY in the
+  // current week. NOT the rest of the week — completing a repair must not erase the
+  // OOS history for the earlier days the truck was genuinely down. Clearing only
+  // today keeps yesterday's OOS intact, which is what lets the fleet app's "Copy
+  // all" detect that the truck was OOS yesterday but its ticket is now closed.
   if (repair && repair.truckId) {
     try {
       const wk = weekKey(new Date());
@@ -654,17 +654,13 @@ async function closeRepair(id) {
       const stat = (await fsGet(statKey)) || {};
       const now = new Date();
       const todayIdx = Math.min(Math.max(now.getDay() - 1, 0), 4); // Mon=0..Fri=4 (Sun/Sat clamp)
-      let cleared = false;
-      for (let i = todayIdx; i < 5; i++) {
-        const k = `${repair.truckId}-${DAY_NAMES[i]}`;
-        const cur = (stat[k] || "").toLowerCase();
-        if (cur === "oos" || cur === "bd" || cur.includes("repair") ||
-            cur.includes("interstate") || cur.includes("shop") || cur.includes("mech")) {
-          stat[k] = "HERE";
-          cleared = true;
-        }
+      const k = `${repair.truckId}-${DAY_NAMES[todayIdx]}`;
+      const cur = (stat[k] || "").toLowerCase();
+      if (cur === "oos" || cur === "bd" || cur.includes("repair") ||
+          cur.includes("interstate") || cur.includes("shop") || cur.includes("mech")) {
+        stat[k] = "HERE";
+        await fsSet(statKey, stat);
       }
-      if (cleared) await fsSet(statKey, stat);
     } catch (e) {
       // Non-fatal — ticket is already closed; status clear is best-effort.
       console.error("[closeRepair] status clear failed:", e);
