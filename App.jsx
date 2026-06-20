@@ -166,6 +166,9 @@ function App(){
   const[gmailProcessing,setGmailProcessing]=useState(null); // emailId currently being processed
   const[scanPreview,setScanPreview]=useState(null); // queue item currently being previewed
   const[showImportedEmails,setShowImportedEmails]=useState(false); // toggle to show already-imported emails in Gmail results
+  const[scanQueueCollapsed,setScanQueueCollapsed]=useState(false); // v2.11: collapse the scan-queue card list into a summary
+  const[scanQueueFilter,setScanQueueFilter]=useState("all"); // v2.11: filter queue by status: all|ready|parsed|error
+  const[saveError,setSaveError]=useState(null); // v2.11: surfaced when a Firestore save fails (e.g. 1MB doc limit)
   const[autoScanDaysBack,setAutoScanDaysBack]=useState(30); // v2.10.3: date window for Scan All New; number OR "custom"
   // v2.10.5: custom since-date (YYYY-MM-DD). Default to 2 years ago.
   const[autoScanCustomSince,setAutoScanCustomSince]=useState(()=>{
@@ -263,7 +266,26 @@ function App(){
     }catch(e){console.log('DVIR import skipped:',e.message);}
   })();},[loaded]);
 
-  const sv=useCallback(async(k,v)=>{try{await window.storage.set(k,JSON.stringify(v));}catch(e){}},[]);
+  // v2.11: surface save failures instead of swallowing them. window.storage.set
+  // returns null (and stashes window.__lastStorageError) when Firestore rejects a
+  // write — most commonly the 1 MiB per-document limit on large keys like fl-costs.
+  const sv=useCallback(async(k,v)=>{
+    try{
+      const json=JSON.stringify(v);
+      const bytes=(typeof TextEncoder!=="undefined")?new TextEncoder().encode(json).length:json.length;
+      const res=await window.storage.set(k,json);
+      if(res===null){
+        setSaveError({key:k,bytes,msg:window.__lastStorageError||"Save failed"});
+      }else if(bytes>900000){
+        // Warn before we hit the hard ~1,048,487-byte ceiling so data isn't lost silently.
+        setSaveError({key:k,bytes,msg:`approaching the 1 MB storage limit (${Math.round(bytes/1024)} KB used)`});
+      }else{
+        setSaveError(prev=>prev&&prev.key===k?null:prev); // clear stale warning for this key on a clean save
+      }
+    }catch(e){
+      setSaveError({key:k,bytes:0,msg:e.message||"Save failed"});
+    }
+  },[]);
   const saveTrucks=t=>{setTrucks(t);sv("fl-trucks",t);};
   const saveRetiredTrucks=rt=>{setRetiredTrucks(rt);sv("fl-retired",rt);};
   const saveDrivers=d=>{setDrivers(d);sv("fl-drivers",d);};
@@ -1264,7 +1286,10 @@ Format your response as clear sections with headers using ** for bold. Use speci
             updated[i].status="error";
             updated[i].parsed={error:`Skipped — ${blankReason}. No invoice data.`};
             setScanQueue([...updated]);
-            continue;
+            // v2.11: a blank image is permanent — break out of the retry loop instead of
+            // `continue` (which targeted the while-retry loop and re-ran the probe + waited
+            // through 2 backoffs before finally erroring).
+            break;
           }
 
           // Downsize if too large
@@ -3667,6 +3692,16 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 
         {/* ══ COSTS / INVOICE SCANNER ══ */}
         {tab==="costs"&&<div>
+          {/* v2.11: persistent save-failure banner — Firestore rejects writes over
+              ~1 MB (the fl-costs blob grows unbounded). Without this the failure was
+              silent and the user lost data on reload. */}
+          {saveError&&<div style={{background:"#fef2f2",border:`1px solid ${C.red}`,borderRadius:8,padding:"10px 12px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+            <div style={{fontSize:12,color:C.red,fontWeight:600,lineHeight:1.5}}>
+              ⚠ Storage warning: <code style={{fontSize:11}}>{saveError.key}</code> {saveError.msg}.
+              <div style={{fontSize:11,fontWeight:400,color:"#7f1d1d",marginTop:2}}>Recent changes to this data may not be saved. Archive or export old cost entries to free space.</div>
+            </div>
+            <button onClick={()=>setSaveError(null)} style={s.xBtn} title="Dismiss">×</button>
+          </div>}
           {/* Scanner section */}
           {/* Gmail Vendors */}
           <div style={{background:"#fff",borderRadius:8,padding:14,marginBottom:16,border:"1px solid #e2e8f0"}}>
@@ -3932,6 +3967,9 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   }} disabled={gmailProcessing!==null} style={{fontSize:11,fontWeight:700,padding:"4px 10px",background:C.brand,color:"#fff",border:"none",borderRadius:4,cursor:gmailProcessing?"wait":"pointer",opacity:gmailProcessing?0.5:1}}>{gmailProcessing?"Processing...":`⇣ Queue All (${queueable.length})`}</button>;
                 })()}
               </div>
+              {/* v2.11: scroll container so a 90+ email result set stays a fixed-height
+                  panel instead of pushing the rest of the page out of reach. */}
+              <div style={{maxHeight:"55vh",overflowY:"auto",overflowX:"hidden",border:visibleResults.length>0?"1px solid #e2e8f0":"none",borderRadius:6,padding:visibleResults.length>0?"4px":0}}>
               {visibleResults.map((r,i)=>{
                 const safeR=(r&&typeof r==="object")?r:{error:String(r)};
                 const atts=Array.isArray(safeR.attachments)?safeR.attachments:[];
@@ -3970,6 +4008,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 </div>;
               })}
               {visibleResults.length===0&&<div style={{padding:20,textAlign:"center",color:"#94a3b8",fontSize:12,fontStyle:"italic"}}>No new emails — all results already imported or dismissed. ✓</div>}
+              </div>
               <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                 <button onClick={()=>setGmailResults(null)} style={{...s.canBtn,fontSize:11,flex:1}}>Dismiss All Results</button>
                 {Object.keys(dismissedMsgs).length>0&&<button onClick={clearAllDismissed} title={`${Object.keys(dismissedMsgs).length} emails dismissed. Click to reset.`} style={{...s.canBtn,fontSize:11,background:"#fff",color:"#94a3b8",border:"1px solid #e2e8f0"}}>Clear dismissed ({Object.keys(dismissedMsgs).length})</button>}
@@ -3982,9 +4021,66 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           <div style={{...s.addForm,marginBottom:16}}>
             <div style={{fontSize:12,color:"#6b7785",marginBottom:4}}>Upload scanned invoices (PDF or images). AI will read each one and extract truck #, vendor, amount, and details automatically.</div>
             <input type="file" accept="image/*,application/pdf" multiple onChange={handleFileUpload} style={{fontSize:13,padding:8}}/>
-            {scanQueue.length>0&&<div>
-              <div style={{fontSize:12,fontWeight:700,color:"#1e293b",marginTop:8,marginBottom:6}}>{scanQueue.length} invoice{scanQueue.length>1?"s":""} queued</div>
-              {scanQueue.filter(q=>q.status!=="merged").map((q,i)=>{const isDup=q.status==="parsed"&&q.parsed&&q.parsed.invoiceNum&&costEntries.some(c=>c.invoiceNum===q.parsed.invoiceNum);
+            {scanQueue.length>0&&(()=>{
+              // v2.11: status-aware summary + collapse + scroll so a 150-item queue
+              // doesn't bury the action buttons off the bottom of the page.
+              // Use the SAME fingerprint the save step uses (vendor|invoiceNum|total)
+              // so the "DUPLICATE" badge matches what actually gets skipped on save.
+              const fpOf=(c)=>`${(c.vendor||"").toLowerCase()}|${c.invoiceNum||""}|${Math.round((c.total||0)*100)}`;
+              const existingFps=new Set(costEntries.filter(c=>c.invoiceNum).map(fpOf));
+              const isDupItem=(q)=>q.status==="parsed"&&q.parsed&&!q.parsed.error&&q.parsed.invoiceNum&&existingFps.has(fpOf(q.parsed));
+              const active=scanQueue.filter(q=>q.status!=="merged");
+              let cReady=0,cBusy=0,cParsed=0,cErr=0,cDup=0;
+              active.forEach(q=>{
+                if(q.status==="ready")cReady++;
+                else if(q.status==="scanning"||q.status==="waiting"||q.status==="uploading")cBusy++;
+                else if(q.status==="error")cErr++;
+                else if(q.status==="parsed"){cParsed++;if(isDupItem(q))cDup++;}
+              });
+              const matchesFilter=(q)=>{
+                if(scanQueueFilter==="ready")return q.status==="ready"||q.status==="scanning"||q.status==="waiting"||q.status==="uploading";
+                if(scanQueueFilter==="parsed")return q.status==="parsed";
+                if(scanQueueFilter==="error")return q.status==="error";
+                return true; // "all"
+              };
+              const shown=active.filter(matchesFilter);
+              const Pill=({label,n,color})=>n>0?<span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:color+"1a",color,whiteSpace:"nowrap"}}>{n} {label}</span>:null;
+              const Chip=({id,label})=><button onClick={()=>setScanQueueFilter(id)} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:12,cursor:"pointer",border:`1px solid ${scanQueueFilter===id?C.brand:"#d1d9e0"}`,background:scanQueueFilter===id?C.brand:"#fff",color:scanQueueFilter===id?"#fff":"#6b7785"}}>{label}</button>;
+              return <div>
+              {/* Summary header — click to collapse/expand the card list */}
+              <div onClick={()=>setScanQueueCollapsed(!scanQueueCollapsed)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:10,marginBottom:8,cursor:"pointer",userSelect:"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>{active.length} invoice{active.length!==1?"s":""} queued</span>
+                  <Pill label="ready" n={cReady} color="#94a3b8"/>
+                  <Pill label="scanning" n={cBusy} color={C.brand}/>
+                  <Pill label="parsed" n={cParsed} color={C.green}/>
+                  <Pill label="dup" n={cDup} color={C.accent}/>
+                  <Pill label="errors" n={cErr} color={C.red}/>
+                </div>
+                <span style={{fontSize:12,color:C.brand,fontWeight:700,whiteSpace:"nowrap"}}>{scanQueueCollapsed?"▸ Show":"▾ Hide"}</span>
+              </div>
+
+              {/* Action bar — placed ABOVE the list so it's always reachable even with 150 items */}
+              <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",position:"sticky",top:0,zIndex:2,background:"#fff",paddingBottom:4}}>
+                {cReady>0&&<button onClick={scanInvoices} disabled={scanning} style={{...s.saveBtn,opacity:scanning?0.6:1}}>{scanning?"Scanning...":"Scan All with AI"}</button>}
+                {cParsed>0&&<button onClick={confirmScannedInvoices} disabled={scanning} style={{...s.addBtn,opacity:scanning?0.6:1}}>Confirm &amp; Save All ({cParsed})</button>}
+                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.map(q=>q.status==="error"?{...q,status:"ready",parsed:null}:q))} style={{...s.saveBtn,background:C.accent}}>↻ Retry Errors ({cErr})</button>}
+                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.filter(q=>q.status!=="error"))} style={s.canBtn}>Clear Errors</button>}
+                <button onClick={()=>{if(confirm("Clear the entire scan queue? This removes all queued and parsed items that haven't been saved yet."))setScanQueue([]);}} style={s.canBtn}>Clear Queue</button>
+              </div>
+
+              {!scanQueueCollapsed&&<>
+              {/* Status filter chips */}
+              {active.length>6&&<div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                <Chip id="all" label={`All (${active.length})`}/>
+                {cReady+cBusy>0&&<Chip id="ready" label={`To scan (${cReady+cBusy})`}/>}
+                {cParsed>0&&<Chip id="parsed" label={`Parsed (${cParsed})`}/>}
+                {cErr>0&&<Chip id="error" label={`Errors (${cErr})`}/>}
+              </div>}
+
+              {/* Scrollable card list — fixed height keeps the page short */}
+              <div style={{maxHeight:"55vh",overflowY:"auto",overflowX:"hidden",border:"1px solid #e2e8f0",borderRadius:6,padding:4}}>
+              {shown.map((q,i)=>{const isDup=isDupItem(q);
                 const currentTruck=q.parsed?.truckId||"";
                 const isInventory=currentTruck==="INVENTORY";
                 const truckOk=currentTruck&&currentTruck!=="UNKNOWN";
@@ -4005,7 +4101,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     <div style={{display:"flex",gap:4,alignItems:"center"}}>
                       {q.dataUrl&&<button onClick={()=>setScanPreview(q)} title="Preview" style={{fontSize:11,padding:"3px 8px",background:"#fff",color:C.brand,border:`1px solid ${C.brand}55`,borderRadius:4,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>👁 View</button>}
                       {q.status==="parsed"&&q.parsed&&!q.parsed.error&&<span style={{fontSize:16,color:isDup?C.accent:C.green}}>{isDup?"⚠":"✓"}</span>}
-                      <button onClick={()=>setScanQueue(scanQueue.filter(x=>x.id!==q.id))} style={s.xBtn}>×</button>
+                      <button onClick={()=>setScanQueue(prev=>prev.filter(x=>x.id!==q.id))} style={s.xBtn}>×</button>
                     </div>
                   </div>
                   {q.status==="parsed"&&q.parsed&&!q.parsed.error&&<div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,flexWrap:"wrap"}}>
@@ -4026,14 +4122,11 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     </select>
                   </div>}
                 </div>;})}
-              <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
-                {scanQueue.some(q=>q.status==="ready")&&<button onClick={scanInvoices} disabled={scanning} style={{...s.saveBtn,opacity:scanning?0.6:1}}>{scanning?"Scanning...":"Scan All with AI"}</button>}
-                {scanQueue.some(q=>q.status==="parsed")&&<button onClick={confirmScannedInvoices} style={s.addBtn}>Confirm & Save All</button>}
-                {scanQueue.some(q=>q.status==="error")&&<button onClick={()=>setScanQueue(prev=>prev.map(q=>q.status==="error"?{...q,status:"ready",parsed:null}:q))} style={{...s.saveBtn,background:C.accent}}>↻ Retry Errors</button>}
-                {scanQueue.some(q=>q.status==="error")&&<button onClick={()=>setScanQueue(prev=>prev.filter(q=>q.status!=="error"))} style={s.canBtn}>Clear Errors</button>}
-                <button onClick={()=>setScanQueue([])} style={s.canBtn}>Clear Queue</button>
+              {shown.length===0&&<div style={{padding:16,textAlign:"center",color:"#94a3b8",fontSize:12,fontStyle:"italic"}}>No items match this filter.</div>}
               </div>
-            </div>}
+              </>}
+            </div>;
+            })()}
           </div>
 
           {/* Manual entry */}
