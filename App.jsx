@@ -4047,8 +4047,18 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               const Pill=({label,n,color})=>n>0?<span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:color+"1a",color,whiteSpace:"nowrap"}}>{n} {label}</span>:null;
               const Chip=({id,label})=><button onClick={()=>setScanQueueFilter(id)} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:12,cursor:"pointer",border:`1px solid ${scanQueueFilter===id?C.brand:"#d1d9e0"}`,background:scanQueueFilter===id?C.brand:"#fff",color:scanQueueFilter===id?"#fff":"#6b7785"}}>{label}</button>;
               return <div>
+              {/* Action bar — FIRST element so "Scan All with AI" sits at the TOP of the
+                  queue, not buried under 150 cards. Sticky keeps it pinned while scrolling. */}
+              <div style={{display:"flex",gap:8,marginTop:10,marginBottom:8,flexWrap:"wrap",position:"sticky",top:0,zIndex:2,background:"#fff",paddingBottom:4}}>
+                {cReady>0&&<button onClick={scanInvoices} disabled={scanning} style={{...s.saveBtn,opacity:scanning?0.6:1}}>{scanning?"Scanning...":"Scan All with AI"}</button>}
+                {cParsed>0&&<button onClick={confirmScannedInvoices} disabled={scanning} style={{...s.addBtn,opacity:scanning?0.6:1}}>Confirm &amp; Save All ({cParsed})</button>}
+                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.map(q=>q.status==="error"?{...q,status:"ready",parsed:null}:q))} style={{...s.saveBtn,background:C.accent}}>↻ Retry Errors ({cErr})</button>}
+                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.filter(q=>q.status!=="error"))} style={s.canBtn}>Clear Errors</button>}
+                <button onClick={()=>{if(confirm("Clear the entire scan queue? This removes all queued and parsed items that haven't been saved yet."))setScanQueue([]);}} style={s.canBtn}>Clear Queue</button>
+              </div>
+
               {/* Summary header — click to collapse/expand the card list */}
-              <div onClick={()=>setScanQueueCollapsed(!scanQueueCollapsed)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:10,marginBottom:8,cursor:"pointer",userSelect:"none"}}>
+              <div onClick={()=>setScanQueueCollapsed(!scanQueueCollapsed)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:8,cursor:"pointer",userSelect:"none"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>{active.length} invoice{active.length!==1?"s":""} queued</span>
                   <Pill label="ready" n={cReady} color="#94a3b8"/>
@@ -4058,15 +4068,6 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   <Pill label="errors" n={cErr} color={C.red}/>
                 </div>
                 <span style={{fontSize:12,color:C.brand,fontWeight:700,whiteSpace:"nowrap"}}>{scanQueueCollapsed?"▸ Show":"▾ Hide"}</span>
-              </div>
-
-              {/* Action bar — placed ABOVE the list so it's always reachable even with 150 items */}
-              <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",position:"sticky",top:0,zIndex:2,background:"#fff",paddingBottom:4}}>
-                {cReady>0&&<button onClick={scanInvoices} disabled={scanning} style={{...s.saveBtn,opacity:scanning?0.6:1}}>{scanning?"Scanning...":"Scan All with AI"}</button>}
-                {cParsed>0&&<button onClick={confirmScannedInvoices} disabled={scanning} style={{...s.addBtn,opacity:scanning?0.6:1}}>Confirm &amp; Save All ({cParsed})</button>}
-                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.map(q=>q.status==="error"?{...q,status:"ready",parsed:null}:q))} style={{...s.saveBtn,background:C.accent}}>↻ Retry Errors ({cErr})</button>}
-                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.filter(q=>q.status!=="error"))} style={s.canBtn}>Clear Errors</button>}
-                <button onClick={()=>{if(confirm("Clear the entire scan queue? This removes all queued and parsed items that haven't been saved yet."))setScanQueue([]);}} style={s.canBtn}>Clear Queue</button>
               </div>
 
               {!scanQueueCollapsed&&<>
