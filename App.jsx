@@ -1,4 +1,4 @@
-const APP_VERSION = "2.10.51";
+const APP_VERSION = "2.11.0";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -166,6 +166,9 @@ function App(){
   const[gmailProcessing,setGmailProcessing]=useState(null); // emailId currently being processed
   const[scanPreview,setScanPreview]=useState(null); // queue item currently being previewed
   const[showImportedEmails,setShowImportedEmails]=useState(false); // toggle to show already-imported emails in Gmail results
+  const[scanQueueCollapsed,setScanQueueCollapsed]=useState(false); // v2.11: collapse the scan-queue card list into a summary
+  const[scanQueueFilter,setScanQueueFilter]=useState("all"); // v2.11: filter queue by status: all|ready|parsed|error
+  const[saveError,setSaveError]=useState(null); // v2.11: surfaced when a Firestore save fails (e.g. 1MB doc limit)
   const[autoScanDaysBack,setAutoScanDaysBack]=useState(30); // v2.10.3: date window for Scan All New; number OR "custom"
   // v2.10.5: custom since-date (YYYY-MM-DD). Default to 2 years ago.
   const[autoScanCustomSince,setAutoScanCustomSince]=useState(()=>{
@@ -263,7 +266,26 @@ function App(){
     }catch(e){console.log('DVIR import skipped:',e.message);}
   })();},[loaded]);
 
-  const sv=useCallback(async(k,v)=>{try{await window.storage.set(k,JSON.stringify(v));}catch(e){}},[]);
+  // v2.11: surface save failures instead of swallowing them. window.storage.set
+  // returns null (and stashes window.__lastStorageError) when Firestore rejects a
+  // write — most commonly the 1 MiB per-document limit on large keys like fl-costs.
+  const sv=useCallback(async(k,v)=>{
+    try{
+      const json=JSON.stringify(v);
+      const bytes=(typeof TextEncoder!=="undefined")?new TextEncoder().encode(json).length:json.length;
+      const res=await window.storage.set(k,json);
+      if(res===null){
+        setSaveError({key:k,bytes,msg:window.__lastStorageError||"Save failed"});
+      }else if(bytes>900000){
+        // Warn before we hit the hard ~1,048,487-byte ceiling so data isn't lost silently.
+        setSaveError({key:k,bytes,msg:`approaching the 1 MB storage limit (${Math.round(bytes/1024)} KB used)`});
+      }else{
+        setSaveError(prev=>prev&&prev.key===k?null:prev); // clear stale warning for this key on a clean save
+      }
+    }catch(e){
+      setSaveError({key:k,bytes:0,msg:e.message||"Save failed"});
+    }
+  },[]);
   const saveTrucks=t=>{setTrucks(t);sv("fl-trucks",t);};
   const saveRetiredTrucks=rt=>{setRetiredTrucks(rt);sv("fl-retired",rt);};
   const saveDrivers=d=>{setDrivers(d);sv("fl-drivers",d);};
@@ -278,6 +300,106 @@ function App(){
   const saveReviewQueue=useCallback(q=>{setReviewQueue(q);sv("fl-review-queue",q);},[sv]);
   const[syncStatus,setSyncStatus]=useState(null);
   const[syncing,setSyncing]=useState(false);
+
+  // ── Motive driver-assignment sync (Weekly Board → Motive) ──
+  // The Weekly Board stores assignments as {"DriverName-Day":"TruckId"} in Firestore.
+  // Motive only tracks ONE current driver per vehicle (no day-of-week), so we push a
+  // single selected day's assignments on demand. Truck/driver IDs differ between the
+  // two systems, so we keep a confirmed mapping in fl-motive-map:
+  //   { vehicles:{ truckId: motiveVehicleId }, drivers:{ driverName: motiveDriverId } }
+  const[showMotiveSync,setShowMotiveSync]=useState(false);
+  const[motiveMap,setMotiveMap]=useState({vehicles:{},drivers:{}});
+  const[motiveVehicles,setMotiveVehicles]=useState([]); // raw Motive vehicle objects
+  const[motiveDrivers,setMotiveDrivers]=useState([]);   // raw Motive user (driver) objects
+  const[motiveLoading,setMotiveLoading]=useState(false);
+  const[motiveSyncing,setMotiveSyncing]=useState(false);
+  const[motiveError,setMotiveError]=useState("");
+  const[motiveSyncDay,setMotiveSyncDay]=useState(DAYS[Math.min(todayDI(),4)]);
+  const[motiveSyncLog,setMotiveSyncLog]=useState([]);
+  const[motiveShowMap,setMotiveShowMap]=useState(false);
+  const saveMotiveMap=useCallback(m=>{setMotiveMap(m);sv("fl-motive-map",m);},[sv]);
+  // Auto-suggest a mapping by matching our truck number to Motive vehicle.number and
+  // our driver name to Motive first_name+last_name. Never overwrites a confirmed entry.
+  const autoMatchMotive=(vehicles,driversList,existing)=>{
+    const normNum=x=>String(x==null?"":x).replace(/\D/g,"").replace(/^0+/,"");
+    const normName=x=>String(x==null?"":x).toLowerCase().replace(/[^a-z]/g,"");
+    const vMap={...((existing&&existing.vehicles)||{})};
+    const dMap={...((existing&&existing.drivers)||{})};
+    trucks.forEach(t=>{
+      if(vMap[t.id])return;
+      const key=normNum(t.id);if(!key)return;
+      const m=vehicles.find(v=>normNum(v.number)===key);
+      if(m)vMap[t.id]=String(m.id);
+    });
+    drivers.forEach(d=>{
+      if(dMap[d.name])return;
+      const target=normName(d.name);if(!target)return;
+      const m=driversList.find(u=>normName(`${u.first_name||""} ${u.last_name||""}`)===target);
+      if(m)dMap[d.name]=String(m.id);
+    });
+    return {vehicles:vMap,drivers:dMap};
+  };
+  const loadMotiveData=async(baseMap)=>{
+    setMotiveLoading(true);setMotiveError("");
+    try{
+      const[vR,dR]=await Promise.all([
+        fetch("/api/motive?action=vehicles"),
+        fetch("/api/motive?action=drivers"),
+      ]);
+      const vJson=await vR.json().catch(()=>({}));
+      const dJson=await dR.json().catch(()=>({}));
+      if(!vR.ok)throw new Error(vJson.error||`Vehicles request failed (HTTP ${vR.status})`);
+      if(!dR.ok)throw new Error(dJson.error||`Drivers request failed (HTTP ${dR.status})`);
+      const vehicles=(vJson.vehicles||[]).map(x=>x.vehicle||x);
+      const driversList=(dJson.users||dJson.drivers||[]).map(x=>x.user||x);
+      setMotiveVehicles(vehicles);setMotiveDrivers(driversList);
+      saveMotiveMap(autoMatchMotive(vehicles,driversList,baseMap||motiveMap));
+    }catch(e){setMotiveError(e.message||"Could not reach Motive. Check MOTIVE_API_KEY.");}
+    setMotiveLoading(false);
+  };
+  const openMotiveSync=async()=>{
+    setShowMotiveSync(true);setMotiveSyncLog([]);setMotiveError("");
+    setMotiveSyncDay(DAYS[Math.min(todayDI(),4)]);
+    let base=motiveMap;
+    try{const r=await window.storage.get("fl-motive-map");if(r){const m=JSON.parse(r.value);base={vehicles:m.vehicles||{},drivers:m.drivers||{}};setMotiveMap(base);}}catch(e){}
+    loadMotiveData(base);
+  };
+  // Compute the set of PATCHes needed so Motive matches the board for `day`.
+  // Skips trucks already correct, flags assigned-but-unmapped drivers as "blocked",
+  // and unassigns (clears) any mapped vehicle that has no driver on that day.
+  const buildMotivePlan=(day)=>{
+    const plan=[];
+    trucks.forEach(t=>{
+      const vid=motiveMap.vehicles[t.id];
+      if(!vid)return; // truck not mapped to Motive — surfaced in the mapping section
+      const mv=motiveVehicles.find(v=>String(v.id)===String(vid));
+      const cur=mv&&mv.current_driver_id!=null?String(mv.current_driver_id):null;
+      const drv=drivers.find(d=>asgn[`${d.name}-${day}`]===t.id);
+      if(drv){
+        const did=motiveMap.drivers[drv.name];
+        if(!did){plan.push({truckId:t.id,vehicleId:String(vid),driverName:drv.name,action:"blocked",reason:"driver not mapped to Motive"});return;}
+        if(String(did)!==cur)plan.push({truckId:t.id,vehicleId:String(vid),driverName:drv.name,driverId:String(did),action:"assign"});
+      }else if(cur){
+        // No driver on this truck that day (unassigned, OFF/VAC, or OOS) → clear in Motive.
+        plan.push({truckId:t.id,vehicleId:String(vid),driverId:null,action:"unassign"});
+      }
+    });
+    return plan;
+  };
+  const runMotiveSync=async(plan)=>{
+    setMotiveSyncing(true);
+    const log=[];
+    for(const p of plan){
+      try{
+        const r=await fetch("/api/motive?action=assign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({vehicleId:p.vehicleId,driverId:p.driverId})});
+        const j=await r.json().catch(()=>({}));
+        log.push({truckId:p.truckId,ok:r.ok,msg:r.ok?(p.action==="assign"?`assigned ${p.driverName}`:"cleared driver"):(j.error||`HTTP ${r.status}`)});
+      }catch(e){log.push({truckId:p.truckId,ok:false,msg:e.message||"request failed"});}
+      setMotiveSyncLog([...log]);
+    }
+    setMotiveSyncing(false);
+    loadMotiveData(motiveMap); // refresh current_driver_id so the plan reflects the push
+  };
 
   // v2.10.30: real-time listener for fl-repairs so mechanic portal updates
   // appear in the fleet app instantly without a page refresh.
@@ -1264,7 +1386,10 @@ Format your response as clear sections with headers using ** for bold. Use speci
             updated[i].status="error";
             updated[i].parsed={error:`Skipped — ${blankReason}. No invoice data.`};
             setScanQueue([...updated]);
-            continue;
+            // v2.11: a blank image is permanent — break out of the retry loop instead of
+            // `continue` (which targeted the while-retry loop and re-ran the probe + waited
+            // through 2 backoffs before finally erroring).
+            break;
           }
 
           // Downsize if too large
@@ -2863,7 +2988,89 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             <button style={s.wBtnA} onClick={()=>setWeekDate(new Date())}>This Week</button>
             <span style={s.wLbl}>{fWL(weekDate)}</span>
             <button style={s.wBtn} onClick={nextW}>Next →</button>
+            <button style={{...s.wBtnA,marginLeft:"auto",background:C.purple,borderColor:C.purple}} onClick={openMotiveSync} title="Push this week's driver assignments to Motive">🔗 Sync to Motive</button>
           </div>
+
+          {showMotiveSync&&(()=>{
+            const plan=buildMotivePlan(motiveSyncDay);
+            const assigns=plan.filter(p=>p.action==="assign");
+            const unassigns=plan.filter(p=>p.action==="unassign");
+            const blocked=plan.filter(p=>p.action==="blocked");
+            const pushable=plan.filter(p=>p.action!=="blocked");
+            const dayDrivers=drivers.filter(d=>{const v=asgn[`${d.name}-${motiveSyncDay}`];return v&&!OFF_OPTS.includes(v);});
+            const sortedV=[...motiveVehicles].sort((a,b)=>String(a.number||"").localeCompare(String(b.number||"")));
+            const sortedD=[...motiveDrivers].sort((a,b)=>`${a.first_name||""}${a.last_name||""}`.localeCompare(`${b.first_name||""}${b.last_name||""}`));
+            return(
+            <div style={s.modal} onClick={()=>setShowMotiveSync(false)}>
+              <div style={{...s.modalBox,maxWidth:580}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontSize:15,fontWeight:800,color:C.dark}}>Sync Weekly Board → Motive</div>
+                  <button onClick={()=>setShowMotiveSync(false)} style={{border:"none",background:"none",fontSize:22,lineHeight:1,cursor:"pointer",color:"#94a3b8"}}>×</button>
+                </div>
+                <div style={{fontSize:11,color:"#6b7785"}}>Pushes the selected day's truck→driver assignments to Motive. A mapped truck with no driver that day (unassigned, OFF/VAC, or OOS) is cleared in Motive.</div>
+
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
+                  {DAYS.map(d=><button key={d} onClick={()=>setMotiveSyncDay(d)} style={motiveSyncDay===d?{...s.wBtnA}:{...s.wBtn}}>{d}</button>)}
+                </div>
+
+                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+                  <button onClick={()=>loadMotiveData(motiveMap)} disabled={motiveLoading} style={s.wBtn}>{motiveLoading?"Loading…":"↻ Reload from Motive"}</button>
+                  <span style={{fontSize:11,color:"#6b7785"}}>{motiveVehicles.length} vehicles · {motiveDrivers.length} drivers</span>
+                </div>
+                {motiveError&&<div style={{fontSize:11,color:C.red,background:"#fef2f2",border:`1px solid ${C.red}44`,borderRadius:6,padding:"6px 10px"}}>⚠️ {motiveError}</div>}
+
+                <details open={motiveShowMap} onToggle={e=>setMotiveShowMap(e.target.open)} style={{marginTop:4,border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px"}}>
+                  <summary style={{fontSize:12,fontWeight:700,color:C.brand,cursor:"pointer"}}>Confirm truck &amp; driver mapping</summary>
+                  <div style={{fontSize:11,color:"#6b7785",margin:"6px 0"}}>Auto-suggested matches below — fix any that are wrong (orange = unmapped). Changes save automatically.</div>
+                  <div style={{fontWeight:700,fontSize:11,color:C.dark,marginTop:6}}>Trucks → Motive vehicle</div>
+                  <div style={{maxHeight:150,overflowY:"auto",display:"flex",flexDirection:"column",gap:3,marginTop:4}}>
+                    {trucks.map(t=>(
+                      <div key={t.id} style={{display:"flex",alignItems:"center",gap:6,fontSize:11}}>
+                        <span style={{width:48,fontWeight:700}}>#{t.id}</span>
+                        <select value={motiveMap.vehicles[t.id]||""} onChange={e=>saveMotiveMap({...motiveMap,vehicles:{...motiveMap.vehicles,[t.id]:e.target.value}})} style={{flex:1,fontSize:11,padding:"3px 4px",borderRadius:4,border:motiveMap.vehicles[t.id]?"1px solid #d1d9e0":`1px solid ${C.accent}`}}>
+                          <option value="">— not mapped —</option>
+                          {sortedV.map(v=><option key={v.id} value={String(v.id)}>{v.number||v.name||v.id}{v.make?` (${v.make})`:""}</option>)}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{fontWeight:700,fontSize:11,color:C.dark,marginTop:8}}>Drivers assigned {motiveSyncDay} → Motive driver</div>
+                  <div style={{maxHeight:150,overflowY:"auto",display:"flex",flexDirection:"column",gap:3,marginTop:4}}>
+                    {dayDrivers.length===0&&<div style={{fontSize:11,color:"#94a3b8"}}>No drivers assigned on {motiveSyncDay}.</div>}
+                    {dayDrivers.map(d=>(
+                      <div key={d.name} style={{display:"flex",alignItems:"center",gap:6,fontSize:11}}>
+                        <span style={{flex:"0 0 130px",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.name}</span>
+                        <select value={motiveMap.drivers[d.name]||""} onChange={e=>saveMotiveMap({...motiveMap,drivers:{...motiveMap.drivers,[d.name]:e.target.value}})} style={{flex:1,fontSize:11,padding:"3px 4px",borderRadius:4,border:motiveMap.drivers[d.name]?"1px solid #d1d9e0":`1px solid ${C.accent}`}}>
+                          <option value="">— not mapped —</option>
+                          {sortedD.map(u=><option key={u.id} value={String(u.id)}>{`${u.first_name||""} ${u.last_name||""}`.trim()||u.id}</option>)}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+
+                <div style={{marginTop:4}}>
+                  <div style={{fontWeight:700,fontSize:12,color:C.dark}}>Plan for {motiveSyncDay} — {assigns.length} assign, {unassigns.length} clear{blocked.length?`, ${blocked.length} blocked`:""}</div>
+                  <div style={{maxHeight:150,overflowY:"auto",marginTop:4,display:"flex",flexDirection:"column",gap:2,fontSize:11}}>
+                    {plan.length===0&&!motiveLoading&&<div style={{color:C.green}}>✓ Motive already matches the board for {motiveSyncDay}.</div>}
+                    {assigns.map(p=><div key={"a"+p.truckId}>🚚 <b>#{p.truckId}</b> → {p.driverName}</div>)}
+                    {unassigns.map(p=><div key={"u"+p.truckId} style={{color:"#6b7785"}}>🚚 <b>#{p.truckId}</b> → clear current driver</div>)}
+                    {blocked.map(p=><div key={"b"+p.truckId} style={{color:C.accent}}>⚠️ <b>#{p.truckId}</b> → {p.driverName}: not mapped, will skip</div>)}
+                  </div>
+                </div>
+
+                <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:6}}>
+                  <button onClick={()=>setShowMotiveSync(false)} style={s.wBtn}>Close</button>
+                  <button onClick={()=>runMotiveSync(pushable)} disabled={motiveSyncing||pushable.length===0} style={{...s.saveBtn,opacity:(motiveSyncing||pushable.length===0)?0.5:1,cursor:(motiveSyncing||pushable.length===0)?"default":"pointer"}}>{motiveSyncing?"Pushing…":`Push ${pushable.length} to Motive`}</button>
+                </div>
+
+                {motiveSyncLog.length>0&&<div style={{marginTop:6,borderTop:"1px solid #e2e8f0",paddingTop:6,maxHeight:140,overflowY:"auto",fontSize:11,display:"flex",flexDirection:"column",gap:2}}>
+                  {motiveSyncLog.map((l,i)=><div key={i} style={{color:l.ok?C.green:C.red}}>{l.ok?"✓":"✗"} #{l.truckId} — {l.msg}</div>)}
+                </div>}
+              </div>
+            </div>
+            );
+          })()}
           {/* v2.10.31: emergency diagnostic — shows what assignment data exists in Firebase */}
           <details style={{marginBottom:12,padding:"8px 12px",background:"#fffbeb",border:`1px solid ${C.accent}55`,borderRadius:6}}>
             <summary style={{fontSize:11,fontWeight:700,color:C.accent,cursor:"pointer"}}>🔍 Data Diagnostic & Recovery</summary>
@@ -3667,6 +3874,16 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 
         {/* ══ COSTS / INVOICE SCANNER ══ */}
         {tab==="costs"&&<div>
+          {/* v2.11: persistent save-failure banner — Firestore rejects writes over
+              ~1 MB (the fl-costs blob grows unbounded). Without this the failure was
+              silent and the user lost data on reload. */}
+          {saveError&&<div style={{background:"#fef2f2",border:`1px solid ${C.red}`,borderRadius:8,padding:"10px 12px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+            <div style={{fontSize:12,color:C.red,fontWeight:600,lineHeight:1.5}}>
+              ⚠ Storage warning: <code style={{fontSize:11}}>{saveError.key}</code> {saveError.msg}.
+              <div style={{fontSize:11,fontWeight:400,color:"#7f1d1d",marginTop:2}}>Recent changes to this data may not be saved. Archive or export old cost entries to free space.</div>
+            </div>
+            <button onClick={()=>setSaveError(null)} style={s.xBtn} title="Dismiss">×</button>
+          </div>}
           {/* Scanner section */}
           {/* Gmail Vendors */}
           <div style={{background:"#fff",borderRadius:8,padding:14,marginBottom:16,border:"1px solid #e2e8f0"}}>
@@ -3932,6 +4149,9 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   }} disabled={gmailProcessing!==null} style={{fontSize:11,fontWeight:700,padding:"4px 10px",background:C.brand,color:"#fff",border:"none",borderRadius:4,cursor:gmailProcessing?"wait":"pointer",opacity:gmailProcessing?0.5:1}}>{gmailProcessing?"Processing...":`⇣ Queue All (${queueable.length})`}</button>;
                 })()}
               </div>
+              {/* v2.11: scroll container so a 90+ email result set stays a fixed-height
+                  panel instead of pushing the rest of the page out of reach. */}
+              <div style={{maxHeight:"55vh",overflowY:"auto",overflowX:"hidden",border:visibleResults.length>0?"1px solid #e2e8f0":"none",borderRadius:6,padding:visibleResults.length>0?"4px":0}}>
               {visibleResults.map((r,i)=>{
                 const safeR=(r&&typeof r==="object")?r:{error:String(r)};
                 const atts=Array.isArray(safeR.attachments)?safeR.attachments:[];
@@ -3970,6 +4190,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 </div>;
               })}
               {visibleResults.length===0&&<div style={{padding:20,textAlign:"center",color:"#94a3b8",fontSize:12,fontStyle:"italic"}}>No new emails — all results already imported or dismissed. ✓</div>}
+              </div>
               <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                 <button onClick={()=>setGmailResults(null)} style={{...s.canBtn,fontSize:11,flex:1}}>Dismiss All Results</button>
                 {Object.keys(dismissedMsgs).length>0&&<button onClick={clearAllDismissed} title={`${Object.keys(dismissedMsgs).length} emails dismissed. Click to reset.`} style={{...s.canBtn,fontSize:11,background:"#fff",color:"#94a3b8",border:"1px solid #e2e8f0"}}>Clear dismissed ({Object.keys(dismissedMsgs).length})</button>}
@@ -3982,9 +4203,67 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           <div style={{...s.addForm,marginBottom:16}}>
             <div style={{fontSize:12,color:"#6b7785",marginBottom:4}}>Upload scanned invoices (PDF or images). AI will read each one and extract truck #, vendor, amount, and details automatically.</div>
             <input type="file" accept="image/*,application/pdf" multiple onChange={handleFileUpload} style={{fontSize:13,padding:8}}/>
-            {scanQueue.length>0&&<div>
-              <div style={{fontSize:12,fontWeight:700,color:"#1e293b",marginTop:8,marginBottom:6}}>{scanQueue.length} invoice{scanQueue.length>1?"s":""} queued</div>
-              {scanQueue.filter(q=>q.status!=="merged").map((q,i)=>{const isDup=q.status==="parsed"&&q.parsed&&q.parsed.invoiceNum&&costEntries.some(c=>c.invoiceNum===q.parsed.invoiceNum);
+            {scanQueue.length>0&&(()=>{
+              // v2.11: status-aware summary + collapse + scroll so a 150-item queue
+              // doesn't bury the action buttons off the bottom of the page.
+              // Use the SAME fingerprint the save step uses (vendor|invoiceNum|total)
+              // so the "DUPLICATE" badge matches what actually gets skipped on save.
+              const fpOf=(c)=>`${(c.vendor||"").toLowerCase()}|${c.invoiceNum||""}|${Math.round((c.total||0)*100)}`;
+              const existingFps=new Set(costEntries.filter(c=>c.invoiceNum).map(fpOf));
+              const isDupItem=(q)=>q.status==="parsed"&&q.parsed&&!q.parsed.error&&q.parsed.invoiceNum&&existingFps.has(fpOf(q.parsed));
+              const active=scanQueue.filter(q=>q.status!=="merged");
+              let cReady=0,cBusy=0,cParsed=0,cErr=0,cDup=0;
+              active.forEach(q=>{
+                if(q.status==="ready")cReady++;
+                else if(q.status==="scanning"||q.status==="waiting"||q.status==="uploading")cBusy++;
+                else if(q.status==="error")cErr++;
+                else if(q.status==="parsed"){cParsed++;if(isDupItem(q))cDup++;}
+              });
+              const matchesFilter=(q)=>{
+                if(scanQueueFilter==="ready")return q.status==="ready"||q.status==="scanning"||q.status==="waiting"||q.status==="uploading";
+                if(scanQueueFilter==="parsed")return q.status==="parsed";
+                if(scanQueueFilter==="error")return q.status==="error";
+                return true; // "all"
+              };
+              const shown=active.filter(matchesFilter);
+              const Pill=({label,n,color})=>n>0?<span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:color+"1a",color,whiteSpace:"nowrap"}}>{n} {label}</span>:null;
+              const Chip=({id,label})=><button onClick={()=>setScanQueueFilter(id)} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:12,cursor:"pointer",border:`1px solid ${scanQueueFilter===id?C.brand:"#d1d9e0"}`,background:scanQueueFilter===id?C.brand:"#fff",color:scanQueueFilter===id?"#fff":"#6b7785"}}>{label}</button>;
+              return <div>
+              {/* Action bar — FIRST element so "Scan All with AI" sits at the TOP of the
+                  queue, not buried under 150 cards. Sticky keeps it pinned while scrolling. */}
+              <div style={{display:"flex",gap:8,marginTop:10,marginBottom:8,flexWrap:"wrap",position:"sticky",top:0,zIndex:2,background:"#fff",paddingBottom:4}}>
+                {cReady>0&&<button onClick={scanInvoices} disabled={scanning} style={{...s.saveBtn,opacity:scanning?0.6:1}}>{scanning?"Scanning...":"Scan All with AI"}</button>}
+                {cParsed>0&&<button onClick={confirmScannedInvoices} disabled={scanning} style={{...s.addBtn,opacity:scanning?0.6:1}}>Confirm &amp; Save All ({cParsed})</button>}
+                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.map(q=>q.status==="error"?{...q,status:"ready",parsed:null}:q))} style={{...s.saveBtn,background:C.accent}}>↻ Retry Errors ({cErr})</button>}
+                {cErr>0&&<button onClick={()=>setScanQueue(prev=>prev.filter(q=>q.status!=="error"))} style={s.canBtn}>Clear Errors</button>}
+                <button onClick={()=>{if(confirm("Clear the entire scan queue? This removes all queued and parsed items that haven't been saved yet."))setScanQueue([]);}} style={s.canBtn}>Clear Queue</button>
+              </div>
+
+              {/* Summary header — click to collapse/expand the card list */}
+              <div onClick={()=>setScanQueueCollapsed(!scanQueueCollapsed)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:8,cursor:"pointer",userSelect:"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>{active.length} invoice{active.length!==1?"s":""} queued</span>
+                  <Pill label="ready" n={cReady} color="#94a3b8"/>
+                  <Pill label="scanning" n={cBusy} color={C.brand}/>
+                  <Pill label="parsed" n={cParsed} color={C.green}/>
+                  <Pill label="dup" n={cDup} color={C.accent}/>
+                  <Pill label="errors" n={cErr} color={C.red}/>
+                </div>
+                <span style={{fontSize:12,color:C.brand,fontWeight:700,whiteSpace:"nowrap"}}>{scanQueueCollapsed?"▸ Show":"▾ Hide"}</span>
+              </div>
+
+              {!scanQueueCollapsed&&<>
+              {/* Status filter chips */}
+              {active.length>6&&<div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                <Chip id="all" label={`All (${active.length})`}/>
+                {cReady+cBusy>0&&<Chip id="ready" label={`To scan (${cReady+cBusy})`}/>}
+                {cParsed>0&&<Chip id="parsed" label={`Parsed (${cParsed})`}/>}
+                {cErr>0&&<Chip id="error" label={`Errors (${cErr})`}/>}
+              </div>}
+
+              {/* Scrollable card list — fixed height keeps the page short */}
+              <div style={{maxHeight:"55vh",overflowY:"auto",overflowX:"hidden",border:"1px solid #e2e8f0",borderRadius:6,padding:4}}>
+              {shown.map((q,i)=>{const isDup=isDupItem(q);
                 const currentTruck=q.parsed?.truckId||"";
                 const isInventory=currentTruck==="INVENTORY";
                 const truckOk=currentTruck&&currentTruck!=="UNKNOWN";
@@ -4005,7 +4284,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     <div style={{display:"flex",gap:4,alignItems:"center"}}>
                       {q.dataUrl&&<button onClick={()=>setScanPreview(q)} title="Preview" style={{fontSize:11,padding:"3px 8px",background:"#fff",color:C.brand,border:`1px solid ${C.brand}55`,borderRadius:4,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>👁 View</button>}
                       {q.status==="parsed"&&q.parsed&&!q.parsed.error&&<span style={{fontSize:16,color:isDup?C.accent:C.green}}>{isDup?"⚠":"✓"}</span>}
-                      <button onClick={()=>setScanQueue(scanQueue.filter(x=>x.id!==q.id))} style={s.xBtn}>×</button>
+                      <button onClick={()=>setScanQueue(prev=>prev.filter(x=>x.id!==q.id))} style={s.xBtn}>×</button>
                     </div>
                   </div>
                   {q.status==="parsed"&&q.parsed&&!q.parsed.error&&<div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,flexWrap:"wrap"}}>
@@ -4026,14 +4305,11 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     </select>
                   </div>}
                 </div>;})}
-              <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
-                {scanQueue.some(q=>q.status==="ready")&&<button onClick={scanInvoices} disabled={scanning} style={{...s.saveBtn,opacity:scanning?0.6:1}}>{scanning?"Scanning...":"Scan All with AI"}</button>}
-                {scanQueue.some(q=>q.status==="parsed")&&<button onClick={confirmScannedInvoices} style={s.addBtn}>Confirm & Save All</button>}
-                {scanQueue.some(q=>q.status==="error")&&<button onClick={()=>setScanQueue(prev=>prev.map(q=>q.status==="error"?{...q,status:"ready",parsed:null}:q))} style={{...s.saveBtn,background:C.accent}}>↻ Retry Errors</button>}
-                {scanQueue.some(q=>q.status==="error")&&<button onClick={()=>setScanQueue(prev=>prev.filter(q=>q.status!=="error"))} style={s.canBtn}>Clear Errors</button>}
-                <button onClick={()=>setScanQueue([])} style={s.canBtn}>Clear Queue</button>
+              {shown.length===0&&<div style={{padding:16,textAlign:"center",color:"#94a3b8",fontSize:12,fontStyle:"italic"}}>No items match this filter.</div>}
               </div>
-            </div>}
+              </>}
+            </div>;
+            })()}
           </div>
 
           {/* Manual entry */}

@@ -153,6 +153,25 @@ export default async (req: Request) => {
     const existingReview = reviewDoc.exists() ? JSON.parse(reviewDoc.data().v) : [];
     for (const c of existingCosts) if (c.invoiceNum) dedupInvoiceNums.add(String(c.invoiceNum).toUpperCase());
 
+    // v2.11: Firestore caps a single document field at ~1,048,487 bytes. The fl-costs
+    // blob grows unbounded, and once it nears that ceiling EVERY setDoc throws
+    // "INVALID_ARGUMENT: property 'v' is longer than 1048487 bytes" — which is what the
+    // user saw on the Costs page. Before, the function would still burn Anthropic calls
+    // scanning the whole queue and THEN fail on write, repeating nightly forever. Now we
+    // short-circuit with a clear, actionable message and zero AI spend.
+    const FIRESTORE_DOC_LIMIT = 1_000_000; // ~1MB with headroom for the ts field + overhead
+    const existingCostsBytes = costsDoc.exists() ? (costsDoc.data().v || "").length : 0;
+    if (existingCostsBytes > FIRESTORE_DOC_LIMIT) {
+      await store.setJSON("sync-state", {
+        ...prevState,
+        running: false,
+        lastRun: new Date().toISOString(),
+        message: `✗ Auto-sync paused: the cost log has reached Firestore's 1 MB limit (${Math.round(existingCostsBytes / 1024)} KB). Archive or export old invoices to free space, then sync again. No new invoices were processed (no AI cost incurred).`,
+        errors: ["fl-costs is at the 1 MB Firestore document limit"],
+      });
+      return json({ error: "cost log at storage limit", paused: true, bytes: existingCostsBytes }, 200);
+    }
+
     const newCostsAdds: any[] = [];
     const newReviewAdds: any[] = [];
 
@@ -201,8 +220,23 @@ export default async (req: Request) => {
     // ── 5. Write back to Firestore (single write each)
     if (newCostsAdds.length > 0) {
       const updated = [...existingCosts, ...newCostsAdds];
+      const costsJson = JSON.stringify(updated);
+      // v2.11: guard the incremental write too — if these new rows would push the blob
+      // over the 1 MB ceiling, surface a clear message rather than letting setDoc throw
+      // the raw INVALID_ARGUMENT. The dedup-index below is NOT updated in this case, so
+      // these attachments can be retried after the cost log is trimmed.
+      if (costsJson.length > FIRESTORE_DOC_LIMIT) {
+        await store.setJSON("sync-state", {
+          ...prevState,
+          running: false,
+          lastRun: new Date().toISOString(),
+          message: `✗ Auto-sync paused: saving ${newCostsAdds.length} new invoice(s) would exceed Firestore's 1 MB limit (${Math.round(costsJson.length / 1024)} KB). Archive or export old invoices, then sync again.`,
+          errors: ["fl-costs would exceed the 1 MB Firestore document limit"],
+        });
+        return json({ error: "cost log would exceed storage limit", paused: true, bytes: costsJson.length }, 200);
+      }
       await setDoc(doc(db, "kv", "fl-costs"), {
-        v: JSON.stringify(updated),
+        v: costsJson,
         ts: new Date().toISOString(),
       });
     }
