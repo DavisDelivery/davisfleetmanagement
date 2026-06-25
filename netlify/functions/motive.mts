@@ -75,6 +75,9 @@ export default async (req: Request) => {
       }
       case "assign": {
         // Assign a driver to a vehicle (or clear it when driverId is null).
+        // Motive uses PUT (PATCH returns 405). Assignment goes through the
+        // nested `current_driver` object — we fetch the driver's details and
+        // build that object server-side so the caller only sends ids.
         const reqBody = await req.json();
         const vehicleId = reqBody.vehicleId;
         const driverId = reqBody.driverId;
@@ -84,10 +87,31 @@ export default async (req: Request) => {
             headers: { "Content-Type": "application/json" },
           });
         }
+        let vehicleBody: any;
+        if (driverId) {
+          const dResp = await fetch(`https://api.gomotive.com/v1/users/${driverId}`, {
+            headers: { "X-Api-Key": apiKey, "Content-Type": "application/json" },
+          });
+          const dJson: any = await dResp.json().catch(() => ({}));
+          const u = dJson.user || dJson;
+          vehicleBody = {
+            current_driver: {
+              id: Number(driverId),
+              first_name: u.first_name,
+              last_name: u.last_name,
+              username: u.username,
+              email: u.email,
+              status: u.status || "active",
+              role: u.role || "driver",
+            },
+          };
+        } else {
+          vehicleBody = { current_driver: null };
+        }
         const resp = await fetch(`https://api.gomotive.com/v1/vehicles/${vehicleId}`, {
-          method: "PATCH",
+          method: "PUT",
           headers: { "X-Api-Key": apiKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ vehicle: { current_driver_id: driverId || null } }),
+          body: JSON.stringify({ vehicle: vehicleBody }),
         });
         const text = await resp.text();
         return new Response(text, {
