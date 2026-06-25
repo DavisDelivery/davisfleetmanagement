@@ -88,10 +88,7 @@ export default async (req: Request) => {
           });
         }
         let vehicleBody: any;
-        if (reqBody.vehicle) {
-          // Temporary: raw passthrough for verifying the exact payload Motive wants.
-          vehicleBody = reqBody.vehicle;
-        } else if (driverId) {
+        if (driverId) {
           const dResp = await fetch(`https://api.gomotive.com/v1/users/${driverId}`, {
             headers: { "X-Api-Key": apiKey, "Content-Type": "application/json" },
           });
