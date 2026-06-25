@@ -75,6 +75,8 @@ export default async (req: Request) => {
       }
       case "assign": {
         // Assign a driver to a vehicle (or clear it when driverId is null).
+        // Motive uses PUT (PATCH returns 405) and the assignable field is
+        // `permanent_driver_id` — `current_driver` is read-only ELD/trip data.
         const reqBody = await req.json();
         const vehicleId = reqBody.vehicleId;
         const driverId = reqBody.driverId;
@@ -85,9 +87,9 @@ export default async (req: Request) => {
           });
         }
         const resp = await fetch(`https://api.gomotive.com/v1/vehicles/${vehicleId}`, {
-          method: "PATCH",
+          method: "PUT",
           headers: { "X-Api-Key": apiKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ vehicle: { current_driver_id: driverId || null } }),
+          body: JSON.stringify({ vehicle: { permanent_driver_id: driverId ? Number(driverId) : null } }),
         });
         const text = await resp.text();
         return new Response(text, {
