@@ -1,4 +1,4 @@
-const APP_VERSION = "2.11.0";
+const APP_VERSION = "2.11.3";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -133,6 +133,7 @@ function App(){
   const[trucks,setTrucks]=useState([]);
   const[retiredTrucks,setRetiredTrucks]=useState([]);
   const[drivers,setDrivers]=useState([]);
+  const[retiredDrivers,setRetiredDrivers]=useState([]); // drivers removed from the active roster, kept for history
   const[weekDate,setWeekDate]=useState(new Date());
   const[asgn,setAsgn]=useState({});
   const[tStat,setTStat]=useState({});
@@ -143,6 +144,7 @@ function App(){
   const[editVal,setEditVal]=useState("");
   const[boardFilter,setBoardFilter]=useState("all");
   const[fleetView,setFleetView]=useState("list");
+  const[driverView,setDriverView]=useState("list"); // drivers page: "list" | "cards"
   const[showAddD,setShowAddD]=useState(false);
   const[showAddT,setShowAddT]=useState(false);
   const[newD,setNewD]=useState({name:"",role:"Davis Straight Driver",category:"Davis"});
@@ -199,7 +201,7 @@ function App(){
   // Load data
   useEffect(()=>{(async()=>{
     try{
-      const[tR,dR,aR,sR,rR,cR,rtR,coresR,rqR]=await Promise.all([
+      const[tR,dR,aR,sR,rR,cR,rtR,coresR,rqR,rdR]=await Promise.all([
         window.storage.get("fl-trucks").catch(()=>null),
         window.storage.get("fl-drivers").catch(()=>null),
         window.storage.get(`fl-asgn-${wk}`).catch(()=>null),
@@ -209,6 +211,7 @@ function App(){
         window.storage.get("fl-retired").catch(()=>null),
         window.storage.get("fl-cores").catch(()=>null), // v2.10.0
         window.storage.get("fl-review-queue").catch(()=>null), // v2.10.48
+        window.storage.get("fl-retired-drivers").catch(()=>null),
       ]);
       setTrucks(tR?JSON.parse(tR.value):[...ST,...TR]);
       setDrivers(dR?JSON.parse(dR.value):[...ID]);
@@ -217,6 +220,7 @@ function App(){
       setRepairs(rR?JSON.parse(rR.value):[]);
       setCostEntries(cR?JSON.parse(cR.value):[]);
       setRetiredTrucks(rtR?JSON.parse(rtR.value):[]);
+      setRetiredDrivers(rdR?JSON.parse(rdR.value):[]);
       setCores(coresR?JSON.parse(coresR.value):[]); // v2.10.0
       setReviewQueue(rqR?JSON.parse(rqR.value):[]); // v2.10.48
     }catch(e){setTrucks([...ST,...TR]);setDrivers([...ID]);}
@@ -288,6 +292,7 @@ function App(){
   },[]);
   const saveTrucks=t=>{setTrucks(t);sv("fl-trucks",t);};
   const saveRetiredTrucks=rt=>{setRetiredTrucks(rt);sv("fl-retired",rt);};
+  const saveRetiredDrivers=rd=>{setRetiredDrivers(rd);sv("fl-retired-drivers",rd);};
   const saveDrivers=d=>{setDrivers(d);sv("fl-drivers",d);};
   const saveAsgn=useCallback(a=>{setAsgn(a);sv(`fl-asgn-${wk}`,a);},[wk,sv]);
   const saveTStat=useCallback(s=>{setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv]);
@@ -399,6 +404,67 @@ function App(){
     }
     setMotiveSyncing(false);
     loadMotiveData(motiveMap); // refresh current_driver_id so the plan reflects the push
+  };
+
+  // ── MarginIQ phone-number import ──
+  // Driver phone numbers live in the separate DavisMarginIQ Firebase project's
+  // `employees` collection (public-read). We match by full name (+ aliases) and
+  // copy the phone onto each driver. The web config below is not a secret — it
+  // ships in every MarginIQ browser client, same as this app's own config.
+  const MARGINIQ={apiKey:"AIzaSyDyRyjuiP_UD8T_2xmW2xLjvqx9RLCYCmo",projectId:"davismarginiq"};
+  const[showPhoneImport,setShowPhoneImport]=useState(false);
+  const[phoneImporting,setPhoneImporting]=useState(false);
+  const[phoneLog,setPhoneLog]=useState("");
+  const fetchMarginIQEmployees=async()=>{
+    const base=`https://firestore.googleapis.com/v1/projects/${MARGINIQ.projectId}/databases/(default)/documents/employees?key=${MARGINIQ.apiKey}&pageSize=300`;
+    const sv=x=>x&&x.stringValue!==undefined?x.stringValue:undefined;
+    const out=[];let pageToken="";
+    for(let i=0;i<20;i++){
+      const r=await fetch(base+(pageToken?`&pageToken=${encodeURIComponent(pageToken)}`:""));
+      if(!r.ok){const t=await r.text().catch(()=>"");throw new Error(`MarginIQ read failed (HTTP ${r.status}). ${t.slice(0,140)}`);}
+      const j=await r.json();
+      (j.documents||[]).forEach(doc=>{
+        const f=doc.fields||{};
+        const fullName=sv(f.fullName)||[sv(f.firstName),sv(f.lastName)].filter(Boolean).join(" ");
+        const aliases=((f.aliases&&f.aliases.arrayValue&&f.aliases.arrayValue.values)||[]).map(sv).filter(Boolean);
+        out.push({fullName,phone:sv(f.phone),aliases});
+      });
+      pageToken=j.nextPageToken||"";
+      if(!pageToken)break;
+    }
+    return out;
+  };
+  const importPhones=async()=>{
+    setPhoneImporting(true);setPhoneLog("Connecting to MarginIQ…");
+    try{
+      const emps=await fetchMarginIQEmployees();
+      const norm=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+      const toks=x=>String(x||"").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      // Exact full-name (or alias) map, plus token sets for safe subset matching.
+      const exact={};
+      const empList=[];
+      emps.forEach(e=>{if(!e.phone)return;const names=[e.fullName,...(e.aliases||[])].filter(Boolean);names.forEach(n=>{const k=norm(n);if(k&&!exact[k])exact[k]=e.phone;});empList.push({phone:e.phone,tokenSets:names.map(n=>new Set(toks(n)))});});
+      // Match a driver: exact first, else a unique employee whose name tokens fully
+      // contain (or are contained by) the driver's — e.g. "Darvin Cepeda" ⊆
+      // "Darvin Rodriguez Cepeda". Requires ≥2 shared tokens (first + last) so
+      // people who share only a first or last name never match.
+      const matchDriver=(name)=>{
+        const k=norm(name);if(exact[k])return exact[k];
+        const dt=new Set(toks(name));if(dt.size<2)return null;
+        const phones=new Set();
+        empList.forEach(e=>e.tokenSets.forEach(ts=>{
+          const small=dt.size<=ts.size?dt:ts,big=dt.size<=ts.size?ts:dt;
+          if(small.size>=2&&[...small].every(t=>big.has(t)))phones.add(e.phone);
+        }));
+        return phones.size===1?[...phones][0]:null;
+      };
+      const unmatched=[];
+      const updated=drivers.map(d=>{const p=matchDriver(d.name);if(p)return{...d,phone:p};unmatched.push(d.name);return d;});
+      saveDrivers(updated);
+      const withPhone=updated.filter(d=>d.phone).length;
+      setPhoneLog(`✓ Read ${emps.length} MarginIQ employee cards.\n${withPhone} of ${drivers.length} drivers now have a phone number.${unmatched.length?`\n\nNo match for ${unmatched.length}: ${unmatched.slice(0,15).join(", ")}${unmatched.length>15?` +${unmatched.length-15} more`:""}`:""}`);
+    }catch(e){setPhoneLog("⚠️ "+(e.message||"Import failed"));}
+    setPhoneImporting(false);
   };
 
   // v2.10.30: real-time listener for fl-repairs so mechanic portal updates
@@ -2688,7 +2754,17 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       saveTrucks(trucks.filter(t=>t.id!==id));
     }
   };
-  const removeDriver=name=>{if(!confirm(`Remove ${name}?`))return;saveDrivers(drivers.filter(d=>d.name!==name));};
+  const removeDriver=name=>{
+    const d=drivers.find(x=>x.name===name);if(!d)return;
+    if(!confirm(`Move ${name} to the Retired Drivers list?\n\nThey'll be removed from the active roster but kept for history, and you can restore them anytime.`))return;
+    saveDrivers(drivers.filter(x=>x.name!==name));
+    if(!retiredDrivers.some(x=>x.name===name))saveRetiredDrivers([...retiredDrivers,{...d,retiredDate:new Date().toISOString().split("T")[0]}]);
+  };
+  const restoreDriver=rd=>{
+    saveRetiredDrivers(retiredDrivers.filter(x=>x.name!==rd.name));
+    if(!drivers.some(x=>x.name===rd.name)){const{retiredDate,...d}=rd;saveDrivers([...drivers,d]);}
+  };
+  const purgeDriver=name=>{if(!confirm(`Permanently delete ${name} from the retired list?\n\nThis cannot be undone.`))return;saveRetiredDrivers(retiredDrivers.filter(x=>x.name!==name));};
 
   if(!loaded)return <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"100vh",background:"#f5f7fa"}}><div style={{width:36,height:36,border:"3px solid #dde3ea",borderTop:`3px solid ${C.brand}`,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/></div>;
 
@@ -2997,7 +3073,9 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             const unassigns=plan.filter(p=>p.action==="unassign");
             const blocked=plan.filter(p=>p.action==="blocked");
             const pushable=plan.filter(p=>p.action!=="blocked");
-            const dayDrivers=drivers.filter(d=>{const v=asgn[`${d.name}-${motiveSyncDay}`];return v&&!OFF_OPTS.includes(v);});
+            // Mapping is driver-identity, not day-specific — list everyone on the board
+            // this week (stable when you switch days) so any driver can be mapped once.
+            const weekDrivers=drivers.filter(d=>DAYS.some(day=>{const v=asgn[`${d.name}-${day}`];return v&&!OFF_OPTS.includes(v);})).sort((a,b)=>a.name.localeCompare(b.name));
             const sortedV=[...motiveVehicles].sort((a,b)=>String(a.number||"").localeCompare(String(b.number||"")));
             const sortedD=[...motiveDrivers].sort((a,b)=>`${a.first_name||""}${a.last_name||""}`.localeCompare(`${b.first_name||""}${b.last_name||""}`));
             return(
@@ -3034,13 +3112,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                       </div>
                     ))}
                   </div>
-                  <div style={{fontWeight:700,fontSize:11,color:C.dark,marginTop:8}}>Drivers assigned {motiveSyncDay} → Motive driver</div>
-                  <div style={{maxHeight:150,overflowY:"auto",display:"flex",flexDirection:"column",gap:3,marginTop:4}}>
-                    {dayDrivers.length===0&&<div style={{fontSize:11,color:"#94a3b8"}}>No drivers assigned on {motiveSyncDay}.</div>}
-                    {dayDrivers.map(d=>(
-                      <div key={d.name} style={{display:"flex",alignItems:"center",gap:6,fontSize:11}}>
-                        <span style={{flex:"0 0 130px",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.name}</span>
-                        <select value={motiveMap.drivers[d.name]||""} onChange={e=>saveMotiveMap({...motiveMap,drivers:{...motiveMap.drivers,[d.name]:e.target.value}})} style={{flex:1,fontSize:11,padding:"3px 4px",borderRadius:4,border:motiveMap.drivers[d.name]?"1px solid #d1d9e0":`1px solid ${C.accent}`}}>
+                  <div style={{fontWeight:700,fontSize:11,color:C.dark,marginTop:10}}>Drivers on the board this week → Motive driver <span style={{fontWeight:400,color:"#94a3b8"}}>({weekDrivers.length})</span></div>
+                  <div style={{maxHeight:230,overflowY:"auto",display:"flex",flexDirection:"column",gap:8,marginTop:6,paddingRight:4}}>
+                    {weekDrivers.length===0&&<div style={{fontSize:11,color:"#94a3b8"}}>No drivers assigned this week.</div>}
+                    {weekDrivers.map(d=>(
+                      <div key={d.name} style={{display:"flex",flexDirection:"column",gap:3}}>
+                        <span style={{fontWeight:600,fontSize:12,color:C.dark}}>{d.name}{!motiveMap.drivers[d.name]&&<span style={{color:C.accent,fontWeight:400,fontSize:10,marginLeft:6}}>needs mapping</span>}</span>
+                        <select value={motiveMap.drivers[d.name]||""} onChange={e=>saveMotiveMap({...motiveMap,drivers:{...motiveMap.drivers,[d.name]:e.target.value}})} style={{fontSize:12,padding:"5px 6px",borderRadius:5,border:motiveMap.drivers[d.name]?"1px solid #d1d9e0":`1px solid ${C.accent}`,background:motiveMap.drivers[d.name]?"#fff":"#fffaf2"}}>
                           <option value="">— not mapped —</option>
                           {sortedD.map(u=><option key={u.id} value={String(u.id)}>{`${u.first_name||""} ${u.last_name||""}`.trim()||u.id}</option>)}
                         </select>
@@ -3728,7 +3806,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 
         {/* ══ DRIVERS ══ */}
         {tab==="drivers"&&<div>
-          <div style={{display:"flex",gap:8,marginBottom:12}}><input style={s.sInp} placeholder="Search driver..." value={search} onChange={e=>setSearch(e.target.value)}/><button style={s.addBtn} onClick={()=>setShowAddD(true)}>+ Add</button></div>
+          <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}><input style={{...s.sInp,flex:1}} placeholder="Search driver..." value={search} onChange={e=>setSearch(e.target.value)}/>
+            <div style={s.vTog}>
+              <button onClick={()=>setDriverView("list")} style={driverView==="list"?{...s.vBtn,...s.vBtnOn}:s.vBtn} title="List view">☰</button>
+              <button onClick={()=>setDriverView("cards")} style={driverView==="cards"?{...s.vBtn,...s.vBtnOn}:s.vBtn} title="KPI card view">▦</button>
+            </div>
+            <button style={{...s.addBtn,background:"#fff",color:C.brand,border:`1px solid ${C.brand}`}} onClick={()=>{setShowPhoneImport(true);setPhoneLog("");}} title="Pull driver phone numbers from MarginIQ">📞 Phones</button>
+            <button style={s.addBtn} onClick={()=>setShowAddD(true)}>+ Add</button></div>
           {showAddD&&<div style={s.addForm}>
             <input style={s.fInp} placeholder="Driver Name" value={newD.name} onChange={e=>setNewD({...newD,name:e.target.value})}/>
             <select style={s.fInp} value={newD.role} onChange={e=>setNewD({...newD,role:e.target.value,category:e.target.value.includes("Owner")?"Owner":"Davis"})}>
@@ -3738,16 +3822,80 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             </select>
             <div style={{display:"flex",gap:8}}><button style={s.saveBtn} onClick={addDriver}>Save</button><button style={s.canBtn} onClick={()=>setShowAddD(false)}>Cancel</button></div>
           </div>}
-          {RG.map(g=>{const fl=drivers.filter(d=>g.f(d)&&(!search||d.name.toLowerCase().includes(search.toLowerCase())));if(!fl.length)return null;
+          {showPhoneImport&&<div style={s.modal} onClick={()=>setShowPhoneImport(false)}>
+            <div style={{...s.modalBox,maxWidth:440}} onClick={e=>e.stopPropagation()}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:15,fontWeight:800,color:C.dark}}>Import phone numbers</div>
+                <button onClick={()=>setShowPhoneImport(false)} style={{border:"none",background:"none",fontSize:22,lineHeight:1,cursor:"pointer",color:"#94a3b8"}}>×</button>
+              </div>
+              <div style={{fontSize:11,color:"#6b7785"}}>Pulls phone numbers from the MarginIQ employee cards and fills them in on each driver, matched by full name. Safe to re-run anytime — it only updates phones.</div>
+              {phoneLog&&<div style={{fontSize:11,color:phoneLog.startsWith("⚠️")?C.red:"#1e293b",background:phoneLog.startsWith("⚠️")?"#fef2f2":"#f0fdf4",border:`1px solid ${phoneLog.startsWith("⚠️")?C.red+"44":C.green+"44"}`,borderRadius:6,padding:"8px 10px",whiteSpace:"pre-wrap",lineHeight:1.5}}>{phoneLog}</div>}
+              <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:4}}>
+                <button onClick={()=>setShowPhoneImport(false)} style={s.wBtn}>Close</button>
+                <button onClick={importPhones} disabled={phoneImporting} style={{...s.saveBtn,opacity:phoneImporting?0.5:1,cursor:phoneImporting?"default":"pointer"}}>{phoneImporting?"Importing…":"📞 Import now"}</button>
+              </div>
+            </div>
+          </div>}
+          {driverView==="list"&&RG.map(g=>{const fl=drivers.filter(d=>g.f(d)&&(!search||d.name.toLowerCase().includes(search.toLowerCase())));if(!fl.length)return null;
             return <div key={g.key}><div style={{...s.dCat,color:g.color}}>{g.label} ({fl.length})</div>
               {fl.map(d=>{const tv=asgn[`${d.name}-${dk}`]||"";
-                return <div key={d.name} style={s.dRow}><div><div style={{...s.dNm,cursor:"pointer",color:C.brand,textDecoration:"underline",textDecorationColor:C.brand+"44"}} onClick={()=>setDriverReport(d.name)}>{drvIcon(d.role)} {d.name}</div><div style={s.dRl}>{d.role}</div></div>
+                return <div key={d.name} style={s.dRow}><div><div style={{...s.dNm,cursor:"pointer",color:C.brand,textDecoration:"underline",textDecorationColor:C.brand+"44"}} onClick={()=>setDriverReport(d.name)}>{drvIcon(d.role)} {d.name}</div><div style={s.dRl}>{d.role}{d.phone?<> · <a href={`tel:${d.phone}`} style={{color:C.brand,textDecoration:"none"}}>📞 {d.phone}</a></>:""}</div></div>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     {tv&&!OFF_OPTS.includes(tv)?<span style={s.tBdg}>#{tv}</span>:OFF_OPTS.includes(tv)?<span style={s.oBdg}>{tv}</span>:null}
                     <button style={s.xBtn} onClick={()=>removeDriver(d.name)}>×</button>
                   </div></div>;
               })}</div>;
           })}
+          {driverView==="cards"&&(()=>{
+            const kpi=(label,val,color)=><div style={{background:"#f8fafc",border:"1px solid #eef2f7",borderRadius:6,padding:"5px 4px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color,lineHeight:1.1}}>{val}</div><div style={{fontSize:8,fontWeight:600,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.3,marginTop:2}}>{label}</div></div>;
+            return RG.map(g=>{const fl=drivers.filter(d=>g.f(d)&&(!search||d.name.toLowerCase().includes(search.toLowerCase())));if(!fl.length)return null;
+              return <div key={g.key}><div style={{...s.dCat,color:g.color}}>{g.label} ({fl.length})</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(230px, 1fr))",gap:10,marginTop:8}}>
+                  {fl.map(d=>{
+                    const tv=asgn[`${d.name}-${dk}`]||"";
+                    const a=attendance[d.name]||{worked:0,off:0,vac:0,calledOut:0,noShow:0,unassigned:0,totalDays:0};
+                    const scheduled=a.totalDays-a.vac;
+                    const rate=scheduled>0?Math.round((a.worked/scheduled)*100):0;
+                    return <div key={d.name} style={{border:"1px solid #e2e8f0",borderRadius:10,padding:12,background:"#fff",display:"flex",flexDirection:"column",gap:8,boxShadow:"0 1px 2px rgba(0,0,0,0.04)"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
+                        <div style={{minWidth:0}}>
+                          <div onClick={()=>setDriverReport(d.name)} style={{fontSize:14,fontWeight:700,color:C.brand,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{drvIcon(d.role)} {d.name}</div>
+                          <div style={{fontSize:10,color:"#6b7785",marginTop:1}}>{d.role}</div>
+                        </div>
+                        <button style={s.xBtn} onClick={()=>removeDriver(d.name)}>×</button>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        {tv&&!OFF_OPTS.includes(tv)?<span style={s.tBdg}>Today #{tv}</span>:OFF_OPTS.includes(tv)?<span style={s.oBdg}>{tv}</span>:<span style={{...s.oBdg,background:"#f1f5f9",color:"#94a3b8"}}>No truck today</span>}
+                        {d.phone?<a href={`tel:${d.phone}`} style={{fontSize:11,fontWeight:600,color:C.brand,textDecoration:"none"}}>📞 {d.phone}</a>:<span style={{fontSize:10,color:"#cbd5e1"}}>No phone</span>}
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}}>
+                        {kpi("Rate",rate+"%",rate>=90?C.green:rate>=75?C.accent:C.red)}
+                        {kpi("Worked",a.worked,C.brand)}
+                        {kpi("Called Out",a.calledOut,a.calledOut>0?C.accent:"#cbd5e1")}
+                        {kpi("No Show",a.noShow,a.noShow>0?C.red:"#cbd5e1")}
+                      </div>
+                    </div>;
+                  })}
+                </div></div>;
+            });
+          })()}
+          {/* Retired drivers — removed from the active roster but kept for history */}
+          {retiredDrivers.length>0&&(()=>{
+            const fl=retiredDrivers.filter(d=>!search||d.name.toLowerCase().includes(search.toLowerCase()));
+            if(!fl.length)return null;
+            return <div style={{marginTop:24,borderTop:"1px solid #e2e8f0",paddingTop:16}}>
+              <div style={{...s.dCat,color:"#94a3b8"}}>🗄️ Retired Drivers ({fl.length})</div>
+              {fl.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>(
+                <div key={d.name} style={{...s.dRow,opacity:0.85}}>
+                  <div><div style={{...s.dNm,color:"#64748b"}}>{drvIcon(d.role)} {d.name}</div><div style={s.dRl}>{d.role}{d.retiredDate?` · retired ${dateStr(d.retiredDate)}`:""}</div></div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <button style={{padding:"5px 12px",fontSize:11,fontWeight:700,background:"#fff",color:C.green,border:`1px solid ${C.green}`,borderRadius:6,cursor:"pointer"}} onClick={()=>restoreDriver(d)}>↩ Restore</button>
+                    <button style={s.xBtn} title="Permanently delete" onClick={()=>purgeDriver(d.name)}>×</button>
+                  </div>
+                </div>
+              ))}
+            </div>;
+          })()}
         </div>}
 
         {/* ══ ATTENDANCE ══ */}
