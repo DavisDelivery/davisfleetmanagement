@@ -60,6 +60,25 @@ export default async (req: Request) => {
           headers: { "Content-Type": "application/json" },
         });
       }
+      case "vehicle": {
+        // Single vehicle by id — used for the live per-edit drift check so we
+        // don't pull the whole fleet on every assignment change.
+        const id = url.searchParams.get("id");
+        if (!id) {
+          return new Response(JSON.stringify({ error: "id required" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        const resp = await fetch(`https://api.gomotive.com/v1/vehicles/${id}`, {
+          headers: { "X-Api-Key": apiKey, "Content-Type": "application/json" },
+        });
+        const text = await resp.text();
+        return new Response(text, {
+          status: resp.status,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       case "drivers": {
         const r = await fetchAllPages("https://api.gomotive.com/v1/users?role=driver", "users", apiKey);
         if (!r.ok) {
