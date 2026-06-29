@@ -92,22 +92,6 @@ export default async (req: Request) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-      case "driver_locations": {
-        // Each driver with their LIVE current_vehicle (the source behind Motive's
-        // driver page). This is the authoritative "who is on which truck right
-        // now" — vehicle.current_driver on /v1/vehicles can be stale.
-        const r = await fetchAllPages("https://api.gomotive.com/v1/driver_locations", "users", apiKey);
-        if (!r.ok) {
-          return new Response(
-            JSON.stringify({ error: `Motive driver_locations request failed (HTTP ${r.status})`, detail: r.body.slice(0, 500) }),
-            { status: r.status, headers: { "Content-Type": "application/json" } }
-          );
-        }
-        return new Response(JSON.stringify({ users: r.items }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
       case "assign": {
         // Assign a driver to a vehicle (or clear it when driverId is null).
         // Motive uses PUT (PATCH returns 405). Assignment goes through the
