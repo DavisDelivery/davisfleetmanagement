@@ -1,7 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, documentId } from "firebase/firestore";
 import pdfParse from "pdf-parse";
 
 /**
@@ -144,33 +144,30 @@ export default async (req: Request) => {
     const fbApp = initializeApp(FIREBASE_CONFIG, `auto-sync-${Date.now()}`);
     const db = getFirestore(fbApp);
 
-    // Read existing data once for dedup
-    const [costsDoc, reviewDoc] = await Promise.all([
-      getDoc(doc(db, "kv", "fl-costs")),
+    // Read existing data once for dedup.
+    // v2.16.7: costs are sharded across per-month docs (fl-costs-<YYYY-MM>) so the log
+    // never hits Firestore's ~1 MB per-document limit. Read every shard (documentId
+    // range query) plus any legacy monolithic fl-costs, build the dedup set from all
+    // of them, and keep each shard's array so new invoices can be appended to the
+    // right shard below.
+    const [reviewDoc, legacyCostsDoc, shardSnap] = await Promise.all([
       getDoc(doc(db, "kv", "fl-review-queue")),
+      getDoc(doc(db, "kv", "fl-costs")),
+      getDocs(query(collection(db, "kv"), where(documentId(), ">=", "fl-costs-"), where(documentId(), "<", "fl-costs-"))),
     ]);
-    const existingCosts = costsDoc.exists() ? JSON.parse(costsDoc.data().v) : [];
+    const shardEntries: Record<string, any[]> = {}; // shard key (YYYY-MM) -> entries currently in that shard
+    const existingCosts: any[] = [];
+    shardSnap.forEach((d) => {
+      try {
+        const arr = JSON.parse(d.data().v);
+        if (Array.isArray(arr)) { shardEntries[d.id.slice("fl-costs-".length)] = arr; existingCosts.push(...arr); }
+      } catch {}
+    });
+    if (legacyCostsDoc.exists()) {
+      try { const arr = JSON.parse(legacyCostsDoc.data().v); if (Array.isArray(arr)) existingCosts.push(...arr); } catch {}
+    }
     const existingReview = reviewDoc.exists() ? JSON.parse(reviewDoc.data().v) : [];
     for (const c of existingCosts) if (c.invoiceNum) dedupInvoiceNums.add(String(c.invoiceNum).toUpperCase());
-
-    // v2.11: Firestore caps a single document field at ~1,048,487 bytes. The fl-costs
-    // blob grows unbounded, and once it nears that ceiling EVERY setDoc throws
-    // "INVALID_ARGUMENT: property 'v' is longer than 1048487 bytes" — which is what the
-    // user saw on the Costs page. Before, the function would still burn Anthropic calls
-    // scanning the whole queue and THEN fail on write, repeating nightly forever. Now we
-    // short-circuit with a clear, actionable message and zero AI spend.
-    const FIRESTORE_DOC_LIMIT = 1_000_000; // ~1MB with headroom for the ts field + overhead
-    const existingCostsBytes = costsDoc.exists() ? (costsDoc.data().v || "").length : 0;
-    if (existingCostsBytes > FIRESTORE_DOC_LIMIT) {
-      await store.setJSON("sync-state", {
-        ...prevState,
-        running: false,
-        lastRun: new Date().toISOString(),
-        message: `✗ Auto-sync paused: the cost log has reached Firestore's 1 MB limit (${Math.round(existingCostsBytes / 1024)} KB). Archive or export old invoices to free space, then sync again. No new invoices were processed (no AI cost incurred).`,
-        errors: ["fl-costs is at the 1 MB Firestore document limit"],
-      });
-      return json({ error: "cost log at storage limit", paused: true, bytes: existingCostsBytes }, 200);
-    }
 
     const newCostsAdds: any[] = [];
     const newReviewAdds: any[] = [];
@@ -217,28 +214,22 @@ export default async (req: Request) => {
       }
     }
 
-    // ── 5. Write back to Firestore (single write each)
+    // ── 5. Write new invoices back — append each to its per-month shard (fl-costs-<YYYY-MM>).
+    // v2.16.7: sharding keeps every doc well under Firestore's 1 MB limit, so instead of
+    // pausing the whole sync we only skip the (very rare) individual month that would overflow.
     if (newCostsAdds.length > 0) {
-      const updated = [...existingCosts, ...newCostsAdds];
-      const costsJson = JSON.stringify(updated);
-      // v2.11: guard the incremental write too — if these new rows would push the blob
-      // over the 1 MB ceiling, surface a clear message rather than letting setDoc throw
-      // the raw INVALID_ARGUMENT. The dedup-index below is NOT updated in this case, so
-      // these attachments can be retried after the cost log is trimmed.
-      if (costsJson.length > FIRESTORE_DOC_LIMIT) {
-        await store.setJSON("sync-state", {
-          ...prevState,
-          running: false,
-          lastRun: new Date().toISOString(),
-          message: `✗ Auto-sync paused: saving ${newCostsAdds.length} new invoice(s) would exceed Firestore's 1 MB limit (${Math.round(costsJson.length / 1024)} KB). Archive or export old invoices, then sync again.`,
-          errors: ["fl-costs would exceed the 1 MB Firestore document limit"],
-        });
-        return json({ error: "cost log would exceed storage limit", paused: true, bytes: costsJson.length }, 200);
+      const SHARD_LIMIT = 1_000_000; // ~1MB with headroom for the ts field + overhead
+      const byShard: Record<string, any[]> = {};
+      for (const e of newCostsAdds) { const k = costShardKey(e); (byShard[k] ||= []).push(e); }
+      for (const k of Object.keys(byShard)) {
+        const merged = [...(shardEntries[k] || []), ...byShard[k]];
+        const shardJson = JSON.stringify(merged);
+        if (shardJson.length > SHARD_LIMIT) {
+          errors.push(`fl-costs-${k} would exceed 1 MB (${Math.round(shardJson.length / 1024)} KB) — ${byShard[k].length} invoice(s) not saved; archive older invoices.`);
+          continue;
+        }
+        await setDoc(doc(db, "kv", `fl-costs-${k}`), { v: shardJson, ts: new Date().toISOString() });
       }
-      await setDoc(doc(db, "kv", "fl-costs"), {
-        v: costsJson,
-        ts: new Date().toISOString(),
-      });
     }
     if (newReviewAdds.length > 0) {
       const updated = [...existingReview, ...newReviewAdds];
@@ -289,6 +280,12 @@ export default async (req: Request) => {
 };
 
 // ──────────────────────────────────────────────────────────────────────────
+
+// v2.16.7: per-month shard key for a cost entry — must match costShardKey() in App.jsx.
+function costShardKey(e: any): string {
+  const m = String(e?.date || "").slice(0, 7);
+  return /^\d{4}-\d{2}$/.test(m) ? m : "unknown";
+}
 
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string) {
   const resp = await fetch("https://oauth2.googleapis.com/token", {
