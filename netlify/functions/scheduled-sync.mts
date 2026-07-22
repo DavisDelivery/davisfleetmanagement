@@ -1,13 +1,19 @@
 import type { Config } from "@netlify/functions";
 
 /**
- * Scheduled function — runs daily at 11:00 UTC (~7am Eastern, ~6am Central) and
- * calls /api/auto-sync to do the actual work. Kept thin so the cron logic and
- * the sync logic stay testable independently.
+ * Scheduled function — runs every 3 hours and calls /api/auto-sync to do the
+ * actual work. Kept thin so the cron logic and the sync logic stay testable
+ * independently.
  *
- * Note: Netlify scheduled functions have the same 26s timeout on the dev plan,
- * so auto-sync is designed to time-budget itself and persist state. If a sync
- * doesn't finish in one invocation, the next night picks up where it left off.
+ * v2.16.8: bumped from once-daily to every 3h with a 30-day lookback so invoices
+ * are auto-ingested throughout the day and the sync reliably keeps up with volume
+ * (one nightly run + a ~22s budget could lag behind a busy week). This is cost-safe:
+ * auto-sync dedups every attachment BEFORE the paid AI call, so once caught up a run
+ * finds nothing new and costs ~nothing — only genuinely new invoices are ever scanned.
+ *
+ * Note: Netlify scheduled functions share the 26s timeout, so auto-sync time-budgets
+ * itself and persists state; if a run doesn't finish, the next run picks up where it
+ * left off (dedup skips what's already imported).
  */
 export default async () => {
   const siteUrl = Netlify.env.get("URL") || "https://davis-fleet-mgmt.netlify.app";
@@ -15,7 +21,7 @@ export default async () => {
     const resp = await fetch(`${siteUrl}/api/auto-sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ daysBack: 7, triggeredBy: "schedule" }),
+      body: JSON.stringify({ daysBack: 30, triggeredBy: "schedule" }),
     });
     const data = await resp.json();
     console.log("[scheduled-sync]", resp.status, JSON.stringify(data));
@@ -32,6 +38,6 @@ export default async () => {
 };
 
 export const config: Config = {
-  // Daily at 11:00 UTC (06:00 Central / 07:00 Eastern)
-  schedule: "0 11 * * *",
+  // Every 3 hours, on the hour (00:00, 03:00, 06:00 … UTC)
+  schedule: "0 */3 * * *",
 };
