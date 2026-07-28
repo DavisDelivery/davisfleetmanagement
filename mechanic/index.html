@@ -525,7 +525,7 @@ function repairCardHtml(r) {
         ${reasonSelectHtml(r.id, r.reason)}
       </div>
       <div class="card-meta">
-        <div class="meta-item">In: <span>${dateStr(r.dateIn)}</span></div>
+        <div class="meta-item">In: <span>${dateStr(r.dateIn)}</span>${r.openedBy ? ` by <span style="color:var(--brand)">${escHtml(r.openedBy)}</span>` : ""}</div>
         ${r.estReturn ? `<div class="meta-item">Est return: <span>${dateStr(r.estReturn)}</span></div>` : ""}
         ${ageChip(r.dateIn)}
       </div>
@@ -570,7 +570,7 @@ function renderHistory(closed) {
       </div>
       <div style="font-size:12px;color:var(--red);font-weight:600;margin-top:4px;">${r.reason}</div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
-        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">In: <span style="color:var(--text)">${dateStr(r.dateIn)}</span></span>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">In: <span style="color:var(--text)">${dateStr(r.dateIn)}</span>${r.openedBy ? ` by <span style="color:var(--brand)">${escHtml(r.openedBy)}</span>` : ""}</span>
         <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">Closed: <span style="color:var(--green)">${dateStr(r.dateClosed)}</span>${r.closedBy ? ` by <span style="color:var(--green)">${escHtml(r.closedBy)}</span>` : ""}</span>
         ${r.shop ? `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">Shop: <span style="color:var(--text)">${escHtml(r.shop)}</span></span>` : ""}
       </div>
@@ -734,18 +734,22 @@ async function logNewRepair() {
   const btn = document.querySelector(".btn-log");
   btn.disabled = true;
   btn.textContent = "Saving...";
+  // v2.16.14: record WHO opened the ticket (same per-device name that signs notes),
+  // and sign the opening note with it too.
+  const openedBy = ensureDeviceUser();
   const rec = {
     id: Date.now(),
     truckId,
     reason,
     shop,
     estReturn: est || null,
-    notesLog: notes ? [{ ts: new Date().toISOString(), text: notes }] : [],
+    notesLog: notes ? [{ ts: new Date().toISOString(), text: notes, ...(openedBy ? { by: openedBy } : {}) }] : [],
     notes: "",
     dateIn: new Date().toISOString(),
     dateClosed: null,
     status: "open",
-    cost: 0
+    cost: 0,
+    ...(openedBy ? { openedBy } : {})
   };
   // Build the new array explicitly — don't rely on module-level `repairs`
   // which can be overwritten by onSnapshot mid-await.

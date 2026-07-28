@@ -1,4 +1,4 @@
-const APP_VERSION = "2.16.11";
+const APP_VERSION = "2.16.14";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -252,6 +252,38 @@ function App(){
   // load or cascade into resetting an unrelated collection.
   const pj=(r,fb)=>{if(!r)return fb;try{return JSON.parse(r.value);}catch(e){return fb;}};
 
+  // v2.16.7: load costs from per-month shards (fl-costs-<YYYY-MM>), merging any legacy
+  // monolithic fl-costs. With migrate=true (first load) the legacy doc is split into
+  // shards so it stops bumping Firestore's 1 MB limit — non-destructive: it's read+
+  // merged every load and only emptied after EVERY shard write succeeds.
+  // v2.16.13: extracted so the backlog sweep can re-read (migrate=false) and show
+  // server-imported invoices without a page reload.
+  const loadCostsFromShards=useCallback(async(migrate=false)=>{
+    try{
+      const lst=await window.storage.list("fl-costs").catch(()=>({keys:[]}));
+      const keys=(((lst&&lst.keys)||[]).filter(k=>k==="fl-costs"||/^fl-costs-/.test(k)));
+      const docs=await Promise.all(keys.map(k=>window.storage.get(k).catch(()=>null)));
+      const legacyIdx=keys.indexOf("fl-costs");
+      const legacyArr=legacyIdx>=0?pj(docs[legacyIdx],[]):[];
+      const byId=new Map();const noId=[];
+      // process legacy first, shards after → a shard copy wins on any id collision
+      const ordered=keys.map((k,i)=>({k,r:docs[i]})).sort((a,b)=>(a.k==="fl-costs"?-1:b.k==="fl-costs"?1:0));
+      for(const{r}of ordered){const arr=pj(r,[]);if(Array.isArray(arr))for(const e of arr){if(e&&e.id!=null)byId.set(e.id,e);else noId.push(e);}}
+      const costs=[...byId.values(),...noId];
+      setCostEntries(costs);
+      const groups={};for(const e of costs){const k=costShardKey(e);(groups[k]||(groups[k]=[])).push(e);}
+      const ref={};for(const k of Object.keys(groups))ref[k]=JSON.stringify(groups[k]);
+      costShardJsonRef.current=ref;
+      if(migrate&&Array.isArray(legacyArr)&&legacyArr.length>0){
+        let ok=true;
+        for(const k of Object.keys(groups)){const res=await window.storage.set(`fl-costs-${k}`,JSON.stringify(groups[k]));if(res===null){ok=false;break;}}
+        if(ok){await window.storage.set("fl-costs",JSON.stringify([]));console.log(`Migrated ${legacyArr.length} cost entries from fl-costs into ${Object.keys(groups).length} month shard(s).`);}
+        else console.log("Cost migration deferred: a shard write failed; legacy fl-costs kept as backup.");
+      }
+      return costs.length;
+    }catch(e){console.log("Cost shard load failed:",e);return 0;}
+  },[]);
+
   // Load GLOBAL (non-week-scoped) data once on mount. Previously this ran on every
   // week change with dep [wk], which re-fetched week-independent collections and
   // could snap costs/trucks back to a pre-save value mid-flight.
@@ -275,33 +307,7 @@ function App(){
     setRetiredDrivers(pj(rdR,[]));
     const m=pj(mmR,null);if(m)setMotiveMap({vehicles:m.vehicles||{},drivers:m.drivers||{}});
 
-    // v2.16.7: load costs from per-month shards (fl-costs-<YYYY-MM>), merge with any
-    // legacy monolithic fl-costs, and — one time — migrate that legacy doc into
-    // shards so it stops bumping Firestore's 1 MB limit. Non-destructive: the
-    // legacy doc is read+merged every load, and only emptied after EVERY shard
-    // write succeeds, so no entry can be lost mid-migration.
-    try{
-      const lst=await window.storage.list("fl-costs").catch(()=>({keys:[]}));
-      const keys=(((lst&&lst.keys)||[]).filter(k=>k==="fl-costs"||/^fl-costs-/.test(k)));
-      const docs=await Promise.all(keys.map(k=>window.storage.get(k).catch(()=>null)));
-      const legacyIdx=keys.indexOf("fl-costs");
-      const legacyArr=legacyIdx>=0?pj(docs[legacyIdx],[]):[];
-      const byId=new Map();const noId=[];
-      // process legacy first, shards after → a shard copy wins on any id collision
-      const ordered=keys.map((k,i)=>({k,r:docs[i]})).sort((a,b)=>(a.k==="fl-costs"?-1:b.k==="fl-costs"?1:0));
-      for(const{r}of ordered){const arr=pj(r,[]);if(Array.isArray(arr))for(const e of arr){if(e&&e.id!=null)byId.set(e.id,e);else noId.push(e);}}
-      const costs=[...byId.values(),...noId];
-      setCostEntries(costs);
-      const groups={};for(const e of costs){const k=costShardKey(e);(groups[k]||(groups[k]=[])).push(e);}
-      const ref={};for(const k of Object.keys(groups))ref[k]=JSON.stringify(groups[k]);
-      costShardJsonRef.current=ref;
-      if(Array.isArray(legacyArr)&&legacyArr.length>0){
-        let ok=true;
-        for(const k of Object.keys(groups)){const res=await window.storage.set(`fl-costs-${k}`,JSON.stringify(groups[k]));if(res===null){ok=false;break;}}
-        if(ok){await window.storage.set("fl-costs",JSON.stringify([]));console.log(`Migrated ${legacyArr.length} cost entries from fl-costs into ${Object.keys(groups).length} month shard(s).`);}
-        else console.log("Cost migration deferred: a shard write failed; legacy fl-costs kept as backup.");
-      }
-    }catch(e){console.log("Cost shard load failed:",e);}
+    await loadCostsFromShards(true);
 
     setLoaded(true);
   })();},[]);
@@ -438,6 +444,8 @@ function App(){
   const saveReviewQueue=useCallback(q=>{setReviewQueue(q);sv("fl-review-queue",q);},[sv]);
   const[syncStatus,setSyncStatus]=useState(null);
   const[syncing,setSyncing]=useState(false);
+  const[backlog,setBacklog]=useState(null); // v2.16.13: backlog sweep progress {running,pass,imported,queued,scanned,note}
+  const backlogStopRef=useRef(false);
 
   // ── Motive driver-assignment sync (Weekly Board → Motive) ──
   // The Weekly Board stores assignments as {"DriverName-Day":"TruckId"} in Firestore.
@@ -1152,6 +1160,51 @@ Format your response as clear sections with headers using ** for bold. Use speci
       toast(`Sync failed: ${e.message}`);
     }
     setSyncing(false);
+  };
+
+  // v2.16.13: one-click backlog sweep. The scheduled sync only looks back 30 days, so
+  // older invoices are never reached. This repeatedly calls /api/auto-sync over a wide
+  // window until a pass finds nothing new (each server run is time-budgeted to ~22s and
+  // resumes where the last left off). Cost-safe: attachments are deduped BEFORE the paid
+  // AI call, so only genuinely new invoices are ever scanned. Stoppable mid-run.
+  const catchUpBacklog=async(daysBack=365)=>{
+    if(!gmailConn?.refresh_token){toast("Connect Gmail first (below).");return;}
+    const months=Math.round(daysBack/30);
+    if(!await uiConfirm(`Catch up the invoice backlog?\n\nScans about the last ${months} months of vendor email and imports anything not already in the ledger. Confident invoices import automatically; uncertain ones go to the Review Queue.\n\nIt runs in passes and can take several minutes. Invoices it has already imported are skipped for free — only genuinely new ones use AI credits. You can stop it at any time.`))return;
+    backlogStopRef.current=false;
+    let pass=0,imported=0,queued=0,scanned=0;
+    const MAX_PASSES=60;
+    setBacklog({running:true,pass:0,imported:0,queued:0,scanned:0});
+    while(pass<MAX_PASSES){
+      if(backlogStopRef.current){setBacklog({running:false,pass,imported,queued,scanned,note:"Stopped."});toast(`Backlog sweep stopped — imported ${imported}, queued ${queued}.`);return;}
+      pass++;
+      setBacklog({running:true,pass,imported,queued,scanned});
+      let data;
+      try{
+        const resp=await fetch("/api/auto-sync",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({daysBack,triggeredBy:"backlog"})});
+        data=await resp.json();
+      }catch(e){
+        setBacklog({running:false,pass,imported,queued,scanned,note:`Failed: ${e.message}`});
+        toast(`Backlog sweep failed: ${e.message}`);return;
+      }
+      if(data&&(data.paused||data.error)){
+        const msg=data.error||"paused";
+        setBacklog({running:false,pass,imported,queued,scanned,note:msg});
+        toast(`Backlog sweep stopped: ${msg}`);
+        await refreshSyncStatus();return;
+      }
+      imported+=data.imported||0;queued+=data.queued||0;scanned+=data.processed||0;
+      setBacklog({running:true,pass,imported,queued,scanned});
+      await refreshSyncStatus();
+      // A pass that processed nothing means the queue is empty → we're caught up.
+      if(!data.processed){break;}
+    }
+    await loadCostsFromShards(false); // pull in what the server just wrote, no reload needed
+    const hitCap=pass>=MAX_PASSES;
+    setBacklog({running:false,pass,imported,queued,scanned,note:hitCap?`Stopped after ${MAX_PASSES} passes — run again to continue.`:"Caught up ✓"});
+    toast(hitCap
+      ?`Paused after ${MAX_PASSES} passes — imported ${imported}, queued ${queued}. Run again to continue.`
+      :`Backlog caught up — imported ${imported}, queued ${queued} for review.`);
   };
 
   const refreshSyncStatus=useCallback(async()=>{
@@ -2958,7 +3011,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
   };
   // Repair functions
   const addRepair=(truckId)=>{
-    const rec={id:Date.now(),truckId,reason:repairForm.reason,notes:repairForm.notes,shop:repairForm.shop,dateIn:new Date().toISOString(),estReturn:repairForm.estReturn||null,cost:repairForm.cost?Number(repairForm.cost):0,dateClosed:null,status:"open"};
+    // v2.16.14: record WHO opened the ticket (same per-device name that signs notes)
+    const rec={id:Date.now(),truckId,reason:repairForm.reason,notes:repairForm.notes,shop:repairForm.shop,dateIn:new Date().toISOString(),estReturn:repairForm.estReturn||null,cost:repairForm.cost?Number(repairForm.cost):0,dateClosed:null,status:"open",...(deviceUser?{openedBy:deviceUser}:{})};
     const next=[rec,...repairs];
     saveRepairs(next);
     setRepairForm({reason:"Mechanical Repair",notes:"",shop:"",estReturn:"",cost:""});
@@ -4248,7 +4302,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     onKeyDown={e=>{if(e.key==="Enter")e.target.blur();}}
                     style={{flex:"1 1 120px",fontSize:11,padding:"4px 6px",border:"1px solid #e2e8f0",borderRadius:4,outline:"none",background:"#fff",boxSizing:"border-box"}}
                   />
-                  <span>In: {dateStr(r.dateIn)}</span>
+                  <span>In: {dateStr(r.dateIn)}{r.openedBy?<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>:null}</span>
                   {r.estReturn&&<span>Est: {dateStr(r.estReturn)}</span>}
                   {r.cost>0&&<span>${r.cost.toLocaleString()}</span>}
                 </div>
@@ -4293,7 +4347,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 })}
               </div>}
               <div style={{fontSize:10,color:"#94a3b8",marginTop:4}}>
-                In: {dateStr(r.dateIn)}{r.dateClosed&&` · Resolved: ${dateStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
+                In: {dateStr(r.dateIn)}{r.openedBy&&<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>}{r.dateClosed&&` · Resolved: ${dateStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
               </div>
             </div>;
           })}
@@ -4647,6 +4701,20 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                         style={{padding:"6px 14px",fontSize:12,fontWeight:700,background:syncing?C.accent:"#1e3a8a",color:"#fff",border:"none",borderRadius:6,cursor:syncing?"wait":"pointer",opacity:!gmailConn?.refresh_token?0.5:1}}>
                         {syncing?"⏳ Syncing...":"⚡ Sync Now"}
                       </button>
+                    </div>
+                    {/* v2.16.13: one-click sweep for invoices older than the 30-day schedule window */}
+                    <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:6}}>
+                      <button
+                        onClick={()=>backlog?.running?(backlogStopRef.current=true):catchUpBacklog(365)}
+                        disabled={syncing||!gmailConn?.refresh_token}
+                        title="Scan the last ~12 months of vendor email and import anything missing. Already-imported invoices are skipped for free."
+                        style={{padding:"6px 14px",fontSize:12,fontWeight:700,background:backlog?.running?C.red:"#fff",color:backlog?.running?"#fff":"#1e3a8a",border:`1px solid ${backlog?.running?C.red:"#1e3a8a"}`,borderRadius:6,cursor:(syncing||!gmailConn?.refresh_token)?"default":"pointer",opacity:!gmailConn?.refresh_token?0.5:1,whiteSpace:"nowrap"}}>
+                        {backlog?.running?"■ Stop sweep":"📥 Catch Up Backlog"}
+                      </button>
+                      {backlog&&<span style={{fontSize:11,color:backlog.running?C.accent:"#475569"}}>
+                        {backlog.running?`Pass ${backlog.pass} · scanned ${backlog.scanned} · imported ${backlog.imported}${backlog.queued?` · ${backlog.queued} to review`:""}…`
+                          :`${backlog.note||"Done"} — imported ${backlog.imported}${backlog.queued?`, ${backlog.queued} queued for review`:""}`}
+                      </span>}
                     </div>
                     <div style={{fontSize:11,color:"#475569",lineHeight:1.5}}>
                       {syncStatus?(()=>{
@@ -6211,7 +6279,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               </div>
               {r.notes&&<div style={{fontSize:11,color:"#6b7785"}}>{r.notes}</div>}
               <div style={{fontSize:10,color:"#94a3b8"}}>
-                In: {dateStr(r.dateIn)}{r.dateClosed&&` · Out: ${dateStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
+                In: {dateStr(r.dateIn)}{r.openedBy&&<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>}{r.dateClosed&&` · Out: ${dateStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
               </div>
             </div>
           )}
@@ -6470,12 +6538,19 @@ const s={
   header:{background:"#fff",borderBottom:"2px solid #e2e8f0",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"},
   hInner:{padding:"12px 20px 0",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8},
   tabs:{display:"flex",gap:0,overflowX:"auto"},
-  tab:{padding:"10px 14px",fontSize:12,fontWeight:500,color:"#6b7785",background:"none",border:"none",borderBottom:"2px solid transparent",cursor:"pointer",whiteSpace:"nowrap",position:"relative",outline:"none",textDecoration:"none",WebkitTapHighlightColor:"transparent",WebkitAppearance:"none"},
+  // v2.16.12: the underline uses LONGHANDS (borderBottomWidth/Style/Color), not the
+  // `borderBottom` shorthand. tabOn overrides borderBottomColor; with the shorthand,
+  // React cleared only that longhand when a tab deactivated, which resets it to the
+  // initial value (black) instead of the shorthand's transparent — so the previously
+  // active tab kept a black underline. Longhands on both sides make it flip cleanly.
+  tab:{padding:"10px 14px",fontSize:12,fontWeight:500,color:"#6b7785",background:"none",border:"none",borderBottomWidth:"2px",borderBottomStyle:"solid",borderBottomColor:"transparent",cursor:"pointer",whiteSpace:"nowrap",position:"relative",outline:"none",textDecoration:"none",WebkitTapHighlightColor:"transparent",WebkitAppearance:"none"},
   tabOn:{color:C.brand,borderBottomColor:C.brand,fontWeight:700},
   badge:{position:"absolute",top:4,right:2,fontSize:9,fontWeight:700,background:C.red,color:"#fff",borderRadius:10,padding:"1px 5px",minWidth:16,textAlign:"center"},
   body:{padding:"16px 12px 40px",maxWidth:1200,margin:"0 auto"},
   statGrid:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))",gap:10},
-  statCard:{background:"#fff",borderRadius:10,padding:"16px 14px",border:"1px solid #e2e8f0",boxShadow:"0 1px 2px rgba(0,0,0,0.03)"},
+  // longhands (not the `border` shorthand) — Stat overrides borderColor on hover, and
+  // with a shorthand base React resets it to black on un-hover. See the tab note above.
+  statCard:{background:"#fff",borderRadius:10,padding:"16px 14px",borderWidth:"1px",borderStyle:"solid",borderColor:"#e2e8f0",boxShadow:"0 1px 2px rgba(0,0,0,0.03)"},
   secT:{fontSize:14,fontWeight:700,color:"#1e293b",marginBottom:10},
   bGrid:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6},
   bItem:{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"#fff",borderRadius:6,border:"1px solid #e2e8f0"},
@@ -6499,7 +6574,7 @@ const s={
   eCell:{padding:4,background:"#f0f5ff",minWidth:140,cursor:"default"},
   ePanel:{display:"flex",flexDirection:"column",gap:4},
   offRow:{display:"flex",gap:2,flexWrap:"wrap"},
-  oBtn:{padding:"2px 5px",fontSize:8,fontWeight:700,background:"#fff",color:"#6b7785",border:"1px solid #d1d9e0",borderRadius:3,cursor:"pointer"},
+  oBtn:{padding:"2px 5px",fontSize:8,fontWeight:700,background:"#fff",color:"#6b7785",borderWidth:"1px",borderStyle:"solid",borderColor:"#d1d9e0",borderRadius:3,cursor:"pointer"}, // longhands: oBtnOn overrides borderColor (see tab note)
   oBtnOn:{background:"#fef3c7",color:C.accent,borderColor:C.accent},
   clrBtn:{padding:"2px 5px",fontSize:8,fontWeight:700,background:"#fef2f2",color:C.red,border:`1px solid ${C.red}44`,borderRadius:3,cursor:"pointer"},
   cInp:{width:"100%",padding:"4px 6px",fontSize:12,fontFamily:"monospace",background:"#fff",color:"#1e293b",border:`1px solid ${C.brand}`,borderRadius:3,outline:"none"},
