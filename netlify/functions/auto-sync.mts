@@ -49,7 +49,10 @@ export default async (req: Request) => {
   try {
     if (req.method === "POST") {
       const body = await req.json();
-      if (typeof body?.daysBack === "number") daysBack = Math.max(1, Math.min(90, body.daysBack));
+      // v2.16.13: cap raised from 90 → 1095 days so the one-click "Catch Up Backlog"
+      // sweep can reach historical invoices. Safe: every attachment is deduped BEFORE
+      // the paid AI call, so a wide window only costs anything for genuinely new ones.
+      if (typeof body?.daysBack === "number") daysBack = Math.max(1, Math.min(1095, body.daysBack));
     }
   } catch {}
 
