@@ -31,8 +31,13 @@
   .header-logo { width: 36px; height: 36px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 16px; color: #fff; flex-shrink: 0; }
   .header-title { font-weight: 700; font-size: 16px; line-height: 1.2; }
   .header-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
-  .header-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; font-family: var(--mono); padding: 3px 8px; border-radius: 12px; display: none; }
+  .header-badge { background: var(--red); color: #fff; font-size: 11px; font-weight: 700; font-family: var(--mono); padding: 3px 8px; border-radius: 12px; display: none; }
   .header-badge.visible { display: block; }
+  /* WHO'S USING THIS DEVICE — stamps the name onto every note added here */
+  .who-chip { margin-left: auto; display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 5px 10px; font-size: 11px; font-weight: 600; color: var(--text); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .who-chip:hover { border-color: var(--brand); }
+  .who-chip.unset { border-color: var(--yellow); color: var(--yellow); }
+  .note-by { font-size: 10px; color: var(--brand); font-weight: 600; white-space: nowrap; margin-top: 1px; }
 
   /* LOADING */
   #loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
@@ -152,6 +157,7 @@
     <div class="header-title">Davis Fleet — Shop Portal</div>
     <div class="header-sub">mechanics.davisfleetmanagement.netlify.app</div>
   </div>
+  <button class="who-chip unset" id="who-chip" onclick="changeDeviceUser()" title="Who's using this device — stamped on notes you add">👤 Set your name</button>
   <div class="header-badge" id="open-badge">0</div>
 </div>
 
@@ -265,6 +271,7 @@ const OOS_REASONS = ["Mechanical Repair","Planned Maintenance","Tires","Body/Pai
 
 // ── INIT ─────────────────────────────────────────────────────────────
 async function init() {
+  renderWhoChip(); // show who's using this device (name is stamped on notes added here)
   // Set up real-time listener for trucks (fires immediately + on changes)
   db.collection("kv").doc("fl-trucks").onSnapshot(snap => {
     if (!snap.exists) {
@@ -373,6 +380,7 @@ function noteEntryHtml(repairId, entry, idx) {
   return `<div class="note-entry" id="note-${repairId}-${idx}">
     <span class="note-ts">${shortTs(entry.ts)}</span>
     <span class="note-text" id="nt-${repairId}-${idx}">${escHtml(entry.text)}</span>
+    ${entry.by ? `<span class="note-by" title="Added by ${escHtml(entry.by)}">— ${escHtml(entry.by)}</span>` : ""}
     <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit note">✎</button>
     <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete note">✕</button>
   </div>`;
@@ -399,6 +407,45 @@ function notesLogHtml(repairId, notesLog, legacyNote) {
 function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
+/* ── WHO'S USING THIS DEVICE ─────────────────────────────────────────────
+   There are no logins in this app, so notes had no author — you could see
+   WHEN a note was added but never WHO added it. This stores a per-device
+   name in localStorage and stamps it onto each note added from this device
+   (entry.by). Existing notes have no `by` and simply render without an
+   author. It's an honour-system label, not authentication. */
+const DEVICE_USER_KEY = "fl-device-user";
+function getDeviceUser() {
+  try { return (localStorage.getItem(DEVICE_USER_KEY) || "").trim(); } catch (e) { return ""; }
+}
+function setDeviceUser(name) {
+  try { localStorage.setItem(DEVICE_USER_KEY, (name || "").trim()); } catch (e) {}
+  renderWhoChip();
+}
+function renderWhoChip() {
+  const el = document.getElementById("who-chip");
+  if (!el) return;
+  const who = getDeviceUser();
+  el.textContent = who ? `👤 ${who}` : "👤 Set your name";
+  el.classList.toggle("unset", !who);
+  el.title = who
+    ? `Notes you add are stamped "${who}" — tap to change`
+    : "Who's using this device — tap to set, so your notes are signed";
+}
+function changeDeviceUser() {
+  const next = prompt("Who's using this device?\n\nYour name gets stamped on every note you add here.", getDeviceUser());
+  if (next === null) return;                 // cancelled
+  setDeviceUser(next);
+  showToast(getDeviceUser() ? `Signed in as ${getDeviceUser()}` : "Name cleared");
+}
+/* Ask once, at the moment it matters, if they add a note with no name set. */
+function ensureDeviceUser() {
+  if (getDeviceUser()) return getDeviceUser();
+  const next = prompt("Who's using this device?\n\nYour name gets stamped on every note you add here. (Leave blank to skip.)", "");
+  if (next === null) return "";
+  setDeviceUser(next);
+  return getDeviceUser();
+}
+
 function showToast(msg, color) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -550,7 +597,8 @@ async function addNote(id) {
   const r = repairs.find(x => x.id == id);
   if (!r) return;
   const existingLog = r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
-  const newEntry = { ts: new Date().toISOString(), text };
+  const by = ensureDeviceUser();
+  const newEntry = { ts: new Date().toISOString(), text, ...(by ? { by } : {}) };
   const newLog = [...existingLog, newEntry];
   const updated = repairs.map(r2 => r2.id == id
     ? { ...r2, notesLog: newLog, notes: "" }
