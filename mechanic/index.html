@@ -33,10 +33,12 @@
   .header-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
   .header-badge { background: var(--red); color: #fff; font-size: 11px; font-weight: 700; font-family: var(--mono); padding: 3px 8px; border-radius: 12px; display: none; }
   .header-badge.visible { display: block; }
-  /* WHO'S USING THIS DEVICE — stamps the name onto every note added here */
-  .who-chip { margin-left: auto; display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 5px 10px; font-size: 11px; font-weight: 600; color: var(--text); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-  .who-chip:hover { border-color: var(--brand); }
-  .who-chip.unset { border-color: var(--yellow); color: var(--yellow); }
+  /* WHO'S USING THIS DEVICE — full-width bar; stamps the name onto notes added here */
+  .who-bar { display: block; width: 100%; box-sizing: border-box; text-align: left; background: var(--surface2); border: none; border-bottom: 1px solid var(--border); padding: 10px 16px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .who-bar:active { background: var(--border); }
+  .who-bar .who-hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+  .who-bar.unset { background: rgba(245,158,11,0.12); border-bottom-color: var(--yellow); color: var(--yellow); }
+  .who-bar.unset .who-hint { color: var(--yellow); opacity: 0.85; }
   .note-by { font-size: 10px; color: var(--brand); font-weight: 600; white-space: nowrap; margin-top: 1px; }
 
   /* LOADING */
@@ -157,9 +159,12 @@
     <div class="header-title">Davis Fleet — Shop Portal</div>
     <div class="header-sub">mechanics.davisfleetmanagement.netlify.app</div>
   </div>
-  <button class="who-chip unset" id="who-chip" onclick="changeDeviceUser()" title="Who's using this device — stamped on notes you add">👤 Set your name</button>
   <div class="header-badge" id="open-badge">0</div>
 </div>
+
+<!-- WHO'S USING THIS DEVICE — full-width so it's unmissable on a phone.
+     The header is already full (title + URL + badge) on a narrow screen. -->
+<button class="who-bar unset" id="who-bar" onclick="changeDeviceUser()"></button>
 
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('open')" id="tab-open">
@@ -422,14 +427,13 @@ function setDeviceUser(name) {
   renderWhoChip();
 }
 function renderWhoChip() {
-  const el = document.getElementById("who-chip");
+  const el = document.getElementById("who-bar");
   if (!el) return;
   const who = getDeviceUser();
-  el.textContent = who ? `👤 ${who}` : "👤 Set your name";
+  el.innerHTML = who
+    ? `👤 You: ${escHtml(who)} <span class="who-hint">— tap to change</span>`
+    : `👤 Who's using this device? <span class="who-hint">Tap to add your name so your notes are signed.</span>`;
   el.classList.toggle("unset", !who);
-  el.title = who
-    ? `Notes you add are stamped "${who}" — tap to change`
-    : "Who's using this device — tap to set, so your notes are signed";
 }
 function changeDeviceUser() {
   const next = prompt("Who's using this device?\n\nYour name gets stamped on every note you add here.", getDeviceUser());
