@@ -1,4 +1,4 @@
-const APP_VERSION = "2.16.15";
+const APP_VERSION = "2.16.17";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -105,6 +105,9 @@ const OFF_OPTS=["OFF","VAC","CALLED OUT","NO SHOW"];
 const TRACTOR_MAKES=["Kenworth","Peterbilt","Freightliner","Volvo","Mack","International","Western Star","Other"];
 const BOX_MAKES=["Freightliner","Hino","International","Ford","Isuzu","Other"];
 const OOS_REASONS=["Mechanical Repair","Planned Maintenance","Tires","Body/Paint","Electrical","DOT Inspection","Accident Repair","Waiting Parts","Other"];
+// v2.16.17: one make list shared by the Add Truck form and the Truck Report editor,
+// so the two can't drift apart.
+const MAKES=["Freightliner","Hino","International","Ford","Isuzu","Kenworth","Peterbilt","Volvo","Mack","Western Star","Other"];
 const C={brand:"#1e5b92",dark:"#153f66",light:"#e8f0f7",accent:"#d4841b",red:"#c0392b",green:"#27ae60",yellow:"#e6a817",purple:"#7b5ea7",cyan:"#2596be"};
 const SC={available:C.green,assigned:C.brand,repair:C.yellow,oos:C.red,"for-sale":C.purple,unassigned:C.accent};
 const SL={available:"Available",assigned:"Assigned",repair:"In Repair",oos:"Out of Service","for-sale":"For Sale",unassigned:"Needs Assignment"};
@@ -121,6 +124,12 @@ function localDate(d){return (typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)
 function wkOf(d){return d?wK(localDate(d)):"";}
 function todayYMD(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function dateStr(d){return d?localDate(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";}
+// v2.16.16: drivers were rendered in stored order — i.e. the order they were added —
+// so anyone created after the initial roster landed at the BOTTOM of every list rather
+// than in place. Sort by name centrally (on load and on save) so every consumer is
+// alphabetical: Weekly Board, Drivers, Attendance, dispatch, drill-downs. Sorting the
+// full name string gives first-name order, matching how the roster already reads.
+function sortDrivers(a){return [...(a||[])].sort((x,y)=>String((x&&x.name)||"").localeCompare(String((y&&y.name)||""),undefined,{sensitivity:"base"}));}
 // v2.16.7: cost entries are sharded across per-MONTH Firestore docs (fl-costs-<YYYY-MM>)
 // so the log never hits Firestore's ~1 MB per-document limit — a month's invoices are
 // far smaller than a year's, so no single shard gets close, and adding an invoice only
@@ -183,7 +192,7 @@ function App(){
   const[showAddD,setShowAddD]=useState(false);
   const[showAddT,setShowAddT]=useState(false);
   const[newD,setNewD]=useState({name:"",role:"Davis Straight Driver",category:"Davis"});
-  const[newT,setNewT]=useState({id:"",mk:"Freightliner",tr:"A",ax:"Single",type:"straight",year:null});
+  const[newT,setNewT]=useState({id:"",mk:"Freightliner",md:"",tr:"A",ax:"Single",type:"straight",year:null});
   // Repair form
   const[showRepairForm,setShowRepairForm]=useState(null); // truckId or null
   const[repairForm,setRepairForm]=useState({reason:"Mechanical Repair",notes:"",shop:"",estReturn:"",cost:""});
@@ -311,12 +320,12 @@ function App(){
       window.storage.get("fl-motive-map").catch(()=>null),
     ]);
     const t=pj(tR,null);setTrucks(Array.isArray(t)&&t.length?t:[...ST,...TR]);
-    const d=pj(dR,null);setDrivers(Array.isArray(d)&&d.length?d:[...ID]);
+    const d=pj(dR,null);setDrivers(sortDrivers(Array.isArray(d)&&d.length?d:[...ID]));
     setRepairs(pj(rR,[]));
     setRetiredTrucks(pj(rtR,[]));
     setCores(pj(coresR,[])); // v2.10.0
     setReviewQueue(pj(rqR,[])); // v2.10.48
-    setRetiredDrivers(pj(rdR,[]));
+    setRetiredDrivers(sortDrivers(pj(rdR,[])));
     const m=pj(mmR,null);if(m)setMotiveMap({vehicles:m.vehicles||{},drivers:m.drivers||{}});
 
     await loadCostsFromShards(true);
@@ -405,8 +414,8 @@ function App(){
   },[]);
   const saveTrucks=t=>{setTrucks(t);sv("fl-trucks",t);};
   const saveRetiredTrucks=rt=>{setRetiredTrucks(rt);sv("fl-retired",rt);};
-  const saveRetiredDrivers=rd=>{setRetiredDrivers(rd);sv("fl-retired-drivers",rd);};
-  const saveDrivers=d=>{setDrivers(d);sv("fl-drivers",d);};
+  const saveRetiredDrivers=rd=>{const v=sortDrivers(rd);setRetiredDrivers(v);sv("fl-retired-drivers",v);};
+  const saveDrivers=d=>{const v=sortDrivers(d);setDrivers(v);sv("fl-drivers",v);};
   const saveAsgn=useCallback(a=>{setAsgn(a);sv(`fl-asgn-${wk}`,a);},[wk,sv]);
   const saveTStat=useCallback(s=>{setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv]);
   const saveRepairs=useCallback(r=>{setRepairs(r);sv("fl-repairs",r);},[sv]);
@@ -2759,11 +2768,16 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     }
     const prevDay=sourceDay; // status-history detection below keys off this (same-week only)
     const next={...asgn};
-    let copied=0;
+    let copied=0,kept=0;
     drivers.forEach(d=>{
+      const targetKey=`${d.name}-${targetDay}`;
+      // v2.16.16: NEVER overwrite a cell already set for the target day. Dispatchers
+      // routinely make manual changes in the morning and then hit "Same as Yesterday"
+      // to fill in everyone else — this used to clobber those edits. Fill blanks only.
+      if((asgn[targetKey]||"").trim()){kept++;return;}
       const prevVal=sourceAsgn[`${d.name}-${sourceDay}`]||"";
       // Don't repeat one-off absences — a call-out/no-show shouldn't auto-carry forward.
-      if(prevVal&&prevVal!=="CALLED OUT"&&prevVal!=="NO SHOW"){next[`${d.name}-${targetDay}`]=prevVal;copied++;}
+      if(prevVal&&prevVal!=="CALLED OUT"&&prevVal!=="NO SHOW"){next[targetKey]=prevVal;copied++;}
     });
 
     // v2.10.51: Detect trucks that were OOS YESTERDAY (the day being copied from)
@@ -2809,9 +2823,12 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     if(copied>0)saveAsgn(next);
     if(clearedToday)saveTStat(nextStat);
 
-    // Build the dispatcher message
+    // Build the dispatcher message. v2.16.16: always report how many cells were left
+    // alone, so it's obvious the button filled blanks and did not touch today's edits.
+    const keptNote=kept>0?` Left ${kept} ${kept===1?"driver":"drivers"} unchanged — already set for ${targetDay}.`:"";
     let msg="";
-    if(copied>0)msg+=`Copied ${copied} assignment${copied===1?"":"s"} from ${sourceLabel} → ${targetDay}.`;
+    if(copied>0)msg+=`Copied ${copied} assignment${copied===1?"":"s"} from ${sourceLabel} → ${targetDay}.${keptNote}`;
+    else if(kept>0)msg+=`Nothing new to copy — ${kept} ${kept===1?"driver is":"drivers are"} already set for ${targetDay}, left as-is.`;
     else msg+=`No assignments found for ${sourceLabel} to copy.`;
     if(oosAssignments.length>0){
       const n=oosAssignments.length;
@@ -3160,9 +3177,100 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
   };
 
   const addDriver=()=>{if(!newD.name.trim())return;saveDrivers([...drivers,{...newD}]);setNewD({name:"",role:"Davis Straight Driver",category:"Davis"});setShowAddD(false);};
-  const addTruck=()=>{if(!newT.id.trim()||trucks.find(t=>t.id===newT.id))return;saveTrucks([...trucks,{...newT}]);setNewT({id:"",mk:"Freightliner",tr:"A",ax:"Single",type:"straight",year:null});setShowAddT(false);};
+  const addTruck=()=>{if(!newT.id.trim()||trucks.find(t=>t.id===newT.id))return;saveTrucks([...trucks,{...newT,id:newT.id.trim(),md:(newT.md||"").trim()}]);setNewT({id:"",mk:"Freightliner",md:"",tr:"A",ax:"Single",type:"straight",year:null});setShowAddT(false);};
   // v2.10.28: inline-edit any truck field from the Fleet list view
   const updateTruck=(id,updates)=>saveTrucks(trucks.map(t=>t.id===id?{...t,...updates}:t));
+
+  // ── v2.16.17: edit a truck's number / make / model from its Truck Report ──
+  // The truck # is the foreign key for everything: weekly assignments store it as
+  // the CELL VALUE, daily status stores it inside the CELL KEY, and repairs, cost
+  // entries, cores, the review queue and the Motive mapping all carry it as
+  // truckId. Renaming only the fl-trucks row would orphan the truck's entire
+  // history the moment the number changed, so a renumber has to rewrite all of it.
+  const[truckEdit,setTruckEdit]=useState(null); // {orig,id,mk,md} while the report's edit panel is open
+  const[truckEditBusy,setTruckEditBusy]=useState(false);
+
+  // Rewrites every stored week (not just the one on screen) — assignments key off
+  // the truck # by value, statuses by key prefix. Returns how many docs changed.
+  const renumberTruckInWeeks=async(oldId,newId)=>{
+    let weeksTouched=0;
+    const rewrite=async(prefix,fn)=>{
+      let keys=[];
+      try{const r=await window.storage.list(prefix);keys=(r&&r.keys)||[];}catch(e){keys=[];}
+      for(const key of keys){
+        let m=null;
+        try{const d=await window.storage.get(key);m=d?JSON.parse(d.value):null;}catch(e){continue;}
+        if(!m||typeof m!=="object")continue;
+        const out=fn(m);
+        if(!out)continue;
+        await window.storage.set(key,JSON.stringify(out));
+        weeksTouched++;
+        const weekKey=key.slice(prefix.length);
+        if(prefix==="fl-asgn-"){
+          setAttendWeeks(w=>({...w,[weekKey]:out}));
+          if(weekKey===wk)setAsgn(out);
+        }else if(weekKey===wk)setTStat(out);
+      }
+    };
+    // Assignments: "<driver>-<day>" → truck #. The truck # is the value.
+    await rewrite("fl-asgn-",m=>{
+      let hit=false;const out={};
+      for(const k of Object.keys(m)){if(m[k]===oldId){out[k]=newId;hit=true;}else out[k]=m[k];}
+      return hit?out:null;
+    });
+    // Daily status: "<truck #>-<day>" → status. The truck # is part of the key.
+    await rewrite("fl-stat-",m=>{
+      let hit=false;const out={};
+      for(const k of Object.keys(m)){
+        const day=DAYS.find(d=>k===`${oldId}-${d}`);
+        if(day){out[`${newId}-${day}`]=m[k];hit=true;}else out[k]=m[k];
+      }
+      return hit?out:null;
+    });
+    return weeksTouched;
+  };
+
+  const commitTruckEdit=async()=>{
+    if(!truckEdit||truckEditBusy)return;
+    const oldId=truckEdit.orig;
+    const newId=String(truckEdit.id||"").trim();
+    const mk=truckEdit.mk||"";
+    const md=String(truckEdit.md||"").trim();
+    if(!newId){toast("Truck # can't be blank.","error");return;}
+    const renumber=newId!==oldId;
+    if(renumber){
+      if(trucks.some(t=>t.id===newId)){toast(`Truck #${newId} already exists in the fleet — pick a different number.`,"error");return;}
+      if(retiredTrucks.some(t=>t.id===newId)){toast(`Truck #${newId} is in the retired list. Restore or renumber that one first.`,"error");return;}
+      const nRep=repairs.filter(r=>r.truckId===oldId).length;
+      const nCost=costEntries.filter(c=>c.truckId===oldId).length;
+      const detail=[nRep?`${nRep} repair ticket${nRep===1?"":"s"}`:null,nCost?`${nCost} invoice${nCost===1?"":"s"}`:null].filter(Boolean).join(" and ");
+      if(!await uiConfirm(`Renumber truck #${oldId} → #${newId}?\n\nAll history moves with it${detail?`, including ${detail}`:""}, plus every weekly assignment and daily status.\n\nThis cannot be undone automatically.`))return;
+    }
+    setTruckEditBusy(true);
+    try{
+      saveTrucks(trucks.map(t=>t.id===oldId?{...t,id:newId,mk,md}:t));
+      if(renumber){
+        if(repairs.some(r=>r.truckId===oldId))saveRepairs(repairs.map(r=>r.truckId===oldId?{...r,truckId:newId}:r));
+        if(costEntries.some(c=>c.truckId===oldId))saveCosts(costEntries.map(c=>c.truckId===oldId?{...c,truckId:newId}:c));
+        if(cores.some(c=>c.truckId===oldId))saveCores(cores.map(c=>c.truckId===oldId?{...c,truckId:newId}:c));
+        // Review-queue rows carry the truck # inside item.parsed[] (each pending line item).
+        if(reviewQueue.some(q=>Array.isArray(q&&q.parsed)&&q.parsed.some(e=>e&&e.truckId===oldId)))
+          saveReviewQueue(reviewQueue.map(q=>Array.isArray(q&&q.parsed)?{...q,parsed:q.parsed.map(e=>e&&e.truckId===oldId?{...e,truckId:newId}:e)}:q));
+        if(motiveMap.vehicles&&motiveMap.vehicles[oldId]!==undefined){
+          const v={...motiveMap.vehicles};v[newId]=v[oldId];delete v[oldId];
+          saveMotiveMap({...motiveMap,vehicles:v});
+        }
+        const weeks=await renumberTruckInWeeks(oldId,newId);
+        setHistoryTruck(newId);
+        toast(`Truck #${oldId} renumbered to #${newId}. Moved its history across ${weeks} week${weeks===1?"":"s"}.`,"success");
+      }else{
+        toast(`Saved #${newId}${mk?` · ${normalizeMake(mk)}`:""}${md?` ${md}`:""}.`,"success");
+      }
+      setTruckEdit(null);
+    }catch(e){
+      toast(`Couldn't save the truck: ${e.message||e}`,"error");
+    }finally{setTruckEditBusy(false);}
+  };
   // v2.10.43: display-side normalization for legacy make abbreviations.
   // Belt-and-suspenders on top of the 🔤 Migrate button — even if some trucks
   // still have FRTLN/INTL/HINO stored, they render with the full names.
@@ -3978,8 +4086,9 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             <input style={s.fInp} placeholder="Truck #" value={newT.id} onChange={e=>setNewT({...newT,id:e.target.value})}/>
             <div style={{display:"flex",gap:6}}>
               <select style={s.fInp} value={newT.type} onChange={e=>setNewT({...newT,type:e.target.value})}><option value="straight">Straight</option><option value="tractor">Tractor</option></select>
-              <select style={s.fInp} value={newT.mk} onChange={e=>setNewT({...newT,mk:e.target.value})}><option value="Freightliner">Freightliner</option><option value="Hino">Hino</option><option value="International">International</option><option value="Ford">Ford</option><option value="Isuzu">Isuzu</option><option value="Kenworth">Kenworth</option><option value="Peterbilt">Peterbilt</option><option value="Volvo">Volvo</option><option value="Mack">Mack</option><option value="Western Star">Western Star</option><option value="Other">Other</option></select>
+              <select style={s.fInp} value={newT.mk} onChange={e=>setNewT({...newT,mk:e.target.value})}>{MAKES.map(m=><option key={m} value={m}>{m}</option>)}</select>
             </div>
+            <input style={s.fInp} placeholder="Model (e.g. M2 106, Cascadia)" value={newT.md||""} onChange={e=>setNewT({...newT,md:e.target.value})}/>
             <div style={{display:"flex",gap:6}}>
               <select style={s.fInp} value={newT.tr} onChange={e=>setNewT({...newT,tr:e.target.value})}><option value="A">Auto</option><option value="M">Manual</option></select>
               <select style={s.fInp} value={newT.ax} onChange={e=>setNewT({...newT,ax:e.target.value})}><option value="Single">Single</option><option value="Tandem">Tandem</option></select>
@@ -3992,7 +4101,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             // v2.10.20: if truck is OOS/in-repair but has a driver, dim the driver display to flag the inconsistency (driver needs reassignment)
             const drDown=dr&&(st2==="oos"||st2==="repair");
             return <div key={t.id} style={s.tCard}><div style={s.cHdr}><span style={{...s.tNum,cursor:"pointer",textDecoration:"underline",textDecorationColor:C.brand+"44"}} onClick={()=>setHistoryTruck(t.id)}>#{t.id}</span><span style={{...s.sBdg,background:SC[st2]+"18",color:SC[st2],borderColor:SC[st2]}}>{SL[st2]}</span></div>
-              <div style={s.cBody}><Row l="Type" v={t.type==="straight"?"Box Truck":"Tractor"}/><Row l="Make" v={normalizeMake(t.mk)}/>
+              <div style={s.cBody}><Row l="Type" v={t.type==="straight"?"Box Truck":"Tractor"}/><Row l="Make" v={normalizeMake(t.mk)}/>{t.md?<Row l="Model" v={t.md}/>:null}
                 {/* v2.10.43: inline-editable Year field. Empty by default, click to add. */}
                 <Row l="Year" v={
                   <input type="number" min="1980" max="2099" placeholder="—"
@@ -4038,6 +4147,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     {!makeOpts.includes(t.mk)&&<option value={t.mk}>{normalizeMake(t.mk)}</option>}
                   </select>
                 </td>
+                {/* v2.16.17: free-text model, inline-editable like Year above. */}
+                <td style={s.ltd}>
+                  <input placeholder="—" defaultValue={t.md||""}
+                    onBlur={e=>{const v=e.target.value.trim();if(v!==(t.md||""))updateTruck(t.id,{md:v});}}
+                    onKeyDown={e=>{if(e.key==="Enter")e.target.blur();}}
+                    style={{width:80,fontSize:11,padding:"2px 6px",border:"1px solid #e2e8f0",borderRadius:4,background:"#fff",outline:"none"}}/>
+                </td>
                 <td style={s.ltd}>
                   <input type="number" min="1980" max="2099" placeholder="—"
                     defaultValue={t.year||""}
@@ -4070,7 +4186,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 <div style={{fontSize:13,fontWeight:700,marginBottom:8,paddingBottom:6,borderBottom:`2px solid ${borderColor}`,color:C.dark}}>{label} ({list.length})</div>
                 <div style={s.tWrap}>
                   <table style={{...s.table,fontSize:12}}>
-                    <thead><tr>{["Truck #","Make","Year","Trans","Axle","Status",...DAYS,"Repairs",""].map((h,i)=>{
+                    <thead><tr>{["Truck #","Make","Model","Year","Trans","Axle","Status",...DAYS,"Repairs",""].map((h,i)=>{
                       const dayIdx=["Mon","Tue","Wed","Thu","Fri"].indexOf(h);
                       const isTodayCol=dayIdx===di;
                       return <th key={h+i} style={{...s.th,whiteSpace:"nowrap",background:isTodayCol?"#f0f9ff":"transparent",color:isTodayCol?C.brand:"inherit"}}>{h}</th>;
@@ -6235,21 +6351,52 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         const catBreakdown={};
         tCosts.forEach(c=>{if(!catBreakdown[c.category])catBreakdown[c.category]=0;catBreakdown[c.category]+=(c.total||0);});
 
-        return <div style={s.modal} onClick={()=>setHistoryTruck(null)}><div style={{...s.modalBox,maxWidth:520}} onClick={e=>e.stopPropagation()}>
+        return <div style={s.modal} onClick={()=>{setTruckEdit(null);setHistoryTruck(null);}}><div style={{...s.modalBox,maxWidth:520}} onClick={e=>e.stopPropagation()}>
           {/* Header */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
             <div>
               <div style={{fontSize:22,fontWeight:800,fontFamily:"monospace",color:C.dark}}>#{historyTruck}</div>
               <div style={{fontSize:12,color:"#6b7785",marginTop:2}}>Truck Report</div>
             </div>
-            <button onClick={()=>setHistoryTruck(null)} style={s.xBtn}>×</button>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {t&&!truckEdit&&<button onClick={()=>setTruckEdit({orig:t.id,id:t.id,mk:normalizeMake(t.mk)||"Freightliner",md:t.md||""})} style={{padding:"5px 10px",fontSize:11,fontWeight:700,background:"#fff",color:C.brand,border:`1px solid ${C.brand}`,borderRadius:5,cursor:"pointer",whiteSpace:"nowrap"}}>✏️ Edit</button>}
+              <button onClick={()=>{setTruckEdit(null);setHistoryTruck(null);}} style={s.xBtn}>×</button>
+            </div>
           </div>
 
+          {/* v2.16.17: inline editor for truck # / make / model. Renumbering carries
+              the truck's whole history with it — see commitTruckEdit. */}
+          {t&&truckEdit&&<div style={{background:"#fffbeb",borderRadius:8,padding:12,marginBottom:12,border:`1px solid ${C.accent}66`}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.accent,marginBottom:8}}>EDIT TRUCK</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              <label style={{flex:"1 1 110px",minWidth:100}}>
+                <div style={{fontSize:10,color:"#6b7785",marginBottom:3}}>Truck #</div>
+                <input style={{...s.fInp,width:"100%",boxSizing:"border-box",fontFamily:"monospace",fontWeight:700}} value={truckEdit.id} onChange={e=>setTruckEdit({...truckEdit,id:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")commitTruckEdit();if(e.key==="Escape")setTruckEdit(null);}} autoFocus/>
+              </label>
+              <label style={{flex:"1 1 140px",minWidth:120}}>
+                <div style={{fontSize:10,color:"#6b7785",marginBottom:3}}>Make</div>
+                <select style={{...s.fInp,width:"100%",boxSizing:"border-box"}} value={MAKES.includes(truckEdit.mk)?truckEdit.mk:"Other"} onChange={e=>setTruckEdit({...truckEdit,mk:e.target.value})}>{MAKES.map(m=><option key={m} value={m}>{m}</option>)}</select>
+              </label>
+              <label style={{flex:"1 1 140px",minWidth:120}}>
+                <div style={{fontSize:10,color:"#6b7785",marginBottom:3}}>Model</div>
+                <input style={{...s.fInp,width:"100%",boxSizing:"border-box"}} placeholder="e.g. M2 106" value={truckEdit.md} onChange={e=>setTruckEdit({...truckEdit,md:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")commitTruckEdit();if(e.key==="Escape")setTruckEdit(null);}}/>
+              </label>
+            </div>
+            {String(truckEdit.id||"").trim()&&String(truckEdit.id).trim()!==truckEdit.orig&&<div style={{fontSize:11,color:"#92400e",marginTop:8,lineHeight:1.4}}>
+              ⚠ Renumbering #{truckEdit.orig} → #{String(truckEdit.id).trim()} moves its repairs, invoices and every weekly assignment and daily status onto the new number.
+            </div>}
+            <div style={{display:"flex",gap:8,marginTop:10}}>
+              <button style={{...s.saveBtn,opacity:truckEditBusy?0.6:1,cursor:truckEditBusy?"wait":"pointer"}} disabled={truckEditBusy} onClick={commitTruckEdit}>{truckEditBusy?"Saving…":"Save"}</button>
+              <button style={s.canBtn} disabled={truckEditBusy} onClick={()=>setTruckEdit(null)}>Cancel</button>
+            </div>
+          </div>}
+
           {/* Specs */}
-          {t&&<div style={{background:"#f8fafc",borderRadius:8,padding:12,marginBottom:12,border:"1px solid #e2e8f0"}}>
+          {t&&!truckEdit&&<div style={{background:"#f8fafc",borderRadius:8,padding:12,marginBottom:12,border:"1px solid #e2e8f0"}}>
             <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12}}>
               <div><span style={{color:"#6b7785"}}>Type:</span> <span style={{fontWeight:700}}>{t.type==="straight"?"Box Truck":"Tractor"}</span></div>
-              <div><span style={{color:"#6b7785"}}>Make:</span> <span style={{fontWeight:700}}>{t.mk}</span></div>
+              <div><span style={{color:"#6b7785"}}>Make:</span> <span style={{fontWeight:700}}>{normalizeMake(t.mk)}</span></div>
+              {t.md&&<div><span style={{color:"#6b7785"}}>Model:</span> <span style={{fontWeight:700}}>{t.md}</span></div>}
               <div><span style={{color:"#6b7785"}}>Trans:</span> <span style={{fontWeight:700,color:t.tr==="A"?C.green:C.accent}}>{t.tr==="A"?"Auto":"Manual"}</span></div>
               <div><span style={{color:"#6b7785"}}>Axle:</span> <span style={{fontWeight:700}}>{t.ax}</span></div>
             </div>
@@ -6336,7 +6483,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             </div>;
           })()}
 
-          <button onClick={()=>setHistoryTruck(null)} style={{...s.canBtn,marginTop:12,width:"100%"}}>Close Report</button>
+          <button onClick={()=>{setTruckEdit(null);setHistoryTruck(null);}} style={{...s.canBtn,marginTop:12,width:"100%"}}>Close Report</button>
         </div></div>;
       })()}
 
