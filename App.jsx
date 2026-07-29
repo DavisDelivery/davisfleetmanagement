@@ -3030,6 +3030,10 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     saveRepairs(next);
     setRepairForm({reason:"Mechanical Repair",notes:"",shop:"",estReturn:"",cost:""});
     setShowRepairForm(null);
+    /* Clear the search too. The picker now derives its selection from the search
+       box, so leaving "7569" in there would re-select that truck and re-open the
+       form the instant this one is logged. */
+    setRepairTruckSearch("");
   };
   // v2.10.18: when marking a truck OOS on the Weekly Board, only open the repair
   // form if this truck has NO open repair ticket. If there's already an open ticket,
@@ -4199,27 +4203,55 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               ➕ Log New Repair
             </summary>
             <div style={{...s.addForm,marginTop:10}}>
-              <input style={s.fInp} placeholder="🔍 Search truck # or make..." value={repairTruckSearch} onChange={e=>setRepairTruckSearch(e.target.value)}/>
               {(()=>{
+                /* v2.16.20: typing a truck # used to only FILTER a dropdown you
+                   then had to open and pick from — two steps to say one thing.
+                   Narrowing the search to a single truck IS the choice, so it
+                   selects straight away. More than one match lists them as
+                   one-tap rows instead of a dropdown; an empty box lists the
+                   whole fleet, which is what the dropdown was for. An explicit
+                   tap outranks the search, so a truck picked from the list stays
+                   put. `picked` is derived rather than synced into state — there
+                   is nothing to keep in step and no effect to misfire. */
                 const q=repairTruckSearch.trim().toLowerCase();
-                const matches=trucks.filter(t=>!q||String(t.id).toLowerCase().includes(q)||String(t.mk||"").toLowerCase().includes(q));
-                return <select style={s.fInp} value={showRepairForm||""} onChange={e=>setShowRepairForm(e.target.value||null)}>
-                  <option value="">{q?`Select Truck… (${matches.length} match${matches.length===1?"":"es"})`:"Select Truck..."}</option>
-                  {matches.map(t=><option key={t.id} value={t.id}>#{t.id} — {t.type==="straight"?t.mk:"Tractor"}</option>)}
-                </select>;
+                const matches=q?trucks.filter(t=>String(t.id).toLowerCase().includes(q)||String(t.mk||"").toLowerCase().includes(q)):trucks;
+                /* Ids are strings with leading zeros ("0154"), the same values the
+                   old <select> round-tripped — keep them as-is so every
+                   truckId===t.id comparison still holds. */
+                const picked=showRepairForm||(q&&matches.length===1?matches[0].id:null);
+                /* showRepairForm is shared with the Weekly Board's OOS modal, which
+                   can set it from openRepairFormIfNeeded. If that id isn't in the
+                   fleet list, still show the form rather than silently rendering
+                   nothing — a missing label beats a form that won't appear. */
+                const pickedTruck=picked?(trucks.find(t=>t.id===picked)||{id:picked,type:"",mk:""}):null;
+                const label=t=>`#${t.id} — ${t.type==="straight"?t.mk:"Tractor"}`;
+                return(<>
+                  {pickedTruck
+                    ?<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:6}}>
+                       <span style={{fontSize:13,fontWeight:700,color:C.brand}}>{label(pickedTruck)}</span>
+                       <button onClick={()=>{setShowRepairForm(null);setRepairTruckSearch("");}} style={{marginLeft:"auto",fontSize:11,fontWeight:700,color:"#64748b",background:"none",border:"none",cursor:"pointer",padding:"2px 4px"}}>✕ change</button>
+                     </div>
+                    :<input style={s.fInp} placeholder="🔍 Type truck # or make…" value={repairTruckSearch} onChange={e=>setRepairTruckSearch(e.target.value)}/>}
+                  {!pickedTruck&&matches.length===0&&
+                    <div style={{fontSize:12,color:"#94a3b8",padding:"2px 2px"}}>No truck matches “{repairTruckSearch.trim()}”.</div>}
+                  {!pickedTruck&&matches.length>0&&
+                    <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:180,overflowY:"auto"}}>
+                      {matches.map(t=><button key={t.id} onClick={()=>setShowRepairForm(t.id)} style={{textAlign:"left",padding:"7px 12px",fontSize:13,color:"#1e293b",background:"#fff",border:"1px solid #e2e8f0",borderRadius:6,cursor:"pointer"}}>{label(t)}</button>)}
+                    </div>}
+                  {pickedTruck&&<>
+                    <select style={s.fInp} value={repairForm.reason} onChange={e=>setRepairForm({...repairForm,reason:e.target.value})}>
+                      {OOS_REASONS.map(r=><option key={r} value={r}>{r}</option>)}
+                    </select>
+                    <input style={s.fInp} placeholder="Notes (what's wrong)" value={repairForm.notes} onChange={e=>setRepairForm({...repairForm,notes:e.target.value})}/>
+                    <input style={s.fInp} placeholder="Shop / Location" value={repairForm.shop} onChange={e=>setRepairForm({...repairForm,shop:e.target.value})}/>
+                    <div style={{display:"flex",gap:6}}>
+                      <input style={s.fInp} type="date" placeholder="Est Return" value={repairForm.estReturn} onChange={e=>setRepairForm({...repairForm,estReturn:e.target.value})}/>
+                      <input style={s.fInp} type="number" placeholder="Cost $" value={repairForm.cost} onChange={e=>setRepairForm({...repairForm,cost:e.target.value})}/>
+                    </div>
+                    <button style={s.saveBtn} onClick={()=>addRepair(picked)}>Log Repair</button>
+                  </>}
+                </>);
               })()}
-              {showRepairForm&&<>
-                <select style={s.fInp} value={repairForm.reason} onChange={e=>setRepairForm({...repairForm,reason:e.target.value})}>
-                  {OOS_REASONS.map(r=><option key={r} value={r}>{r}</option>)}
-                </select>
-                <input style={s.fInp} placeholder="Notes (what's wrong)" value={repairForm.notes} onChange={e=>setRepairForm({...repairForm,notes:e.target.value})}/>
-                <input style={s.fInp} placeholder="Shop / Location" value={repairForm.shop} onChange={e=>setRepairForm({...repairForm,shop:e.target.value})}/>
-                <div style={{display:"flex",gap:6}}>
-                  <input style={s.fInp} type="date" placeholder="Est Return" value={repairForm.estReturn} onChange={e=>setRepairForm({...repairForm,estReturn:e.target.value})}/>
-                  <input style={s.fInp} type="number" placeholder="Cost $" value={repairForm.cost} onChange={e=>setRepairForm({...repairForm,cost:e.target.value})}/>
-                </div>
-                <button style={s.saveBtn} onClick={()=>addRepair(showRepairForm)}>Log Repair</button>
-              </>}
             </div>
           </details>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:4}}>
