@@ -29,8 +29,10 @@
   /* HEADER */
   .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
   .header-logo { width: 36px; height: 36px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 16px; color: #fff; flex-shrink: 0; }
+  .header > div:not(.header-logo) { min-width: 0; }
   .header-title { font-weight: 700; font-size: 16px; line-height: 1.2; }
-  .header-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  /* Long unbreakable mono URL — ellipsis instead of forcing the header wider. */
+  .header-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .header-badge { background: var(--red); color: #fff; font-size: 11px; font-weight: 700; font-family: var(--mono); padding: 3px 8px; border-radius: 12px; display: none; }
   .header-badge.visible { display: block; }
   /* WHO'S USING THIS DEVICE — full-width bar; stamps the name onto notes added here */
@@ -39,7 +41,7 @@
   .who-bar .who-hint { font-weight: 400; color: var(--muted); font-size: 12px; }
   .who-bar.unset { background: rgba(245,158,11,0.12); border-bottom-color: var(--yellow); color: var(--yellow); }
   .who-bar.unset .who-hint { color: var(--yellow); opacity: 0.85; }
-  .note-by { font-size: 10px; color: var(--brand); font-weight: 600; white-space: nowrap; margin-top: 1px; }
+  .note-by { font-size: 10px; color: var(--brand); font-weight: 600; white-space: nowrap; }
 
   /* LOADING */
   #loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
@@ -47,8 +49,9 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* TABS */
-  .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 12px; gap: 4px; }
-  .tab-btn { padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: var(--sans); white-space: nowrap; transition: color 0.15s; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 12px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { flex-shrink: 0; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: var(--sans); white-space: nowrap; transition: color 0.15s; }
   .tab-btn:hover { color: var(--text); }
   .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
   .tab-count { font-family: var(--mono); font-size: 10px; background: var(--border); padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
@@ -66,7 +69,7 @@
   .repair-card.urgent { border-left: 3px solid var(--red); }
   .repair-card.warn { border-left: 3px solid var(--yellow); }
 
-  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .truck-num { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--brand); line-height: 1; }
   .truck-sub { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
   .reason-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); white-space: nowrap; }
@@ -84,41 +87,61 @@
   .age-chip.mid { background: rgba(245,158,11,0.15); color: var(--yellow); }
   .age-chip.old { background: rgba(239,68,68,0.15); color: var(--red); }
 
-  /* NOTES LOG */
-  .notes-log { background: var(--surface2); border-radius: 6px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .note-entry { display: flex; gap: 8px; align-items: flex-start; }
-  .note-ts { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; margin-top: 1px; min-width: 85px; }
-  .note-text { font-size: 12px; color: var(--text); flex: 1; line-height: 1.5; }
-  .note-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+  /* NOTES LOG
+     Phone-first: a note used to be one flex ROW — timestamp | text | author | ✎ | ✕ —
+     which left the body about 96px wide on a 390px phone, so a real shop write-up
+     rendered as a two-word-per-line ribbon hundreds of pixels tall and buried the
+     action buttons below it. Each note is now a small card: a compact meta line on
+     top (time · author · actions) and the text FULL WIDTH underneath. Long notes are
+     clamped with a Show more toggle so the ✓ Repair Completed button stays reachable. */
+  .notes-log { background: var(--surface2); border-radius: 6px; padding: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .note-entry { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  /* ✎/✕ are pinned to the card corner rather than sitting in the meta flow. In the
+     flow they wrapped to their own line on a 320px screen and left a dead gap; pinned,
+     the meta text simply wraps around them and the note body still runs full width. */
+  .note-acts { position: absolute; top: 2px; right: 2px; display: flex; gap: 2px; }
+  .note-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; min-height: 18px; }
+  .note-acts + .note-meta { padding-right: 72px; }
+  .note-ts { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+  /* Full width, honours the mechanic's own line breaks, and never lets a long
+     part number or URL push the card sideways. */
+  .note-text { font-size: 13px; color: var(--text); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .note-text.clamped { display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+  .note-more { display: none; margin-top: 4px; background: none; border: none; color: var(--brand); font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 4px 0; cursor: pointer; }
+  /* ✎ / ✕ were 12px glyphs with 2px of padding — impossible to hit accurately with
+     a thumb. These are now proper ~32px touch targets. */
+  .note-del, .note-edit { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 6px 8px; min-width: 32px; min-height: 32px; flex-shrink: 0; }
   .note-del:hover { color: var(--red); }
-  .note-edit { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
   .note-edit:hover { color: var(--brand); }
-  .note-edit-input { flex: 1; background: var(--surface); border: 1px solid var(--brand); border-radius: 4px; padding: 6px 8px; font: inherit; font-size: 12px; color: var(--text); resize: vertical; min-height: 36px; line-height: 1.5; outline: none; }
-  .note-save { background: var(--brand); border: none; color: #fff; cursor: pointer; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; line-height: 1; }
+  .note-edit-input { width: 100%; background: var(--surface2); border: 1px solid var(--brand); border-radius: 4px; padding: 8px; font: inherit; font-size: 16px; color: var(--text); resize: vertical; min-height: 120px; line-height: 1.5; outline: none; }
+  .note-edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .note-save { background: var(--brand); border: none; color: #fff; cursor: pointer; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 6px; line-height: 1; font-family: var(--sans); }
   .note-save:hover { filter: brightness(1.1); }
-  .note-cancel { background: none; border: 1px solid var(--muted); color: var(--muted); cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; line-height: 1; }
+  .note-cancel { background: none; border: 1px solid var(--muted); color: var(--muted); cursor: pointer; font-size: 13px; padding: 9px 16px; border-radius: 6px; line-height: 1; font-family: var(--sans); }
   .note-cancel:hover { color: var(--text); border-color: var(--text); }
-  .empty-notes { font-size: 11px; color: var(--muted); font-style: italic; }
+  .empty-notes { font-size: 12px; color: var(--muted); font-style: italic; }
 
   /* NOTE INPUT */
   .note-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
-  .note-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 9px 12px; border-radius: 6px; outline: none; }
+  /* 16px: anything smaller makes iOS Safari zoom the whole page when the field
+     is focused, which then leaves the portal scrolled sideways. */
+  .note-input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 16px; padding: 11px 12px; border-radius: 6px; outline: none; }
   .note-input::placeholder { color: var(--muted); }
   .note-input:focus { border-color: var(--brand); }
-  .btn-add { padding: 9px 16px; background: var(--brand); color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap; font-family: var(--sans); transition: background 0.15s; }
+  .btn-add { padding: 11px 18px; background: var(--brand); color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; font-family: var(--sans); transition: background 0.15s; }
   .btn-add:hover { background: var(--brand-dim); }
   .btn-add:active { transform: scale(0.97); }
 
   /* SHOP INPUT */
   .shop-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
   .shop-label { font-size: 11px; font-family: var(--mono); color: var(--muted); white-space: nowrap; }
-  .shop-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 12px; padding: 6px 10px; border-radius: 6px; outline: none; }
+  .shop-input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 16px; padding: 9px 10px; border-radius: 6px; outline: none; }
   .shop-input::placeholder { color: var(--muted); }
   .shop-input:focus { border-color: var(--brand); }
 
   /* ACTIONS */
   .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .btn-complete { padding: 9px 18px; background: var(--green); color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: opacity 0.15s; }
+  .btn-complete { flex: 1; min-width: 180px; padding: 13px 18px; background: var(--green); color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--sans); transition: opacity 0.15s; }
   .btn-complete:hover { opacity: 0.85; }
 
   /* LOG NEW REPAIR */
@@ -127,7 +150,7 @@
   @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
   .form-field { display: flex; flex-direction: column; gap: 4px; }
   .form-label { font-size: 10px; font-family: var(--mono); font-weight: 700; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
-  .form-input, .form-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 10px; border-radius: 6px; outline: none; }
+  .form-input, .form-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 16px; padding: 10px; border-radius: 6px; outline: none; }
   .form-input:focus, .form-select:focus { border-color: var(--brand); }
   .form-select option { background: var(--surface2); }
   .btn-log { width: 100%; padding: 11px; background: var(--brand); color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--sans); margin-top: 4px; transition: background 0.15s; }
@@ -144,7 +167,9 @@
   .empty-sub { font-size: 13px; }
 
   /* TOAST */
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--green); color: var(--green); font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 8px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  /* Was white-space:nowrap, so any message longer than the screen ran off the
+     edge on a phone. Now it wraps inside the viewport. */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--green); color: var(--green); font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 8px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; }
   .toast.show { opacity: 1; }
 
   /* SEPARATOR */
@@ -198,7 +223,7 @@
             <option value="">Select truck...</option>
           </select>
           <input class="form-input" id="new-truck-manual" placeholder="Or type truck # manually (e.g. 0608)"
-            style="margin-top:6px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:1px;"
+            style="margin-top:6px;font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:1px;"
             onchange="document.getElementById('new-truck').value=''">
           <button type="button" onclick="reloadTrucks()" style="margin-top:6px;padding:6px 12px;font-size:11px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:var(--mono);">⟳ Reload truck list</button>
           <div id="truck-debug" style="margin-top:6px;font-size:10px;font-family:var(--mono);color:var(--muted);display:none;"></div>
@@ -382,13 +407,35 @@ function reasonSelectHtml(repairId, currentReason) {
 // v2.10.47: single source of truth for note-entry HTML. Used by initial render,
 // add, delete, and edit so the markup never drifts between code paths.
 function noteEntryHtml(repairId, entry, idx) {
+  // Stacked for phones: meta line on top, note text full width underneath.
   return `<div class="note-entry" id="note-${repairId}-${idx}">
-    <span class="note-ts">${shortTs(entry.ts)}</span>
-    <span class="note-text" id="nt-${repairId}-${idx}">${escHtml(entry.text)}</span>
-    ${entry.by ? `<span class="note-by" title="Added by ${escHtml(entry.by)}">— ${escHtml(entry.by)}</span>` : ""}
-    <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit note">✎</button>
-    <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete note">✕</button>
+    <span class="note-acts">
+      <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit note" aria-label="Edit note">✎</button>
+      <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete note" aria-label="Delete note">✕</button>
+    </span>
+    <div class="note-meta">
+      <span class="note-ts">${shortTs(entry.ts)}</span>
+      ${entry.by ? `<span class="note-by" title="Added by ${escHtml(entry.by)}">— ${escHtml(entry.by)}</span>` : ""}
+    </div>
+    <div class="note-text clamped" id="nt-${repairId}-${idx}">${escHtml(entry.text)}</div>
+    <button class="note-more" onclick="toggleNote(this)">Show more</button>
   </div>`;
+}
+/* Notes are clamped to 7 lines so one long write-up can't push ✓ Repair Completed
+   a screen and a half down. The toggle only appears on notes that actually
+   overflow — measured after render, so it adapts to the phone's width. */
+function refreshNoteClamps(scope) {
+  (scope || document).querySelectorAll(".note-text.clamped").forEach(el => {
+    const btn = el.parentElement && el.parentElement.querySelector(".note-more");
+    if (!btn) return;
+    btn.style.display = el.scrollHeight > el.clientHeight + 2 ? "block" : "none";
+  });
+}
+function toggleNote(btn) {
+  const t = btn.parentElement.querySelector(".note-text");
+  if (!t) return;
+  const clamped = t.classList.toggle("clamped");
+  btn.textContent = clamped ? "Show more" : "Show less";
 }
 function renderNotesLog(repairId, log) {
   const logEl = document.getElementById(`log-${repairId}`);
@@ -396,6 +443,7 @@ function renderNotesLog(repairId, log) {
   logEl.innerHTML = log.length === 0
     ? `<div class="empty-notes">No notes yet.</div>`
     : log.map((e, i) => noteEntryHtml(repairId, e, i)).join("");
+  refreshNoteClamps(logEl);
 }
 function notesLogHtml(repairId, notesLog, legacyNote) {
   // Build unified log: migrate legacy string if no notesLog
@@ -473,6 +521,9 @@ function render() {
 
   renderOpen(open);
   renderHistory(closed);
+  // Decide which notes need a Show more toggle — has to run after the cards are
+  // in the DOM, since it depends on the measured height at this screen width.
+  refreshNoteClamps();
 }
 
 function renderOpen(open) {
@@ -556,8 +607,13 @@ function renderHistory(closed) {
   el.innerHTML = sorted.map(r => {
     const log = r.notesLog || (r.notes ? [{ ts: r.dateIn, text: r.notes }] : []);
     const notesSummary = log.length > 0
-      ? `<div style="margin-top:6px;display:flex;flex-direction:column;gap:3px;">${
-          log.map(e => `<div style="font-size:11px;color:var(--muted);"><span style="color:var(--muted);font-family:var(--mono);font-size:10px;">${shortTs(e.ts)} </span>${escHtml(e.text)}</div>`).join("")
+      ? `<div class="notes-log" style="margin-top:8px;margin-bottom:0;">${
+          log.map(e => `<div class="note-entry">
+            <div class="note-meta"><span class="note-ts">${shortTs(e.ts)}</span>${
+              e.by ? `<span class="note-by">— ${escHtml(e.by)}</span>` : ""}</div>
+            <div class="note-text clamped">${escHtml(e.text)}</div>
+            <button class="note-more" onclick="toggleNote(this)">Show more</button>
+          </div>`).join("")
         }</div>`
       : "";
     return `<div class="history-card">
@@ -636,14 +692,17 @@ function startEditNote(id, idx) {
   if (!entry) return;
   const wrap = document.getElementById(`note-${id}-${idx}`);
   if (!wrap) return;
-  // Swap row to edit mode
+  // Swap row to edit mode — stacked, so the textarea gets the full card width
+  // instead of the ~150px a side-by-side row leaves it on a phone.
   wrap.innerHTML = `
-    <span class="note-ts">${shortTs(entry.ts)}</span>
+    <div class="note-meta"><span class="note-ts">${shortTs(entry.ts)}</span></div>
     <textarea class="note-edit-input" id="ne-${id}-${idx}"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveEditNote('${id}',${idx})}else if(event.key==='Escape'){event.preventDefault();cancelEditNote('${id}',${idx})}"
     >${escHtml(entry.text)}</textarea>
-    <button class="note-save" onclick="saveEditNote('${id}',${idx})" title="Save (Enter)">✓</button>
-    <button class="note-cancel" onclick="cancelEditNote('${id}',${idx})" title="Cancel (Esc)">✕</button>
+    <div class="note-edit-actions">
+      <button class="note-save" onclick="saveEditNote('${id}',${idx})" title="Save (Enter)">✓ Save</button>
+      <button class="note-cancel" onclick="cancelEditNote('${id}',${idx})" title="Cancel (Esc)">Cancel</button>
+    </div>
   `;
   const ta = document.getElementById(`ne-${id}-${idx}`);
   if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
@@ -839,7 +898,18 @@ function switchTab(name) {
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.getElementById(`tab-${name}`).classList.add("active");
   document.getElementById(`panel-${name}`).classList.add("active");
+  // A hidden panel measures zero, so notes in it can't be checked for overflow
+  // until now — re-check on the panel that just became visible.
+  refreshNoteClamps(document.getElementById(`panel-${name}`));
 }
+
+// Rotating the phone changes how many lines a note takes, so re-decide which
+// notes need the Show more toggle. Notes the user already expanded stay expanded.
+let clampTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(clampTimer);
+  clampTimer = setTimeout(() => refreshNoteClamps(), 150);
+});
 
 // ── BOOT ──────────────────────────────────────────────────────────────
 init();
