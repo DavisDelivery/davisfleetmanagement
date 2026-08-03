@@ -39,6 +39,12 @@ const DEFAULT_VENDORS = [
 
 const TIME_BUDGET_MS = 22000; // leave 4s headroom under the 26s function cap
 
+// v2.16.19: an attachment that fails this many runs in a row is quarantined and stops
+// being queued. Only successfully imported attachments were ever recorded, so one that
+// could never succeed (image-only PDF, parser that never returns rows) came back on
+// every single run — re-downloaded, re-parsed and re-billed forever.
+const MAX_ATTEMPTS = 3;
+
 export default async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
   const startedAt = Date.now();
@@ -80,6 +86,13 @@ export default async (req: Request) => {
   const dedupGmailRefs = new Set<string>(dedup.gmailRefs);
   const dedupInvoiceNums = new Set<string>((dedup.invoiceNums as string[]).map((s) => s.toUpperCase()));
 
+  // v2.16.19: failure ledger — gmailRef -> { count, error, filename, vendor, lastAt }.
+  // Counts consecutive failures per attachment so a permanently broken one can be
+  // quarantined instead of retried on every run. Cleared as soon as it succeeds.
+  const failures = ((await store.get("failed-refs", { type: "json" }) as any) || {}) as Record<string, any>;
+  const isQuarantined = (ref: string) => ((failures[ref]?.count || 0) >= MAX_ATTEMPTS);
+  const stuckCount = () => Object.values(failures).filter((f: any) => (f?.count || 0) >= MAX_ATTEMPTS).length;
+
   // Mark running
   await store.setJSON("sync-state", {
     ...prevState,
@@ -118,22 +131,28 @@ export default async (req: Request) => {
           if (dedupGmailRefs.has(gmailRef)) continue;
           const isPdf = (a.mimeType || "").includes("pdf") || (a.filename || "").toLowerCase().endsWith(".pdf");
           if (!isPdf) continue; // server-side only handles PDFs for now
+          if (isQuarantined(gmailRef)) continue; // failed MAX_ATTEMPTS runs in a row — see failure ledger
           queue.push({ vendor, message: m, attachment: a, gmailRef });
         }
       }
     }
 
     if (queue.length === 0) {
+      // v2.16.19: quarantined attachments are not "caught up" — say so, or the one thing
+      // still needing attention is the one thing the status line hides.
+      const stuck = stuckCount();
+      const stuckNote = stuck ? ` ${stuck} attachment(s) skipped after failing ${MAX_ATTEMPTS} times — see errors.` : "";
       await store.setJSON("sync-state", {
         lastRun: new Date().toISOString(),
         lastSuccess: new Date().toISOString(),
         running: false,
         imported: 0,
         queued: 0,
-        errors: [],
-        message: `✓ All caught up. No new invoices in the last ${daysBack} days.`,
+        errors: stuckList(failures),
+        message: `✓ All caught up. No new invoices in the last ${daysBack} days.${stuckNote}`,
+        stuck,
       });
-      return json({ success: true, imported: 0, queued: 0, message: "Nothing new" });
+      return json({ success: true, imported: 0, queued: 0, message: "Nothing new", stuck });
     }
 
     await store.setJSON("sync-state", {
@@ -188,13 +207,26 @@ export default async (req: Request) => {
       );
       for (const r of batchResults) {
         processed++;
-        if (r.skipReason) continue;
         if (r.error) {
-          errors.push(`${r.gmailRef}: ${r.error}`);
+          // v2.16.19: remember the failure so the same attachment isn't retried forever.
+          const count = (failures[r.gmailRef]?.count || 0) + 1;
+          failures[r.gmailRef] = {
+            count,
+            error: r.error,
+            filename: r.filename,
+            vendor: r.vendor,
+            lastAt: new Date().toISOString(),
+          };
+          errors.push(`${r.gmailRef}: ${r.error}${count >= MAX_ATTEMPTS ? ` — quarantined after ${count} attempts` : ""}`);
           continue;
         }
-        // Add to dedup so subsequent batches in same run don't reprocess
+        // Settled one way or the other, so never fetch or parse it again.
+        // v2.16.19: this now covers duplicates too. A duplicate was previously left out
+        // of the dedup index, so the very same attachment was re-downloaded and re-sent
+        // to the paid parser on every run even though its invoice was already imported.
+        delete failures[r.gmailRef];
         dedupGmailRefs.add(r.gmailRef);
+        if (r.skipReason) continue;
         if (r.invoiceNum) dedupInvoiceNums.add(r.invoiceNum.toUpperCase());
         if (r.confidence === "high") {
           newCostsAdds.push(...r.entries);
@@ -242,17 +274,20 @@ export default async (req: Request) => {
       });
     }
 
-    // ── 6. Update dedup index in Blobs
+    // ── 6. Update dedup index + failure ledger in Blobs
     await store.setJSON("dedup-index", {
       gmailRefs: Array.from(dedupGmailRefs),
       invoiceNums: Array.from(dedupInvoiceNums),
     });
+    await store.setJSON("failed-refs", failures);
 
     const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
     const remaining = queue.length - processed;
-    const message = timedOut
+    const stuck = stuckCount();
+    const stuckNote = stuck ? ` ${stuck} attachment(s) skipped after failing ${MAX_ATTEMPTS} times.` : "";
+    const message = (timedOut
       ? `⚠ Hit time budget (${elapsedSec}s) — processed ${processed}/${queue.length}, ${remaining} remain. Will continue next sync.`
-      : `✓ Synced ${processed} attachment(s) in ${elapsedSec}s. Imported: ${imported}. Queued for review: ${queued}.`;
+      : `✓ Synced ${processed} attachment(s) in ${elapsedSec}s. Imported: ${imported}. Queued for review: ${queued}.`) + stuckNote;
 
     await store.setJSON("sync-state", {
       lastRun: new Date().toISOString(),
@@ -266,9 +301,10 @@ export default async (req: Request) => {
       processed,
       total: queue.length,
       timedOut,
+      stuck,
     });
 
-    return json({ success: true, imported, queued, processed, total: queue.length, timedOut, message });
+    return json({ success: true, imported, queued, processed, total: queue.length, timedOut, stuck, message });
   } catch (err: any) {
     const errMsg = err?.message || "Unknown error";
     await store.setJSON("sync-state", {
@@ -283,6 +319,18 @@ export default async (req: Request) => {
 };
 
 // ──────────────────────────────────────────────────────────────────────────
+
+// v2.16.19: name the attachments that hit MAX_ATTEMPTS so the status panel reports what
+// is stuck and why, rather than only counting them. Capped to keep sync-state small.
+function stuckList(failures: Record<string, any>): string[] {
+  return Object.entries(failures)
+    .filter(([, f]) => ((f as any)?.count || 0) >= MAX_ATTEMPTS)
+    .slice(0, 5)
+    .map(([ref, f]) => {
+      const x = f as any;
+      return `${x.filename || ref}${x.vendor ? ` (${x.vendor})` : ""}: ${x.error || "failed"}`;
+    });
+}
 
 // v2.16.7: per-month shard key for a cost entry — must match costShardKey() in App.jsx.
 function costShardKey(e: any): string {
