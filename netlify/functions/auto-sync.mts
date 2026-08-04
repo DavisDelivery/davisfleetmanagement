@@ -7,13 +7,41 @@ import pdfParse from "pdf-parse";
 /**
  * /api/auto-sync — server-side Gmail invoice sync.
  *
- * Pipeline: read token from Blobs → search Gmail per vendor → fetch new
- * attachments → extract PDF text → call Anthropic → evaluate confidence →
- * high-conf items go to fl-costs (Firestore), low-conf items go to
- * fl-review-queue. State is persisted in Blobs so subsequent runs are idempotent.
+ * v2.17.0: rebuilt around a durable work queue so the ~22s time budget is spent
+ * processing invoices instead of re-discovering them.
  *
- * Time budget: ~26s. We process attachments in parallel (CONCURRENCY=3) but
- * stop early if approaching the deadline so we always write state before exit.
+ * The old shape rebuilt its queue from scratch every run: re-list Gmail per vendor
+ * (capped at 50 messages — anything older was unreachable), re-fetch the full payload
+ * of EVERY message to enumerate attachments, and read every Firestore cost shard —
+ * all before processing a single PDF. Most of the budget went to setup, so a run
+ * managed ~6 attachments and a 160-deep backlog could never catch up.
+ *
+ * New shape, all state in Blobs:
+ *  - `work-queue`   pending attachments + a resumable discovery cursor. Discovery
+ *                   paginates the full window (no 50-message cap) and can span runs.
+ *  - `seen-messages` every message ever enumerated — its payload is never fetched
+ *                   again. Steady-state runs do 3 cheap list calls and stop.
+ *  - `dedup-index`  rebuilt from the ACTUAL ledger at each discovery epoch (see
+ *                   reconcile below), then maintained incrementally.
+ *  - `failed-refs`  failure ledger; quarantine after MAX_ATTEMPTS (v2.16.19).
+ *
+ * A run: (0) refuse if another run is in flight; (1) start or resume discovery under
+ * a small sub-budget — or, once discovery is done, a cheap freshness check for new
+ * mail; (2) spend everything else processing the queue front with per-item deadlines
+ * (AbortController) so a slow PDF can't blow past the function cap; (3) persist.
+ *
+ * Reconcile: the dedup index previously accumulated in Blobs forever and was never
+ * checked against the ledger. That leaves it wrong in both directions: a browser
+ * holding a stale copy of a month can full-write that shard (saveCosts diffs against
+ * what it loaded at page-load) and silently drop entries the server imported since —
+ * which the index then blocks from EVER re-importing; and the Purge-vendor buttons
+ * promise a clean re-scan the index would silently refuse. At each discovery epoch
+ * the index is rebuilt from what the ledger actually contains (active + archive
+ * shards + review queue + fl-rejected-refs tombstones written by the app on reject/
+ * delete), so lost entries are re-imported automatically and deliberate removals
+ * stay removed. Shard writes also merge against a fresh read of the target shard,
+ * which narrows the clobber window and drops the read-every-shard-every-run setup
+ * cost to just the shards being written.
  */
 
 const FIREBASE_CONFIG = {
@@ -37,17 +65,27 @@ const DEFAULT_VENDORS = [
   { name: "Quick Fuel", category: "Fuel" },
 ];
 
-const TIME_BUDGET_MS = 22000; // leave 4s headroom under the 26s function cap
-
-// v2.16.19: an attachment that fails this many runs in a row is quarantined and stops
-// being queued. Only successfully imported attachments were ever recorded, so one that
-// could never succeed (image-only PDF, parser that never returns rows) came back on
-// every single run — re-downloaded, re-parsed and re-billed forever.
-const MAX_ATTEMPTS = 3;
+// Exported so the test harness can shrink the clocks; production never touches it.
+export const TUNING = {
+  BUDGET_MS: 22000,        // total run budget
+  DISCOVERY_MS: 8000,      // sub-budget for mailbox crawling (elapsed, not duration)
+  MIN_START_MS: 6000,      // don't start a batch with less than this left
+  ITEM_CAP_MS: 15000,      // hard per-item deadline
+  FAIR_MS: 10000,          // a timeout only counts as a failure if the item had ≥ this
+  WRITE_HEADROOM_MS: 2000, // reserved for the state writes at the end
+  LIST_PAGE: 100,          // Gmail list page size (paginated — no more 50-message cap)
+  GET_CONC: 8,             // parallel message-payload fetches during discovery
+  PROC_CONC: 3,            // parallel attachment processing
+  MAX_ATTEMPTS: 3,         // quarantine threshold (v2.16.19)
+  FRESH_SLACK_DAYS: 3,     // freshness check re-lists this far back (dedup makes overlap free)
+  LOCK_STALE_MS: 90000,    // a "running" flag older than this is a crashed run — ignore it
+  EPOCH_MAX_AGE_DAYS: 1,   // reconcile at most daily, and only when the queue is empty
+};
 
 export default async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
   const startedAt = Date.now();
+  const elapsed = () => Date.now() - startedAt;
   const store = getStore("gmail-sync");
 
   // Parse options from request (manual sync may pass { daysBack: 7 } etc.)
@@ -56,11 +94,18 @@ export default async (req: Request) => {
     if (req.method === "POST") {
       const body = await req.json();
       // v2.16.13: cap raised from 90 → 1095 days so the one-click "Catch Up Backlog"
-      // sweep can reach historical invoices. Safe: every attachment is deduped BEFORE
-      // the paid AI call, so a wide window only costs anything for genuinely new ones.
+      // sweep can reach historical invoices.
       if (typeof body?.daysBack === "number") daysBack = Math.max(1, Math.min(1095, body.daysBack));
     }
   } catch {}
+
+  // ── 0. Single-flight lock. A scheduled run and a browser-driven sweep pass can
+  // land at the same time; both mutating the work queue loses updates. The loser
+  // backs off (the sweep retries in a few seconds).
+  const prevState = (await store.get("sync-state", { type: "json" }) as any) || {};
+  if (prevState.running && prevState.startedAt && (Date.now() - Date.parse(prevState.startedAt)) < TUNING.LOCK_STALE_MS) {
+    return json({ success: true, busy: true, message: "A sync is already running — try again in a moment." });
+  }
 
   // ── 1. Read prerequisites
   const tokenObj = await store.get("token", { type: "json" }) as any;
@@ -77,160 +122,141 @@ export default async (req: Request) => {
   const vendors = (await store.get("vendors", { type: "json" }) as any) || DEFAULT_VENDORS;
   const truckIds = ((await store.get("truck-ids", { type: "json" }) as any) || []) as string[];
 
-  // Existing state + dedup index
-  const prevState = (await store.get("sync-state", { type: "json" }) as any) || {};
-  const dedup = (await store.get("dedup-index", { type: "json" }) as any) || {
-    gmailRefs: [],
-    invoiceNums: [],
-  };
-  const dedupGmailRefs = new Set<string>(dedup.gmailRefs);
-  const dedupInvoiceNums = new Set<string>((dedup.invoiceNums as string[]).map((s) => s.toUpperCase()));
+  const dedup = (await store.get("dedup-index", { type: "json" }) as any) || { gmailRefs: [], invoiceNums: [] };
+  let dedupGmailRefs = new Set<string>(dedup.gmailRefs);
+  let dedupInvoiceNums = new Set<string>((dedup.invoiceNums as string[]).map((s) => s.toUpperCase()));
 
-  // v2.16.19: failure ledger — gmailRef -> { count, error, filename, vendor, lastAt }.
-  // Counts consecutive failures per attachment so a permanently broken one can be
-  // quarantined instead of retried on every run. Cleared as soon as it succeeds.
+  // v2.16.19 failure ledger — gmailRef -> { count, error, filename, vendor, lastAt }.
   const failures = ((await store.get("failed-refs", { type: "json" }) as any) || {}) as Record<string, any>;
-  const isQuarantined = (ref: string) => ((failures[ref]?.count || 0) >= MAX_ATTEMPTS);
-  const stuckCount = () => Object.values(failures).filter((f: any) => (f?.count || 0) >= MAX_ATTEMPTS).length;
+  const isQuarantined = (ref: string) => ((failures[ref]?.count || 0) >= TUNING.MAX_ATTEMPTS);
+  const stuckCount = () => Object.values(failures).filter((f: any) => (f?.count || 0) >= TUNING.MAX_ATTEMPTS).length;
 
-  // Mark running
+  // Durable work queue + discovery cursor + message memo
+  const wq = ((await store.get("work-queue", { type: "json" }) as any) || { items: [], discovery: null }) as {
+    items: any[];
+    discovery: { coveredDays: number; done: boolean; vendorIdx: number; pageToken: string | null; epochAt: string; freshAfter: string | null } | null;
+  };
+  const seen = ((await store.get("seen-messages", { type: "json" }) as any) || {}) as Record<string, 1>;
+
+  // Mark running (after the lock check, so a busy bounce never stamps the lock)
   await store.setJSON("sync-state", {
     ...prevState,
     running: true,
     startedAt: new Date().toISOString(),
-    message: "Searching Gmail…",
+    message: "Syncing…",
   });
 
   let imported = 0;
   let queued = 0;
   let processed = 0;
+  let discovered = 0;
   let errors: string[] = [];
   let timedOut = false;
+  let fbApp: any = null;
+  let db: any = null;
+  const getDb = () => {
+    if (!db) { fbApp = initializeApp(FIREBASE_CONFIG, `auto-sync-${Date.now()}`); db = getFirestore(fbApp); }
+    return db;
+  };
 
   try {
-    // ── 2. Get Gmail access token
+    // ── 2. Gmail access token
     const accessToken = await refreshAccessToken(tokenObj.refresh_token, clientId, clientSecret);
 
-    // ── 3. Build queue: search each vendor in parallel
-    const d = new Date();
-    d.setDate(d.getDate() - daysBack);
-    const afterDate = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
-    const vendorResults = await Promise.all(
-      vendors.map(async (v: any) => {
-        const q = buildVendorQuery(v.name, afterDate);
-        return { vendor: v, messages: await gmailSearch(accessToken, q) };
-      })
-    );
-
-    // Build flat queue of (vendor, message, attachment) tuples
-    const queue: Array<{ vendor: any; message: any; attachment: any; gmailRef: string }> = [];
-    for (const { vendor, messages } of vendorResults) {
-      for (const m of messages) {
-        for (const a of m.attachments || []) {
-          const gmailRef = `gmail:${m.emailId}:${a.attachmentId}`;
-          if (dedupGmailRefs.has(gmailRef)) continue;
-          const isPdf = (a.mimeType || "").includes("pdf") || (a.filename || "").toLowerCase().endsWith(".pdf");
-          if (!isPdf) continue; // server-side only handles PDFs for now
-          if (isQuarantined(gmailRef)) continue; // failed MAX_ATTEMPTS runs in a row — see failure ledger
-          queue.push({ vendor, message: m, attachment: a, gmailRef });
-        }
+    // ── 3. Discovery epoch. A new epoch starts when the requested window is wider
+    // than what the current one covered, or (cheaply, at an empty-queue moment) at
+    // most daily so client-side ledger changes fold back into the dedup index.
+    let disco = wq.discovery;
+    const epochAgeDays = disco ? (Date.now() - Date.parse(disco.epochAt)) / 86400000 : Infinity;
+    const needEpoch = !disco || daysBack > disco.coveredDays ||
+      (wq.items.length === 0 && disco.done && epochAgeDays >= TUNING.EPOCH_MAX_AGE_DAYS);
+    if (needEpoch) {
+      const truth = await reconcileFromLedger(getDb());
+      // Any ref the old index called settled but the ledger has no trace of was lost
+      // (the shard-wipe bug's signature). Un-see its message so the crawl below
+      // re-enumerates and re-imports it — with the memo intact it would never return.
+      for (const ref of dedupGmailRefs) {
+        if (!truth.gmailRefs.has(ref)) { const mid = ref.split(":")[1]; if (mid) delete seen[mid]; }
       }
+      dedupGmailRefs = truth.gmailRefs;
+      dedupInvoiceNums = truth.invoiceNums;
+      disco = {
+        coveredDays: Math.max(daysBack, 0),
+        done: false,
+        vendorIdx: 0,
+        pageToken: null,
+        epochAt: new Date().toISOString(),
+        freshAfter: null,
+      };
+      // Queue items that the rebuilt index now recognizes as settled drop out here.
+      wq.items = wq.items.filter((it) => !dedupGmailRefs.has(it.gmailRef) && !isQuarantined(it.gmailRef));
+    }
+    disco = disco!;
+
+    const queuedRefs = new Set<string>(wq.items.map((it) => it.gmailRef));
+    const enqueue = (item: any, front = false) => {
+      if (queuedRefs.has(item.gmailRef)) return;
+      queuedRefs.add(item.gmailRef);
+      if (front) wq.items.unshift(item); else wq.items.push(item);
+      discovered++;
+    };
+
+    // ── 4. Crawl (resumable) or freshness check.
+    if (!disco.done) {
+      await crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt);
+    } else {
+      await freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue);
     }
 
-    if (queue.length === 0) {
-      // v2.16.19: quarantined attachments are not "caught up" — say so, or the one thing
-      // still needing attention is the one thing the status line hides.
-      const stuck = stuckCount();
-      const stuckNote = stuck ? ` ${stuck} attachment(s) skipped after failing ${MAX_ATTEMPTS} times — see errors.` : "";
-      await store.setJSON("sync-state", {
-        lastRun: new Date().toISOString(),
-        lastSuccess: new Date().toISOString(),
-        running: false,
-        imported: 0,
-        queued: 0,
-        errors: stuckList(failures),
-        message: `✓ All caught up. No new invoices in the last ${daysBack} days.${stuckNote}`,
-        stuck,
-      });
-      return json({ success: true, imported: 0, queued: 0, message: "Nothing new", stuck });
-    }
-
-    await store.setJSON("sync-state", {
-      ...prevState,
-      running: true,
-      message: `Processing ${queue.length} attachment(s)…`,
-      lastRun: new Date().toISOString(),
-    });
-
-    // Init Firebase
-    const fbApp = initializeApp(FIREBASE_CONFIG, `auto-sync-${Date.now()}`);
-    const db = getFirestore(fbApp);
-
-    // Read existing data once for dedup.
-    // v2.16.7: costs are sharded across per-month docs (fl-costs-<YYYY-MM>) so the log
-    // never hits Firestore's ~1 MB per-document limit. Read every shard (documentId
-    // range query) plus any legacy monolithic fl-costs, build the dedup set from all
-    // of them, and keep each shard's array so new invoices can be appended to the
-    // right shard below.
-    const [reviewDoc, legacyCostsDoc, shardSnap] = await Promise.all([
-      getDoc(doc(db, "kv", "fl-review-queue")),
-      getDoc(doc(db, "kv", "fl-costs")),
-      getDocs(query(collection(db, "kv"), where(documentId(), ">=", "fl-costs-"), where(documentId(), "<", "fl-costs-"))),
-    ]);
-    const shardEntries: Record<string, any[]> = {}; // shard key (YYYY-MM) -> entries currently in that shard
-    const existingCosts: any[] = [];
-    shardSnap.forEach((d) => {
-      try {
-        const arr = JSON.parse(d.data().v);
-        if (Array.isArray(arr)) { shardEntries[d.id.slice("fl-costs-".length)] = arr; existingCosts.push(...arr); }
-      } catch {}
-    });
-    if (legacyCostsDoc.exists()) {
-      try { const arr = JSON.parse(legacyCostsDoc.data().v); if (Array.isArray(arr)) existingCosts.push(...arr); } catch {}
-    }
-    const existingReview = reviewDoc.exists() ? JSON.parse(reviewDoc.data().v) : [];
-    for (const c of existingCosts) if (c.invoiceNum) dedupInvoiceNums.add(String(c.invoiceNum).toUpperCase());
-
+    // ── 5. Process the queue front under the remaining budget.
     const newCostsAdds: any[] = [];
     const newReviewAdds: any[] = [];
+    if (wq.items.length > 0) getDb();
 
-    // ── 4. Process queue with concurrency and time budget
-    const CONCURRENCY = 3;
-    for (let i = 0; i < queue.length; i += CONCURRENCY) {
-      if (Date.now() - startedAt > TIME_BUDGET_MS) {
-        timedOut = true;
-        break;
-      }
-      const batch = queue.slice(i, i + CONCURRENCY);
+    // One attempt per attachment per run: a failure goes to the back of the queue for
+    // the NEXT run, so a transient blip can't burn all its quarantine attempts in one
+    // 22-second window (and a queue of only-failing items can't spin).
+    const attempted = new Set<string>();
+    while (wq.items.length > 0) {
+      const remainMs = TUNING.BUDGET_MS - elapsed();
+      if (remainMs < TUNING.MIN_START_MS) { timedOut = true; break; }
+      const deadlineMs = Math.min(remainMs - TUNING.WRITE_HEADROOM_MS, TUNING.ITEM_CAP_MS);
+      // A timeout with a squeezed end-of-run deadline says nothing about the item;
+      // only a full-length attempt counts toward quarantine.
+      const fairAttempt = deadlineMs >= TUNING.FAIR_MS;
+      const batch = wq.items.filter((it) => !attempted.has(it.gmailRef)).slice(0, TUNING.PROC_CONC);
+      if (batch.length === 0) break;
+      for (const it of batch) attempted.add(it.gmailRef);
+      const signal = AbortSignal.timeout(deadlineMs);
       const batchResults = await Promise.all(
-        batch.map((item) => processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums))
+        batch.map((item) => processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, signal))
       );
+      let sawSqueeze = false;
       for (const r of batchResults) {
+        const idx = wq.items.findIndex((it) => it.gmailRef === r.gmailRef);
+        if (r.aborted && !fairAttempt) { sawSqueeze = true; continue; } // stays queued, no penalty
         processed++;
-        if (r.error) {
-          // v2.16.19: remember the failure so the same attachment isn't retried forever.
+        if (r.error || r.aborted) {
+          const errText = r.aborted ? `timed out after ${Math.round(deadlineMs / 1000)}s` : r.error;
           const count = (failures[r.gmailRef]?.count || 0) + 1;
-          failures[r.gmailRef] = {
-            count,
-            error: r.error,
-            filename: r.filename,
-            vendor: r.vendor,
-            lastAt: new Date().toISOString(),
-          };
-          errors.push(`${r.gmailRef}: ${r.error}${count >= MAX_ATTEMPTS ? ` — quarantined after ${count} attempts` : ""}`);
+          failures[r.gmailRef] = { count, error: errText, filename: r.filename, vendor: r.vendor, lastAt: new Date().toISOString() };
+          const quarantined = count >= TUNING.MAX_ATTEMPTS;
+          errors.push(`${r.gmailRef}: ${errText}${quarantined ? ` — quarantined after ${count} attempts` : ""}`);
+          if (idx >= 0) {
+            if (quarantined) { wq.items.splice(idx, 1); queuedRefs.delete(r.gmailRef); }
+            else { wq.items.push(wq.items.splice(idx, 1)[0]); } // retry later, behind fresh work
+          }
           continue;
         }
-        // Settled one way or the other, so never fetch or parse it again.
-        // v2.16.19: this now covers duplicates too. A duplicate was previously left out
-        // of the dedup index, so the very same attachment was re-downloaded and re-sent
-        // to the paid parser on every run even though its invoice was already imported.
+        // Settled one way or the other — never fetch or parse it again (covers
+        // duplicates too, v2.16.19).
         delete failures[r.gmailRef];
         dedupGmailRefs.add(r.gmailRef);
+        if (idx >= 0) { wq.items.splice(idx, 1); queuedRefs.delete(r.gmailRef); }
         if (r.skipReason) continue;
         if (r.invoiceNum) dedupInvoiceNums.add(r.invoiceNum.toUpperCase());
         if (r.confidence === "high") {
           newCostsAdds.push(...r.entries);
-          imported += r.entries.length;
         } else {
           newReviewAdds.push({
             id: Date.now() + Math.random(),
@@ -247,47 +273,70 @@ export default async (req: Request) => {
           queued += r.entries.length;
         }
       }
+      if (sawSqueeze) { timedOut = true; break; }
     }
 
-    // ── 5. Write new invoices back — append each to its per-month shard (fl-costs-<YYYY-MM>).
-    // v2.16.7: sharding keeps every doc well under Firestore's 1 MB limit, so instead of
-    // pausing the whole sync we only skip the (very rare) individual month that would overflow.
+    // ── 6. Write imports — merge each month shard against a FRESH read of that shard,
+    // taken at write time rather than at run start. The old upfront read of EVERY shard
+    // cost seconds of every run's budget and left a whole run's width for a concurrent
+    // client write to slip between read and write; now only the target months are read,
+    // moments before writing. Entries whose id or invoiceNum is already present in the
+    // shard are dropped rather than duplicated.
     if (newCostsAdds.length > 0) {
-      const SHARD_LIMIT = 1_000_000; // ~1MB with headroom for the ts field + overhead
+      const SHARD_LIMIT = 1_000_000;
       const byShard: Record<string, any[]> = {};
       for (const e of newCostsAdds) { const k = costShardKey(e); (byShard[k] ||= []).push(e); }
       for (const k of Object.keys(byShard)) {
-        const merged = [...(shardEntries[k] || []), ...byShard[k]];
+        const ref = doc(getDb(), "kv", `fl-costs-${k}`);
+        const snap = await getDoc(ref);
+        let existing: any[] = [];
+        if (snap.exists()) { try { const a = JSON.parse(snap.data().v); if (Array.isArray(a)) existing = a; } catch {} }
+        const haveIds = new Set(existing.map((e) => e.id));
+        const haveNums = new Set(existing.map((e) => String(e.invoiceNum || "").toUpperCase()).filter(Boolean));
+        const adds = byShard[k].filter((e) => !haveIds.has(e.id) && !(e.invoiceNum && haveNums.has(String(e.invoiceNum).toUpperCase())));
+        if (adds.length === 0) continue;
+        const merged = [...existing, ...adds];
         const shardJson = JSON.stringify(merged);
         if (shardJson.length > SHARD_LIMIT) {
-          errors.push(`fl-costs-${k} would exceed 1 MB (${Math.round(shardJson.length / 1024)} KB) — ${byShard[k].length} invoice(s) not saved; archive older invoices.`);
+          errors.push(`fl-costs-${k} would exceed 1 MB (${Math.round(shardJson.length / 1024)} KB) — ${adds.length} invoice(s) not saved; archive older invoices.`);
           continue;
         }
-        await setDoc(doc(db, "kv", `fl-costs-${k}`), { v: shardJson, ts: new Date().toISOString() });
+        await setDoc(ref, { v: shardJson, ts: new Date().toISOString() });
+        imported += adds.length;
       }
     }
     if (newReviewAdds.length > 0) {
-      const updated = [...existingReview, ...newReviewAdds];
-      await setDoc(doc(db, "kv", "fl-review-queue"), {
-        v: JSON.stringify(updated),
-        ts: new Date().toISOString(),
-      });
+      const ref = doc(getDb(), "kv", "fl-review-queue");
+      const snap = await getDoc(ref);
+      let existingReview: any[] = [];
+      if (snap.exists()) { try { const a = JSON.parse(snap.data().v); if (Array.isArray(a)) existingReview = a; } catch {} }
+      await setDoc(ref, { v: JSON.stringify([...existingReview, ...newReviewAdds]), ts: new Date().toISOString() });
     }
 
-    // ── 6. Update dedup index + failure ledger in Blobs
+    // ── 7. Persist queue, memo, dedup, failures, state.
+    wq.discovery = disco;
+    await store.setJSON("work-queue", wq);
+    await store.setJSON("seen-messages", seen);
     await store.setJSON("dedup-index", {
       gmailRefs: Array.from(dedupGmailRefs),
       invoiceNums: Array.from(dedupInvoiceNums),
     });
     await store.setJSON("failed-refs", failures);
 
-    const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
-    const remaining = queue.length - processed;
+    const elapsedSec = Math.round(elapsed() / 1000);
+    const remaining = wq.items.length;
+    const done = disco.done && remaining === 0;
+    // Old clients break their sweep on processed:0 && !timedOut — keep timedOut
+    // meaning "there is more to do" so they never false-stop mid-drain.
+    timedOut = timedOut || remaining > 0 || !disco.done;
     const stuck = stuckCount();
-    const stuckNote = stuck ? ` ${stuck} attachment(s) skipped after failing ${MAX_ATTEMPTS} times.` : "";
-    const message = (timedOut
-      ? `⚠ Hit time budget (${elapsedSec}s) — processed ${processed}/${queue.length}, ${remaining} remain. Will continue next sync.`
-      : `✓ Synced ${processed} attachment(s) in ${elapsedSec}s. Imported: ${imported}. Queued for review: ${queued}.`) + stuckNote;
+    const stuckNote = stuck ? ` ${stuck} attachment(s) skipped after failing ${TUNING.MAX_ATTEMPTS} times — see errors.` : "";
+    const bits: string[] = [];
+    if (processed) bits.push(`processed ${processed} (imported ${imported}${queued ? `, ${queued} to review` : ""})`);
+    if (discovered) bits.push(`found ${discovered} new`);
+    const message = done
+      ? `✓ All caught up. No new invoices in the last ${disco.coveredDays} days.${stuckNote}`
+      : `⏳ ${bits.join(" · ") || "No progress this run"} — ${remaining} in queue${!disco.done ? ", still scanning mailbox" : ""}. Continues automatically every ~3h, or run Catch Up Backlog.${stuckNote}`;
 
     await store.setJSON("sync-state", {
       lastRun: new Date().toISOString(),
@@ -295,18 +344,27 @@ export default async (req: Request) => {
       running: false,
       imported,
       queued,
-      errors: errors.slice(0, 5), // cap to first 5
+      errors: [...errors.slice(0, 3), ...stuckList(failures)].slice(0, 5),
       message,
       elapsedSec,
       processed,
-      total: queue.length,
+      discovered,
+      remaining,
+      total: remaining + processed,
       timedOut,
+      done,
       stuck,
     });
 
-    return json({ success: true, imported, queued, processed, total: queue.length, timedOut, stuck, message });
+    return json({ success: true, imported, queued, processed, discovered, remaining, discoveryDone: disco.done, done, timedOut, stuck, message });
   } catch (err: any) {
     const errMsg = err?.message || "Unknown error";
+    // Keep whatever discovery/settlement survived — it's all idempotent.
+    try {
+      await store.setJSON("work-queue", wq);
+      await store.setJSON("seen-messages", seen);
+      await store.setJSON("failed-refs", failures);
+    } catch {}
     await store.setJSON("sync-state", {
       ...prevState,
       running: false,
@@ -320,11 +378,160 @@ export default async (req: Request) => {
 
 // ──────────────────────────────────────────────────────────────────────────
 
+/**
+ * Rebuild the dedup index from what the ledger ACTUALLY contains: active month
+ * shards, archive shards, the pending review queue, and human tombstones
+ * (fl-rejected-refs — written by the app when a review item is rejected or an
+ * imported invoice is deleted, so a human "no" doesn't boomerang back on the next
+ * sweep). Any gmailRef the old index claimed was settled but that has no trace
+ * here gets dropped — re-queued and re-imported. That heals entries lost to a
+ * stale client's shard write, and it is what lets the Purge-vendor buttons
+ * actually re-scan: purged refs lose their trace on purpose.
+ */
+async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; invoiceNums: Set<string> }> {
+  const kv = collection(db, "kv");
+  const prefixRange = (p: string) => query(kv, where(documentId(), ">=", p), where(documentId(), "<", p.slice(0, -1) + String.fromCharCode(p.charCodeAt(p.length - 1) + 1)));
+  const [shardSnap, archSnap, legacyDoc, reviewDoc, rejectedDoc] = await Promise.all([
+    getDocs(prefixRange("fl-costs-")),
+    getDocs(prefixRange("fl-arch-costs-")),
+    getDoc(doc(db, "kv", "fl-costs")),
+    getDoc(doc(db, "kv", "fl-review-queue")),
+    getDoc(doc(db, "kv", "fl-rejected-refs")),
+  ]);
+  const gmailRefs = new Set<string>();
+  const invoiceNums = new Set<string>();
+  const eat = (arr: any) => {
+    if (!Array.isArray(arr)) return;
+    for (const e of arr) {
+      if (e?.gmailRef) gmailRefs.add(e.gmailRef);
+      if (e?.invoiceNum) invoiceNums.add(String(e.invoiceNum).toUpperCase());
+    }
+  };
+  const eatDoc = (d: any) => { try { eat(JSON.parse(d.data().v)); } catch {} };
+  shardSnap.forEach(eatDoc);
+  archSnap.forEach(eatDoc);
+  if (legacyDoc.exists()) eatDoc(legacyDoc);
+  if (reviewDoc.exists()) {
+    try {
+      const items = JSON.parse(reviewDoc.data().v);
+      if (Array.isArray(items)) for (const it of items) if (it?.gmailRef) gmailRefs.add(it.gmailRef);
+    } catch {}
+  }
+  if (rejectedDoc.exists()) {
+    try {
+      const refs = JSON.parse(rejectedDoc.data().v);
+      if (Array.isArray(refs)) for (const r of refs) if (typeof r === "string") gmailRefs.add(r);
+    } catch {}
+  }
+  return { gmailRefs, invoiceNums };
+}
+
+/**
+ * Resumable mailbox crawl. Pages through each vendor's full window (LIST_PAGE at a
+ * time), fetches payloads ONLY for messages never enumerated before, enqueues their
+ * un-settled PDF attachments, and records the cursor so the next run continues where
+ * this one stopped. The cursor only advances past a page once every unseen message
+ * on it has been enumerated, so a mid-page deadline loses nothing.
+ */
+async function crawlMailbox(
+  accessToken: string, vendors: any[], disco: any, seen: Record<string, 1>,
+  dedupGmailRefs: Set<string>, isQuarantined: (r: string) => boolean,
+  enqueue: (item: any, front?: boolean) => void, startedAt: number
+) {
+  const deadlineAt = startedAt + TUNING.DISCOVERY_MS;
+  while (!disco.done && Date.now() < deadlineAt) {
+    const vendor = vendors[disco.vendorIdx];
+    if (!vendor) { finishCrawl(disco); break; }
+    const q = buildVendorQuery(vendor.name, afterDateStr(disco.coveredDays));
+    let page;
+    try {
+      page = await gmailList(accessToken, q, disco.pageToken, TUNING.LIST_PAGE);
+    } catch (e) {
+      if (disco.pageToken) { disco.pageToken = null; continue; } // stale cursor — restart vendor (seen-memo keeps it cheap)
+      throw e;
+    }
+    const unseen = page.ids.filter((id) => !seen[id]);
+    let finishedPage = true;
+    for (let i = 0; i < unseen.length; i += TUNING.GET_CONC) {
+      if (Date.now() >= deadlineAt) { finishedPage = false; break; }
+      const metas = await Promise.all(unseen.slice(i, i + TUNING.GET_CONC).map((id) => gmailGetMessage(accessToken, id)));
+      for (const m of metas) {
+        enqueueMessagePdfs(m, vendor, dedupGmailRefs, isQuarantined, enqueue, false);
+        seen[m.emailId] = 1;
+      }
+    }
+    if (!finishedPage) break; // same pageToken next run; already-fetched ids skip via seen
+    if (page.nextPageToken) { disco.pageToken = page.nextPageToken; }
+    else {
+      disco.vendorIdx++;
+      disco.pageToken = null;
+      if (disco.vendorIdx >= vendors.length) finishCrawl(disco);
+    }
+  }
+}
+
+function finishCrawl(disco: any) {
+  disco.done = true;
+  disco.freshAfter = afterDateStr(TUNING.FRESH_SLACK_DAYS);
+}
+
+/**
+ * Once the crawl is done, each run only looks for NEW mail: one list call per vendor
+ * bounded by the last check (minus slack — dedup and the seen-memo make overlap free).
+ * Steady state is 3 list calls, zero payload fetches, zero AI calls.
+ */
+async function freshCheck(
+  accessToken: string, vendors: any[], disco: any, seen: Record<string, 1>,
+  dedupGmailRefs: Set<string>, isQuarantined: (r: string) => boolean,
+  enqueue: (item: any, front?: boolean) => void
+) {
+  const after = disco.freshAfter || afterDateStr(TUNING.FRESH_SLACK_DAYS);
+  const pages = await Promise.all(
+    vendors.map(async (v: any) => ({
+      vendor: v,
+      page: await gmailList(accessToken, buildVendorQuery(v.name, after), null, TUNING.LIST_PAGE),
+    }))
+  );
+  for (const { vendor, page } of pages) {
+    const unseen = page.ids.filter((id: string) => !seen[id]);
+    for (let i = 0; i < unseen.length; i += TUNING.GET_CONC) {
+      const metas = await Promise.all(unseen.slice(i, i + TUNING.GET_CONC).map((id: string) => gmailGetMessage(accessToken, id)));
+      for (const m of metas) {
+        enqueueMessagePdfs(m, vendor, dedupGmailRefs, isQuarantined, enqueue, true); // front: newest first
+        seen[m.emailId] = 1;
+      }
+    }
+  }
+  disco.freshAfter = afterDateStr(TUNING.FRESH_SLACK_DAYS);
+}
+
+function enqueueMessagePdfs(
+  m: any, vendor: any, dedupGmailRefs: Set<string>, isQuarantined: (r: string) => boolean,
+  enqueue: (item: any, front?: boolean) => void, front: boolean
+) {
+  for (const a of m.attachments || []) {
+    if (!a.attachmentId) continue; // inline-data parts can't be fetched via the attachments endpoint
+    const isPdf = (a.mimeType || "").includes("pdf") || (a.filename || "").toLowerCase().endsWith(".pdf");
+    if (!isPdf) continue;
+    const gmailRef = `gmail:${m.emailId}:${a.attachmentId}`;
+    if (dedupGmailRefs.has(gmailRef) || isQuarantined(gmailRef)) continue;
+    enqueue({
+      gmailRef,
+      messageId: m.emailId,
+      attachmentId: a.attachmentId,
+      filename: a.filename,
+      mimeType: a.mimeType,
+      vendorName: vendor.name,
+      vendorCategory: vendor.category,
+    }, front);
+  }
+}
+
 // v2.16.19: name the attachments that hit MAX_ATTEMPTS so the status panel reports what
 // is stuck and why, rather than only counting them. Capped to keep sync-state small.
 function stuckList(failures: Record<string, any>): string[] {
   return Object.entries(failures)
-    .filter(([, f]) => ((f as any)?.count || 0) >= MAX_ATTEMPTS)
+    .filter(([, f]) => ((f as any)?.count || 0) >= TUNING.MAX_ATTEMPTS)
     .slice(0, 5)
     .map(([ref, f]) => {
       const x = f as any;
@@ -336,6 +543,12 @@ function stuckList(failures: Record<string, any>): string[] {
 function costShardKey(e: any): string {
   const m = String(e?.date || "").slice(0, 7);
   return /^\d{4}-\d{2}$/.test(m) ? m : "unknown";
+}
+
+function afterDateStr(daysBack: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysBack);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string) {
@@ -358,67 +571,66 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
 
 function buildVendorQuery(vendorName: string, afterDate: string): string {
   const key = vendorName.toLowerCase().trim();
-  const dateFilter = ` after:${afterDate}`;
+  const dateFilter = afterDate ? ` after:${afterDate}` : "";
   if (VENDOR_QUERIES[key]) return VENDOR_QUERIES[key] + dateFilter;
   return `"${vendorName}" has:attachment` + dateFilter;
 }
 
-async function gmailSearch(accessToken: string, query: string) {
-  const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=50`;
-  const resp = await fetch(searchUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+async function gmailList(accessToken: string, q: string, pageToken: string | null, max: number): Promise<{ ids: string[]; nextPageToken: string | null }> {
+  const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=${max}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   const data = await resp.json();
   if (!resp.ok) throw new Error("Gmail search failed: " + JSON.stringify(data).substring(0, 200));
-  const messages = data.messages || [];
-  if (messages.length === 0) return [];
+  return { ids: (data.messages || []).map((m: any) => m.id), nextPageToken: data.nextPageToken || null };
+}
 
-  // Fetch full details for each (in parallel)
-  return Promise.all(
-    messages.slice(0, 50).map(async (msg: any) => {
-      const r = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const full = await r.json();
-      const headers = full.payload?.headers || [];
-      const getHeader = (n: string) => headers.find((h: any) => h.name.toLowerCase() === n.toLowerCase())?.value || "";
-      const attachments: any[] = [];
-      const walk = (part: any) => {
-        if (part.filename) attachments.push({
-          filename: part.filename,
-          size: part.body?.size || 0,
-          attachmentId: part.body?.attachmentId || null,
-          mimeType: part.mimeType || "",
-        });
-        if (part.parts) part.parts.forEach(walk);
-      };
-      if (full.payload) walk(full.payload);
-      return {
-        emailId: msg.id,
-        emailDate: getHeader("Date"),
-        emailSubject: getHeader("Subject"),
-        from: getHeader("From"),
-        attachments,
-      };
-    })
+async function gmailGetMessage(accessToken: string, id: string) {
+  const r = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
+  const full = await r.json();
+  if (!r.ok) throw new Error("Gmail message fetch failed: " + JSON.stringify(full).substring(0, 200));
+  const headers = full.payload?.headers || [];
+  const getHeader = (n: string) => headers.find((h: any) => h.name.toLowerCase() === n.toLowerCase())?.value || "";
+  const attachments: any[] = [];
+  const walk = (part: any) => {
+    if (part.filename) attachments.push({
+      filename: part.filename,
+      size: part.body?.size || 0,
+      attachmentId: part.body?.attachmentId || null,
+      mimeType: part.mimeType || "",
+    });
+    if (part.parts) part.parts.forEach(walk);
+  };
+  if (full.payload) walk(full.payload);
+  return {
+    emailId: id,
+    emailDate: getHeader("Date"),
+    emailSubject: getHeader("Subject"),
+    from: getHeader("From"),
+    attachments,
+  };
 }
 
 async function processOne(
-  item: { vendor: any; message: any; attachment: any; gmailRef: string },
+  item: { gmailRef: string; messageId: string; attachmentId: string; filename: string; vendorName: string; vendorCategory: string },
   accessToken: string,
   anthropicKey: string,
   truckIds: string[],
   vendors: any[],
-  dedupInvoiceNums: Set<string>
+  dedupInvoiceNums: Set<string>,
+  signal: AbortSignal
 ) {
-  const { vendor, message, attachment, gmailRef } = item;
-  const result: any = { gmailRef, vendor: vendor.name, filename: attachment.filename };
+  const { gmailRef, messageId, attachmentId, filename } = item;
+  const vendor = vendors.find((v: any) => v.name === item.vendorName) || { name: item.vendorName, category: item.vendorCategory || "Other" };
+  const result: any = { gmailRef, vendor: vendor.name, filename };
 
   try {
     // Fetch attachment bytes
     const attResp = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.emailId}/attachments/${attachment.attachmentId}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attachmentId}`,
+      { headers: { Authorization: `Bearer ${accessToken}` }, signal }
     );
     const attData = await attResp.json();
     if (!attData.data) throw new Error("No attachment data");
@@ -427,10 +639,10 @@ async function processOne(
 
     // Upload to invoice-file blobs for later retrieval
     const fileStore = getStore("invoice-files");
-    const safeName = (attachment.filename || "invoice.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const safeName = (filename || "invoice.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileKey = `${Date.now()}-${safeName}`;
     await fileStore.set(fileKey, pdfBuffer, {
-      metadata: { contentType: "application/pdf", filename: attachment.filename },
+      metadata: { contentType: "application/pdf", filename },
     });
     const fileUrl = `/api/invoice-file?key=${encodeURIComponent(fileKey)}`;
     result.fileUrl = fileUrl;
@@ -441,7 +653,7 @@ async function processOne(
     if (!pdfText) throw new Error("PDF has no extractable text (image-only PDF — needs OCR)");
 
     // Call Anthropic with strict prompt
-    const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor);
+    const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor, signal);
     if (!parsed || (Array.isArray(parsed) && parsed.length === 0)) {
       throw new Error("Parser returned no rows");
     }
@@ -465,6 +677,14 @@ async function processOne(
       fileKey,
       addedAt: new Date().toISOString(),
     }));
+    // v2.17.0: carry the AI's own confidence flag through — the explicit field list
+    // above dropped it, so evaluateConfidence never saw "low" and the AI's uncertainty
+    // was silently ignored (only the independent field gate ever routed to review).
+    // evaluateConfidence strips these before the entries are saved.
+    if (rows[0]?._confidence) {
+      (entries[0] as any)._confidence = rows[0]._confidence;
+      (entries[0] as any)._confidenceReason = rows[0]._confidenceReason;
+    }
 
     // Evaluate confidence on the BATCH (group)
     const verdict = evaluateConfidence(entries, vendor, truckIds, vendors);
@@ -480,12 +700,16 @@ async function processOne(
 
     return result;
   } catch (err: any) {
+    if (err?.name === "AbortError" || err?.name === "TimeoutError") {
+      result.aborted = true;
+      return result;
+    }
     result.error = (err?.message || "process failed").substring(0, 300);
     return result;
   }
 }
 
-async function callAnthropicScan(apiKey: string, pdfText: string, truckIds: string[], vendor: any) {
+async function callAnthropicScan(apiKey: string, pdfText: string, truckIds: string[], vendor: any, signal?: AbortSignal) {
   // Same general schema as the existing client-side prompt, but slimmed for text input.
   const truckList = truckIds.length > 0 ? truckIds.join(", ") : "(unknown)";
   const prompt = `You are extracting line items from an invoice for ${vendor.name} (category: ${vendor.category || "Other"}).
@@ -522,6 +746,7 @@ Return ONLY the JSON array, no preamble.`;
       max_tokens: 16384,
       messages: [{ role: "user", content: prompt }],
     }),
+    signal,
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(`Anthropic ${resp.status}: ${JSON.stringify(data).substring(0, 200)}`);
