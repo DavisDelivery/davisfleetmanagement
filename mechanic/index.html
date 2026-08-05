@@ -121,6 +121,28 @@
   .note-cancel:hover { color: var(--text); border-color: var(--text); }
   .empty-notes { font-size: 12px; color: var(--muted); font-style: italic; }
 
+  /* WORK ITEMS (v2.18.0)
+     A repair order routinely covers several jobs — radiator AND injector. Finishing
+     one used to mean either closing the whole ticket or leaving no record at all, so
+     each entry is now a work item: its own ✓, its own sub-notes. The ✓ is a 34px
+     target on the left so a mechanic can tick a job off one-handed in the bay. */
+  .item-done-btn { position: absolute; top: 6px; left: 6px; width: 34px; height: 34px; min-width: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: transparent; font-size: 16px; font-weight: 800; line-height: 1; cursor: pointer; padding: 0; }
+  .item-done-btn.on { background: var(--green, #16a34a); border-color: var(--green, #16a34a); color: #fff; }
+  .note-entry.has-item { padding-left: 48px; }
+  .note-entry.item-done .note-text { text-decoration: line-through; color: var(--muted); }
+  .item-doneline { font-size: 11px; font-weight: 700; color: var(--green, #16a34a); margin-top: 4px; }
+  .subnotes { margin-top: 6px; border-left: 2px solid var(--border); padding-left: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .subnote { display: flex; gap: 6px; align-items: flex-start; }
+  .subnote-ts { font-family: var(--mono); font-size: 9px; color: var(--muted); white-space: nowrap; margin-top: 3px; }
+  .subnote-text { font-size: 12px; color: var(--text); line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; flex: 1; }
+  .subnote-by { font-size: 9px; color: var(--brand); font-weight: 700; white-space: nowrap; margin-top: 3px; }
+  .subnote-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; line-height: 1; padding: 4px 6px; min-width: 28px; flex-shrink: 0; }
+  .item-note-btn { margin-top: 6px; background: none; border: none; color: var(--brand); font-family: var(--sans); font-size: 12px; font-weight: 700; padding: 6px 0; cursor: pointer; }
+  .item-note-row { display: flex; gap: 6px; margin-top: 6px; }
+  .item-note-input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--brand); color: var(--text); font-family: var(--sans); font-size: 16px; padding: 9px 10px; border-radius: 6px; outline: none; }
+  .item-progress { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+  .item-progress.all-done { color: var(--green, #16a34a); border-color: var(--green, #16a34a); }
+
   /* NOTE INPUT */
   .note-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
   /* 16px: anything smaller makes iOS Safari zoom the whole page when the field
@@ -349,6 +371,13 @@ async function saveRepairs(arr) {
     // Always pass the array explicitly — never rely on the module-level
     // `repairs` reference which can be overwritten by onSnapshot mid-await.
     await fsSet("fl-repairs", arr !== undefined ? arr : repairs);
+    // v2.18.0: adopt what we just wrote instead of waiting for onSnapshot to echo
+    // it back. Every caller derives its next edit from `repairs`, so until the
+    // round trip landed, a second action read the pre-write array and saved over
+    // the first one. Rare when a note was the only edit; routine now that ticking
+    // off items and noting them are separate taps seconds apart. A later snapshot
+    // still wins — it carries genuinely newer remote state.
+    if (arr !== undefined) repairs = arr;
     return true;
   } catch(e) {
     console.error("saveRepairs failed:", e);
@@ -408,10 +437,24 @@ function reasonSelectHtml(repairId, currentReason) {
 // add, delete, and edit so the markup never drifts between code paths.
 function noteEntryHtml(repairId, entry, idx) {
   // Stacked for phones: meta line on top, note text full width underneath.
-  return `<div class="note-entry" id="note-${repairId}-${idx}">
+  // v2.18.0: each entry is a work item — ✓ to close just this job, and its own
+  // sub-notes underneath. Entries written before this have neither field and read
+  // back as a plain open item, so nothing needs migrating.
+  const done = !!entry.done;
+  const subs = Array.isArray(entry.notes) ? entry.notes : [];
+  const subsHtml = subs.length ? `<div class="subnotes">${subs.map((n, ni) => `
+      <div class="subnote">
+        <span class="subnote-ts">${shortTs(n.ts)}</span>
+        <span class="subnote-text">${escHtml(n.text)}</span>
+        ${n.by ? `<span class="subnote-by">— ${escHtml(n.by)}</span>` : ""}
+        <button class="subnote-del" onclick="deleteItemNote('${repairId}',${idx},${ni})" title="Delete note" aria-label="Delete note">✕</button>
+      </div>`).join("")}</div>` : "";
+  return `<div class="note-entry has-item${done ? " item-done" : ""}" id="note-${repairId}-${idx}">
+    <button class="item-done-btn${done ? " on" : ""}" onclick="toggleItem('${repairId}',${idx})"
+      title="${done ? "Reopen this item" : "Mark this item done"}" aria-label="${done ? "Reopen this item" : "Mark this item done"}">✓</button>
     <span class="note-acts">
-      <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit note" aria-label="Edit note">✎</button>
-      <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete note" aria-label="Delete note">✕</button>
+      <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit item" aria-label="Edit item">✎</button>
+      <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete item" aria-label="Delete item">✕</button>
     </span>
     <div class="note-meta">
       <span class="note-ts">${shortTs(entry.ts)}</span>
@@ -419,7 +462,86 @@ function noteEntryHtml(repairId, entry, idx) {
     </div>
     <div class="note-text clamped" id="nt-${repairId}-${idx}">${escHtml(entry.text)}</div>
     <button class="note-more" onclick="toggleNote(this)">Show more</button>
+    ${done ? `<div class="item-doneline">✓ Done ${entry.doneAt ? dateStr(entry.doneAt) : ""}${entry.doneBy ? ` by ${escHtml(entry.doneBy)}` : ""}</div>` : ""}
+    ${subsHtml}
+    <div id="itemnote-${repairId}-${idx}">
+      <button class="item-note-btn" onclick="showItemNote('${repairId}',${idx})">＋ Note</button>
+    </div>
   </div>`;
+}
+/* Per-item note box, opened on demand. Rendering an input under every item would
+   push ✓ Repair Completed off a phone screen on any ticket with a few jobs. */
+function showItemNote(id, idx) {
+  const holder = document.getElementById(`itemnote-${id}-${idx}`);
+  if (!holder) return;
+  holder.innerHTML = `<div class="item-note-row">
+    <input class="item-note-input" id="ini-${id}-${idx}" placeholder="Note on this item..."
+      onkeydown="if(event.key==='Enter'){event.preventDefault();addItemNote('${id}',${idx})}else if(event.key==='Escape'){hideItemNote('${id}',${idx})}">
+    <button class="btn-add" onclick="addItemNote('${id}',${idx})">Add</button>
+  </div>`;
+  const el = document.getElementById(`ini-${id}-${idx}`);
+  if (el) el.focus();
+}
+function hideItemNote(id, idx) {
+  const holder = document.getElementById(`itemnote-${id}-${idx}`);
+  if (holder) holder.innerHTML = `<button class="item-note-btn" onclick="showItemNote('${id}',${idx})">＋ Note</button>`;
+}
+function logOfRepair(r) {
+  return r.notesLog || (r.notes ? [{ ts: r.dateIn || new Date().toISOString(), text: r.notes }] : []);
+}
+async function patchItem(id, idx, patch) {
+  const r = repairs.find(x => x.id == id);
+  if (!r) return null;
+  const log = logOfRepair(r);
+  if (!log[idx]) return null;
+  const newLog = log.map((e, i) => i === idx ? { ...e, ...patch } : e);
+  const updated = repairs.map(r2 => r2.id == id ? { ...r2, notesLog: newLog, notes: "" } : r2);
+  const ok = await saveRepairs(updated);
+  if (!ok) return null;
+  renderNotesLog(id, newLog);
+  refreshItemProgress(id, newLog);
+  return newLog;
+}
+async function toggleItem(id, idx) {
+  const r = repairs.find(x => x.id == id);
+  if (!r) return;
+  const cur = logOfRepair(r)[idx];
+  if (!cur) return;
+  if (cur.done) {
+    if (await patchItem(id, idx, { done: false, doneAt: null, doneBy: null })) showToast("Item reopened");
+    return;
+  }
+  const by = ensureDeviceUser();
+  if (await patchItem(id, idx, { done: true, doneAt: new Date().toISOString(), ...(by ? { doneBy: by } : {}) })) showToast("Item done ✓");
+}
+async function addItemNote(id, idx) {
+  const inp = document.getElementById(`ini-${id}-${idx}`);
+  const text = (inp?.value || "").trim();
+  if (!text) return;
+  const r = repairs.find(x => x.id == id);
+  if (!r) return;
+  const cur = logOfRepair(r)[idx];
+  if (!cur) return;
+  const by = ensureDeviceUser();
+  const subs = Array.isArray(cur.notes) ? cur.notes : [];
+  if (await patchItem(id, idx, { notes: [...subs, { ts: new Date().toISOString(), text, ...(by ? { by } : {}) }] })) showToast("Note added ✓");
+}
+async function deleteItemNote(id, idx, nidx) {
+  const r = repairs.find(x => x.id == id);
+  if (!r) return;
+  const cur = logOfRepair(r)[idx];
+  if (!cur || !Array.isArray(cur.notes)) return;
+  if (await patchItem(id, idx, { notes: cur.notes.filter((_, i) => i !== nidx) })) showToast("Note deleted");
+}
+function refreshItemProgress(id, log) {
+  const el = document.getElementById(`prog-${id}`);
+  if (!el) return;
+  const total = (log || []).length;
+  const done = (log || []).filter(e => e && e.done).length;
+  if (!total) { el.style.display = "none"; return; }
+  el.style.display = "";
+  el.textContent = `${done}/${total} done`;
+  el.classList.toggle("all-done", done === total);
 }
 /* Notes are clamped to 7 lines so one long write-up can't push ✓ Repair Completed
    a screen and a half down. The toggle only appears on notes that actually
@@ -573,7 +695,11 @@ function repairCardHtml(r) {
           <div class="truck-num">#${r.truckId}</div>
           <div class="truck-sub">${truckLabel(r.truckId)}</div>
         </div>
-        ${reasonSelectHtml(r.id, r.reason)}
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <span class="item-progress${log.length && log.filter(e => e && e.done).length === log.length ? " all-done" : ""}" id="prog-${r.id}"
+            style="${log.length ? "" : "display:none;"}">${log.filter(e => e && e.done).length}/${log.length} done</span>
+          ${reasonSelectHtml(r.id, r.reason)}
+        </div>
       </div>
       <div class="card-meta">
         <div class="meta-item">In: <span>${dateStr(r.dateIn)}</span>${r.openedBy ? ` by <span style="color:var(--brand)">${escHtml(r.openedBy)}</span>` : ""}</div>
@@ -588,7 +714,7 @@ function repairCardHtml(r) {
       </div>
       ${notesLogHtml(r.id, r.notesLog, r.notes && !r.notesLog ? r.notes : null)}
       <div class="note-input-row">
-        <input class="note-input" id="ni-${r.id}" placeholder="Add a note..." onkeydown="if(event.key==='Enter'){event.preventDefault();addNote('${r.id}')}">
+        <input class="note-input" id="ni-${r.id}" placeholder="${log.length ? "Add another repair item..." : "Add a repair item..."}" onkeydown="if(event.key==='Enter'){event.preventDefault();addNote('${r.id}')}">
         <button class="btn-add" onclick="addNote('${r.id}')">Add</button>
       </div>
       <div class="card-actions">
@@ -668,7 +794,8 @@ async function addNote(id) {
   if (!ok) return;
   inp.value = "";
   renderNotesLog(id, newLog);
-  showToast("Note added ✓");
+  refreshItemProgress(id, newLog);
+  showToast("Item added ✓");
 }
 
 async function deleteNote(id, idx) {
@@ -679,7 +806,8 @@ async function deleteNote(id, idx) {
   const ok = await saveRepairs(updated);
   if (!ok) return;
   renderNotesLog(id, newLog);
-  showToast("Note deleted");
+  refreshItemProgress(id, newLog);
+  showToast("Item deleted");
 }
 
 // v2.10.47: edit note. Click ✎ → text becomes an inline textarea with
@@ -744,7 +872,14 @@ function weekKey(d){const m=gMon(d);return `${m.getFullYear()}-${String(m.getMon
 const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri"];
 
 async function closeRepair(id) {
-  if (!confirm("Mark this repair as completed?")) return;
+  const repair0 = repairs.find(r => r.id == id);
+  // v2.18.0: closing the order closes every job under it. Name the ones still open
+  // rather than letting a half-finished ticket vanish off the board.
+  const openJobs = repair0 ? logOfRepair(repair0).filter(e => e && !e.done) : [];
+  const msg = openJobs.length
+    ? `${openJobs.length} item(s) still open:\n\n${openJobs.map(e => `• ${e.text}`).join("\n")}\n\nClose the whole repair order anyway?`
+    : "Mark this repair as completed?";
+  if (!confirm(msg)) return;
   const repair = repairs.find(r => r.id == id);
   // v2.16.11: record WHO marked it complete (same per-device name that signs notes)
   const closedBy = ensureDeviceUser();
