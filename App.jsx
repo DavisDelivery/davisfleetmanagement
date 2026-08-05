@@ -1,4 +1,4 @@
-const APP_VERSION = "2.17.1";
+const APP_VERSION = "2.17.2";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -136,6 +136,36 @@ function sortDrivers(a){return [...(a||[])].sort((x,y)=>String((x&&x.name)||"").
 // rewrites that month's tiny doc. Derives the shard key from an entry's date; anything
 // without a valid year-month → "unknown". (Must match costShardKey() in auto-sync.mts.)
 function costShardKey(e){const m=String(e&&e.date||"").slice(0,7);return /^\d{4}-\d{2}$/.test(m)?m:"unknown";}
+// v2.17.2: sharded lists — the same rules the server uses (netlify/functions/auto-sync.mts).
+// A per-month cost doc was assumed to stay small, but the review queue had no such
+// assumption and no guard at all: it grew past Firestore's 1,048,487-byte property
+// ceiling and every sync failed on it. Any growing list is now split across
+// `<base>`, `<base>_2`, `<base>_3`, … Index 0 keeps the original key so existing
+// data and any reader that only knows the base key still work. Sizing is UTF-8
+// byte-accurate — JSON string length undercounts non-ASCII, which is exactly the
+// margin a "safely under 1 MB" check needs.
+const SHARD_MAX_BYTES=800000;
+const shardName=(base,i)=>i===0?base:`${base}_${i+1}`;
+// Strict index parse: Number() would coerce " 2"/"+2"/"2\n" onto a real slot, so two
+// different documents could claim the same shard and one would overwrite the other.
+const shardIndexOf=(base,id)=>{if(id===base)return 0;if(!id.startsWith(base+"_"))return null;const s=id.slice(base.length+1);if(!/^[1-9][0-9]*$/.test(s))return null;const n=Number(s);return n>=2?n-1:null;};
+// Shards are rewritten one document at a time, so a reader can catch a torn layout
+// where an item briefly appears in both its old and new shard. Merge by id.
+function dedupById(items){const seen=new Set();const out=[];for(const it of items){const k=it&&it.id!=null?String(it.id):null;if(k!==null){if(seen.has(k))continue;seen.add(k);}out.push(it);}return out;}
+const utf8Len=s=>(typeof TextEncoder!=="undefined")?new TextEncoder().encode(s).length:s.length;
+function chunkByBytes(items){
+  const out=[];let cur=[],bytes=2;
+  for(const it of items){
+    const b=utf8Len(JSON.stringify(it))+1;
+    if(cur.length>0&&bytes+b>SHARD_MAX_BYTES){out.push(cur);cur=[];bytes=2;}
+    cur.push(it);bytes+=b;
+  }
+  out.push(cur);return out;
+}
+// Keys of a sharded list present in storage, in shard order.
+function shardKeysOf(base,keys){
+  return keys.map(k=>({k,i:shardIndexOf(base,k)})).filter(x=>x.i!=null).sort((a,b)=>a.i-b.i).map(x=>x.k);
+}
 
 const RG=[
   {key:"ds",label:"Davis Straight Drivers",f:d=>d.category==="Davis"&&d.role.toLowerCase().includes("straight"),color:C.brand},
@@ -228,6 +258,8 @@ function App(){
   // Cost tracking / Invoice scanner
   const[costEntries,setCostEntries]=useState([]);
   const costShardJsonRef=useRef({}); // year -> last-saved JSON of that year's shard, so saveCosts only writes shards that changed
+  const costShardCountRef=useRef({}); // month -> how many shards it currently occupies, so a shrinking month clears its spillover
+  const reviewShardCountRef=useRef(1); // v2.17.2: same, for the review queue
   const[archiveYear,setArchiveYear]=useState(()=>String(new Date().getFullYear())); // Costs: "archive invoices before <year>" cutoff
   // v2.10.0: Core charge tracking (Peach State and other vendors that charge cores)
   const[cores,setCores]=useState([]); // {id, date, truckId, invoiceNum, corePart, amount, status:"outstanding"|"returned", returnedDate, returnedCreditInvoice, vendor}
@@ -295,6 +327,15 @@ function App(){
       const groups={};for(const e of costs){const k=costShardKey(e);(groups[k]||(groups[k]=[])).push(e);}
       const ref={};for(const k of Object.keys(groups))ref[k]=JSON.stringify(groups[k]);
       costShardJsonRef.current=ref;
+      // v2.17.2: remember how many shards each month actually occupies on disk, so a
+      // month that later shrinks empties its spillover instead of orphaning it.
+      const counts={};
+      for(const k of keys){
+        const m=/^fl-costs-(.+?)(?:_(\d+))?$/.exec(k);
+        if(!m||k==="fl-costs")continue;
+        counts[m[1]]=Math.max(counts[m[1]]||0,m[2]?Number(m[2]):1);
+      }
+      costShardCountRef.current=counts;
       if(migrate&&Array.isArray(legacyArr)&&legacyArr.length>0){
         let ok=true;
         for(const k of Object.keys(groups)){const res=await window.storage.set(`fl-costs-${k}`,JSON.stringify(groups[k]));if(res===null){ok=false;break;}}
@@ -315,7 +356,7 @@ function App(){
       window.storage.get("fl-repairs").catch(()=>null),
       window.storage.get("fl-retired").catch(()=>null),
       window.storage.get("fl-cores").catch(()=>null), // v2.10.0
-      window.storage.get("fl-review-queue").catch(()=>null), // v2.10.48
+      loadReviewQueue().catch(()=>[]), // v2.10.48, sharded since v2.17.2
       window.storage.get("fl-retired-drivers").catch(()=>null),
       window.storage.get("fl-motive-map").catch(()=>null),
     ]);
@@ -324,7 +365,7 @@ function App(){
     setRepairs(pj(rR,[]));
     setRetiredTrucks(pj(rtR,[]));
     setCores(pj(coresR,[])); // v2.10.0
-    setReviewQueue(pj(rqR,[])); // v2.10.48
+    setReviewQueue(Array.isArray(rqR)?rqR:[]); // v2.10.48 — loadReviewQueue returns items, not a record
     setRetiredDrivers(sortDrivers(pj(rdR,[])));
     const m=pj(mmR,null);if(m)setMotiveMap({vehicles:m.vehicles||{},drivers:m.drivers||{}});
 
@@ -395,6 +436,8 @@ function App(){
   // v2.11: surface save failures instead of swallowing them. window.storage.set
   // returns null (and stashes window.__lastStorageError) when Firestore rejects a
   // write — most commonly the 1 MiB per-document limit on large keys like fl-costs.
+  // v2.17.2: returns whether the write landed, so a sharded write can stop instead
+  // of marching on and leaving the list spliced across a half-written layout.
   const sv=useCallback(async(k,v)=>{
     try{
       const json=JSON.stringify(v);
@@ -402,16 +445,35 @@ function App(){
       const res=await window.storage.set(k,json);
       if(res===null){
         setSaveError({key:k,bytes,msg:window.__lastStorageError||"Save failed"});
+        return false;
       }else if(bytes>900000){
         // Warn before we hit the hard ~1,048,487-byte ceiling so data isn't lost silently.
         setSaveError({key:k,bytes,msg:`approaching the 1 MB storage limit (${Math.round(bytes/1024)} KB used)`});
       }else{
         setSaveError(prev=>prev&&prev.key===k?null:prev); // clear stale warning for this key on a clean save
       }
+      return true;
     }catch(e){
       setSaveError({key:k,bytes:0,msg:e.message||"Save failed"});
+      return false;
     }
   },[]);
+  // v2.17.2: write a list across as many shards as its bytes need, emptying any
+  // shard the list has shrunk out of. Returns the new shard count so the caller can
+  // remember how far to clean up next time.
+  // A rewrite moves items between shards, so a failure partway through leaves the
+  // list spliced. Stop at the first failed chunk and do NOT run the trailing-clear
+  // pass: a stale trailing shard is recoverable (the loader merges and dedups it),
+  // an emptied one is not. The shard count is left untouched so the next save
+  // still knows how far to clean up.
+  const svSharded=useCallback(async(base,items,prevCount)=>{
+    const chunks=chunkByBytes(items||[]);
+    for(let i=0;i<chunks.length;i++){
+      if(!await sv(shardName(base,i),chunks[i]))return prevCount||chunks.length;
+    }
+    for(let i=chunks.length;i<(prevCount||0);i++)await sv(shardName(base,i),[]);
+    return chunks.length;
+  },[sv]);
   const saveTrucks=t=>{setTrucks(t);sv("fl-trucks",t);};
   const saveRetiredTrucks=rt=>{setRetiredTrucks(rt);sv("fl-retired",rt);};
   const saveRetiredDrivers=rd=>{const v=sortDrivers(rd);setRetiredDrivers(v);sv("fl-retired-drivers",v);};
@@ -422,13 +484,16 @@ function App(){
   // v2.16.7: write costs to per-month shards (fl-costs-<YYYY-MM>) instead of one
   // unbounded fl-costs doc. Only shards whose contents actually changed are
   // written; a month that drops to zero entries has its shard emptied.
+  // v2.17.2: a month that outgrows one document now spills into `_2`, `_3`, … instead
+  // of failing the write — the server does the same, so both agree on the layout.
   const saveCosts=useCallback(c=>{
     setCostEntries(c);
     const groups={};for(const e of c){const k=costShardKey(e);(groups[k]||(groups[k]=[])).push(e);}
     const keys=new Set(Object.keys(groups));
-    for(const k of keys){const json=JSON.stringify(groups[k]);if(costShardJsonRef.current[k]!==json){sv(`fl-costs-${k}`,groups[k]);costShardJsonRef.current[k]=json;}}
-    for(const k of Object.keys(costShardJsonRef.current)){if(!keys.has(k)&&costShardJsonRef.current[k]!=="[]"){sv(`fl-costs-${k}`,[]);costShardJsonRef.current[k]="[]";}}
-  },[sv]);
+    const bump=(k,items)=>{svSharded(`fl-costs-${k}`,items,costShardCountRef.current[k]).then(n=>{costShardCountRef.current[k]=n;});};
+    for(const k of keys){const json=JSON.stringify(groups[k]);if(costShardJsonRef.current[k]!==json){bump(k,groups[k]);costShardJsonRef.current[k]=json;}}
+    for(const k of Object.keys(costShardJsonRef.current)){if(!keys.has(k)&&costShardJsonRef.current[k]!=="[]"){bump(k,[]);costShardJsonRef.current[k]="[]";}}
+  },[svSharded]);
   // v2.16.7: export a set of cost entries to a CSV file (backup / accounting handoff).
   const exportCostsCSV=(entries,filename)=>{
     const esc=v=>{const s=String(v==null?"":v);return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;};
@@ -448,11 +513,17 @@ function App(){
     if(!old.length){toast(`No invoices dated before ${cy} to archive.`);return;}
     if(!await uiConfirm(`Archive ${old.length} invoice(s) dated before ${cy}?\n\nThey'll be exported to CSV and moved out of the active ledger (kept in the database, not deleted).`))return;
     exportCostsCSV(old,`cost-archive-before-${cy}-${todayYMD()}.csv`);
+    // v2.17.2: archives are sharded lists too — they only ever grow, so a single
+    // document was the same 1 MB trap the review queue fell into.
+    const lstA=await window.storage.list("fl-arch-costs-").catch(()=>({keys:[]}));
+    const archKeys=((lstA&&lstA.keys)||[]);
     const byShard={};for(const e of old){const k=costShardKey(e);(byShard[k]||(byShard[k]=[])).push(e);}
     for(const k of Object.keys(byShard)){
-      let existing=[];try{const r=await window.storage.get(`fl-arch-costs-${k}`);existing=r?JSON.parse(r.value):[];}catch(e){existing=[];}
-      if(!Array.isArray(existing))existing=[];
-      await window.storage.set(`fl-arch-costs-${k}`,JSON.stringify([...existing,...byShard[k]]));
+      const base=`fl-arch-costs-${k}`;
+      const mine=shardKeysOf(base,archKeys.filter(x=>x===base||x.startsWith(base+"_")));
+      const docs=await Promise.all(mine.map(x=>window.storage.get(x).catch(()=>null)));
+      const existing=[];for(const d of docs){const a=pj(d,[]);if(Array.isArray(a))existing.push(...a);}
+      await svSharded(base,[...existing,...byShard[k]],mine.length);
     }
     const archivedIds=new Set(old.map(c=>c.id));
     saveCosts(costEntries.filter(c=>!archivedIds.has(c.id)));
@@ -462,7 +533,22 @@ function App(){
   const saveCores=useCallback(c=>{setCores(c);sv("fl-cores",c);},[sv]);
   // v2.10.48: server-side auto-sync state + review queue (populated by /api/auto-sync)
   const[reviewQueue,setReviewQueue]=useState([]);
-  const saveReviewQueue=useCallback(q=>{setReviewQueue(q);sv("fl-review-queue",q);},[sv]);
+  // v2.17.2: the review queue is a sharded list. It was a single document with no
+  // size guard, and once the server started honoring the parser's own low-confidence
+  // flag it grew past Firestore's 1 MB property ceiling — every sync then failed on
+  // that one write.
+  const loadReviewQueue=useCallback(async()=>{
+    const lst=await window.storage.list("fl-review-queue").catch(()=>({keys:[]}));
+    const keys=shardKeysOf("fl-review-queue",((lst&&lst.keys)||[]));
+    const docs=await Promise.all(keys.map(k=>window.storage.get(k).catch(()=>null)));
+    const items=[];for(const d of docs){const a=pj(d,[]);if(Array.isArray(a))items.push(...a);}
+    reviewShardCountRef.current=Math.max(1,keys.length);
+    return dedupById(items);
+  },[]);
+  const saveReviewQueue=useCallback(q=>{
+    setReviewQueue(q);
+    svSharded("fl-review-queue",q,reviewShardCountRef.current).then(n=>{reviewShardCountRef.current=n;});
+  },[svSharded]);
   const[syncStatus,setSyncStatus]=useState(null);
   const[syncing,setSyncing]=useState(false);
   const[backlog,setBacklog]=useState(null); // v2.16.13: backlog sweep progress {running,pass,imported,queued,scanned,note}
@@ -1305,19 +1391,31 @@ Format your response as clear sections with headers using ** for bold. Use speci
     syncConfigToServer(knownVendors,trucks);
   },[loaded,knownVendors,trucks,syncConfigToServer]);
 
-  // Subscribe to fl-review-queue in Firestore so server-added items appear instantly
+  // Subscribe to the review queue in Firestore so server-added items appear instantly.
+  // v2.17.2: watch every shard, not just the base document — the server appends to the
+  // TAIL shard, so once the queue spilled past one document a doc-level listener on the
+  // base key would never fire again and new items would only appear on a page reload.
   useEffect(()=>{
     if(!loaded||!window.db)return;
-    const unsub=window.db.collection("kv").doc("fl-review-queue").onSnapshot(snap=>{
-      try{
-        if(!snap.exists)return;
-        const data=snap.data();
-        if(!data||!data.v)return;
-        const parsed=JSON.parse(data.v);
-        // Diff guard: only update if changed (avoid render loops)
-        if(JSON.stringify(parsed)!==JSON.stringify(reviewQueue))setReviewQueue(parsed);
-      }catch(e){}
-    });
+    let unsub=()=>{};
+    try{
+      const FP=firebase.firestore.FieldPath.documentId();
+      unsub=window.db.collection("kv")
+        .where(FP,">=","fl-review-queue").where(FP,"<","fl-review-queuf")
+        .onSnapshot(snap=>{
+          try{
+            const rows=[];
+            snap.forEach(d=>{const i=shardIndexOf("fl-review-queue",d.id);if(i!=null)rows.push({i,v:d.data()&&d.data().v});});
+            rows.sort((a,b)=>a.i-b.i);
+            let items=[];
+            for(const r of rows){try{const a=JSON.parse(r.v);if(Array.isArray(a))items.push(...a);}catch(e){}}
+            items=dedupById(items);
+            reviewShardCountRef.current=Math.max(1,rows.length);
+            // Diff guard: only update if changed (avoid render loops)
+            setReviewQueue(prev=>JSON.stringify(prev)===JSON.stringify(items)?prev:items);
+          }catch(e){}
+        });
+    }catch(e){}
     return()=>{try{unsub();}catch(e){}};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[loaded]);

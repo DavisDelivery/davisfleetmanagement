@@ -27,6 +27,38 @@ import pdfParse from "pdf-parse";
  * Auth failures (Gmail token refresh, Anthropic 401/403) fail the RUN, not the
  * attachments, so a dead credential can't quarantine the whole queue.
  *
+ * v2.17.2: durability. Runs were dying on
+ *   "3 INVALID_ARGUMENT: The value of property "v" is longer than 1048487 bytes"
+ * and the 767-deep queue stopped moving. `fl-review-queue` was a single unbounded
+ * Firestore document with no size guard (the cost shards had one), and the
+ * v2.17.0 fix that finally honored the parser's own low-confidence flag routed far
+ * more work into it. Past ~1 MB the write threw, which escaped to the outer catch:
+ * the run returned 500, so the auto-continue chain never fired and the drain
+ * stopped dead. Worse, settle() had already removed those attachments from the
+ * work queue and the catch persisted the queue — while `dedup-index` (written
+ * after the failing line) never landed. The attachments were therefore gone from
+ * the queue, absent from the ledger, absent from dedup, and their message still in
+ * `seen-messages`, so nothing would ever re-enumerate them: silent permanent loss,
+ * every failed run.
+ *
+ * Three structural changes, not another patch:
+ *  1. NO unbounded document. Every growing list is a sharded list — `<base>`,
+ *     `<base>_2`, `<base>_3`, … each packed under FS_MAX_BYTES, appended to the
+ *     tail so earlier shards aren't rewritten. Sizing is UTF-8 byte-accurate
+ *     (Buffer.byteLength), not JS string length, which undercounts any non-ASCII.
+ *  2. NO Firestore write may throw the run. Writes go through guarded helpers that
+ *     report failure; a failed write is a transient condition for the items it
+ *     carried, never a strike against them.
+ *  3. Two-phase settle. An attachment is removed from the queue and added to the
+ *     dedup index ONLY after its data is durably in the ledger. A failed write
+ *     leaves it queued for the next run. Duplicates and skips need no write and
+ *     settle immediately. Combined with the error path now persisting state and
+ *     still chaining, a bad write costs a retry instead of an invoice.
+ *
+ * MEMO_VERSION exists to recover what the old code already lost: bumping it clears
+ * `seen-messages` at the next epoch, forcing a full re-enumeration. Dedup makes
+ * that free for anything already imported, so only the genuinely missing come back.
+ *
  * The old shape rebuilt its queue from scratch every run: re-list Gmail per vendor
  * (capped at 50 messages — anything older was unreachable), re-fetch the full payload
  * of EVERY message to enumerate attachments, and read every Firestore cost shard —
@@ -100,6 +132,109 @@ export const TUNING = {
   CHAIN_MAX: 200,          // max self-fired links per origin trigger (~70 min of draining)
   CHAIN_HANDOFF_MS: 600,   // how long to hold the connection so the next link's request gets out
 };
+
+// Firestore caps one property value at 1,048,487 bytes. Pack shards well under it:
+// the doc also carries `ts` + field names, and a shard read/modify/write races a
+// client doing the same, so headroom is cheaper than a rejected write.
+const FS_MAX_BYTES = 800_000;
+// The real ceiling, minus a little for the `ts` field and field names.
+const FS_HARD_BYTES = 1_040_000;
+
+// Bump to force a one-time full re-enumeration at the next discovery epoch. v2 is
+// the recovery sweep for attachments the pre-v2.17.2 write path dropped silently.
+const MEMO_VERSION = 2;
+
+const utf8Len = (s: string) => Buffer.byteLength(s, "utf8");
+
+// Sharded list: index 0 keeps the original key (so existing data and every client
+// that reads only the base key still work), overflow goes to `<base>_2`, `_3`, …
+const shardName = (base: string, i: number) => (i === 0 ? base : `${base}_${i + 1}`);
+function shardIndexOf(base: string, id: string): number | null {
+  if (id === base) return 0;
+  if (!id.startsWith(base + "_")) return null;
+  // Strict: Number() would coerce " 2", "+2", "2\n" and friends onto a real shard
+  // index, so two different documents could claim the same slot and one would be
+  // rewritten with the other's contents.
+  const s = id.slice(base.length + 1);
+  if (!/^[1-9][0-9]*$/.test(s)) return null;
+  const n = Number(s);
+  return n >= 2 ? n - 1 : null;
+}
+// Every doc id starting with `p`. Firestore has no prefix operator; the idiom is a
+// range up to the prefix with its last character incremented.
+const prefixRange = (kv: any, p: string) =>
+  query(kv, where(documentId(), ">=", p),
+    where(documentId(), "<", p.slice(0, -1) + String.fromCharCode(p.charCodeAt(p.length - 1) + 1)));
+
+/** Read every shard of a sharded list, in shard order. */
+async function readShardedList(db: any, base: string): Promise<{ idx: number; arr: any[] }[]> {
+  const snap = await getDocs(prefixRange(collection(db, "kv"), base));
+  const out: { idx: number; arr: any[] }[] = [];
+  snap.forEach((d: any) => {
+    const idx = shardIndexOf(base, d.id);
+    if (idx == null) return;
+    let arr: any[] = [];
+    try { const a = JSON.parse(d.data().v); if (Array.isArray(a)) arr = a; } catch {}
+    out.push({ idx, arr });
+  });
+  out.sort((a, b) => a.idx - b.idx);
+  return out;
+}
+
+/**
+ * Append to a sharded list, topping up the tail shard and opening new ones as
+ * needed. Never throws: a rejected write is reported and the caller requeues only
+ * the work that did NOT land.
+ *
+ * Two rules earn their keep here:
+ *  - Never rewrite a shard this call did not modify. A tail written by an older
+ *    build can already exceed our budget — production's `fl-review-queue` is
+ *    exactly that, the ~1 MB document the outage left behind. Re-flushing it would
+ *    fail its own size guard on every run, so the list could never be appended to
+ *    again: the queue would livelock, re-fetching and re-billing the same
+ *    attachments forever while the chain ran to its cap all day. Roll past it.
+ *  - Report what was durably committed, not just pass/fail. If shard 3 lands and
+ *    shard 4 is rejected, the items in shard 3 are in the ledger; telling the
+ *    caller "everything failed" would requeue them and duplicate the invoice.
+ */
+async function appendSharded(
+  db: any, base: string, existing: { idx: number; arr: any[] }[], adds: any[], errors: string[]
+): Promise<{ ok: boolean; committed: number }> {
+  if (adds.length === 0) return { ok: true, committed: 0 };
+  let idx = existing.length ? existing[existing.length - 1].idx : 0;
+  let arr = existing.length ? [...existing[existing.length - 1].arr] : [];
+  let bytes = utf8Len(JSON.stringify(arr));
+  // An over-budget legacy tail is treated as full, not as something to rewrite.
+  if (arr.length > 0 && bytes > FS_MAX_BYTES) { idx++; arr = []; bytes = 2; }
+  let dirty = false, committed = 0, inShard = 0;
+  const flush = async () => {
+    await setDoc(doc(db, "kv", shardName(base, idx)), { v: JSON.stringify(arr), ts: new Date().toISOString() });
+    committed += inShard; inShard = 0;
+    return true;
+  };
+  try {
+    for (const it of adds) {
+      const b = utf8Len(JSON.stringify(it)) + 1;
+      // A record too big to ever store alone would otherwise requeue forever and
+      // spin the chain. Count it as handled and name it loudly instead.
+      if (b + 2 > FS_HARD_BYTES) {
+        errors.push(`${base}: one record is ${Math.round(b / 1024)} KB — too large for a document; skipped.`);
+        committed++;
+        continue;
+      }
+      if (arr.length > 0 && bytes + b > FS_MAX_BYTES) {
+        if (dirty && !(await flush())) return { ok: false, committed };
+        idx++; arr = []; bytes = 2; dirty = false;
+      }
+      arr.push(it); bytes += b; dirty = true; inShard++;
+    }
+    if (dirty && !(await flush())) return { ok: false, committed };
+    return { ok: true, committed };
+  } catch (e: any) {
+    errors.push(`${base}: ${(e?.message || "write failed").substring(0, 160)}`);
+    return { ok: false, committed };
+  }
+}
 
 export default async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
@@ -210,8 +345,13 @@ export default async (req: Request) => {
     // most daily so client-side ledger changes fold back into the dedup index.
     let disco = wq.discovery;
     const epochAgeDays = disco ? (Date.now() - Date.parse(disco.epochAt)) / 86400000 : Infinity;
+    // v2.17.2: a memo-version bump forces one recovery epoch. Wait for the queue to
+    // drain first — re-enumerating on top of a full queue would just delay the work
+    // already discovered, and anything lost has waited this long already.
+    const memoStale = ((await store.get("memo-version", { type: "json" }) as any)?.v || 1) < MEMO_VERSION;
+    const idleAtDone = wq.items.length === 0 && !!disco?.done;
     const needEpoch = !disco || daysBack > disco.coveredDays ||
-      (wq.items.length === 0 && disco.done && epochAgeDays >= TUNING.EPOCH_MAX_AGE_DAYS);
+      (idleAtDone && (memoStale || epochAgeDays >= TUNING.EPOCH_MAX_AGE_DAYS));
     // Running totals across the whole drain — chain links each import a slice, and
     // the UI should report the sum, not the last link's. Reset at each epoch.
     const epochBaseImported = needEpoch ? 0 : (prevState.epochImported || 0);
@@ -223,6 +363,14 @@ export default async (req: Request) => {
       // re-enumerates and re-imports it — with the memo intact it would never return.
       for (const ref of dedupGmailRefs) {
         if (!truth.gmailRefs.has(ref)) { const mid = ref.split(":")[1]; if (mid) delete seen[mid]; }
+      }
+      // v2.17.2 recovery: the old write path could drop an attachment without ever
+      // recording its ref, so the un-see pass above cannot find it — its message is
+      // simply memoized as done. Clearing the memo re-enumerates everything once;
+      // dedup keeps that free for the invoices already imported.
+      if (memoStale && idleAtDone) {
+        for (const k of Object.keys(seen)) delete seen[k];
+        await store.setJSON("memo-version", { v: MEMO_VERSION, at: new Date().toISOString() });
       }
       dedupGmailRefs = truth.gmailRefs;
       dedupInvoiceNums = truth.invoiceNums;
@@ -268,6 +416,10 @@ export default async (req: Request) => {
        22-second window. */
     const attempted = new Set<string>();
     const inFlight = new Set<string>();
+    // Refs whose data is parsed and awaiting a durable ledger write (step 6).
+    const pendingRefs = new Map<string, "cost" | "review">();
+    const pendingQueued = new Map<string, number>();
+    const pendingNums = new Map<string, string[]>();
     const settle = (r: any, fairAttempt: boolean, deadlineMs: number) => {
       const idx = wq.items.findIndex((it) => it.gmailRef === r.gmailRef);
       // A timeout against a squeezed end-of-run deadline says nothing about the
@@ -294,15 +446,25 @@ export default async (req: Request) => {
         }
         return;
       }
-      // Settled one way or the other — never fetch or parse it again (covers
-      // duplicates too, v2.16.19).
-      delete failures[r.gmailRef];
-      dedupGmailRefs.add(r.gmailRef);
-      if (idx >= 0) { wq.items.splice(idx, 1); queuedRefs.delete(r.gmailRef); }
-      if (r.skipReason) return;
-      if (r.invoiceNum) dedupInvoiceNums.add(r.invoiceNum.toUpperCase());
+      // v2.17.2: a duplicate or a skip needs no ledger write, so it is settled here
+      // and now. Anything carrying data is only PARSED at this point — it is not
+      // removed from the queue and not added to the dedup index until step 6 has
+      // durably written it. Marking it settled first is exactly how the pre-v2.17.2
+      // path lost invoices when the review-queue write threw.
+      if (r.skipReason) {
+        delete failures[r.gmailRef];
+        dedupGmailRefs.add(r.gmailRef);
+        if (idx >= 0) { wq.items.splice(idx, 1); queuedRefs.delete(r.gmailRef); }
+        return;
+      }
+      // The invoiceNum side of the index is deferred for the same reason as the ref
+      // side: recording it before the write is durable makes the retry treat its own
+      // un-written invoice as an already-imported duplicate and skip it forever.
+      const nums = (r.entries || []).map((e: any) => e.invoiceNum).filter(Boolean).map((n: any) => String(n).toUpperCase());
+      if (nums.length) pendingNums.set(r.gmailRef, nums);
       if (r.confidence === "high") {
         newCostsAdds.push(...r.entries);
+        pendingRefs.set(r.gmailRef, "cost");
       } else {
         newReviewAdds.push({
           id: Date.now() + Math.random(),
@@ -316,7 +478,8 @@ export default async (req: Request) => {
           addedAt: new Date().toISOString(),
           status: "pending",
         });
-        queued += r.entries.length;
+        pendingRefs.set(r.gmailRef, "review");
+        pendingQueued.set(r.gmailRef, r.entries.length);
       }
     };
     const worker = async () => {
@@ -345,8 +508,8 @@ export default async (req: Request) => {
     // client write to slip between read and write; now only the target months are read,
     // moments before writing. Entries whose id or invoiceNum is already present in the
     // shard are dropped rather than duplicated.
+    const writeFailedRefs = new Set<string>();
     if (newCostsAdds.length > 0) {
-      const SHARD_LIMIT = 1_000_000;
       const byShard: Record<string, any[]> = {};
       for (const e of newCostsAdds) { const k = costShardKey(e); (byShard[k] ||= []).push(e); }
       // v2.17.1: with parallel lanes, two attachments carrying the SAME invoice can
@@ -356,10 +519,12 @@ export default async (req: Request) => {
       // attachment share a number on purpose (multi-line invoices) and always pass.
       const runNumOwner = new Map<string, string>();
       for (const k of Object.keys(byShard)) {
-        const ref = doc(getDb(), "kv", `fl-costs-${k}`);
-        const snap = await getDoc(ref);
-        let existing: any[] = [];
-        if (snap.exists()) { try { const a = JSON.parse(snap.data().v); if (Array.isArray(a)) existing = a; } catch {} }
+        // v2.17.2: a month is a sharded list now, so read every shard of it — the
+        // dedup check has to see entries that spilled past the first shard, or a
+        // re-run would append duplicates behind its back.
+        const base = `fl-costs-${k}`;
+        const shards = await readShardedList(getDb(), base);
+        const existing = shards.flatMap((s) => s.arr);
         const haveIds = new Set(existing.map((e) => e.id));
         const haveNums = new Set(existing.map((e) => String(e.invoiceNum || "").toUpperCase()).filter(Boolean));
         const adds = byShard[k].filter((e) => {
@@ -373,22 +538,39 @@ export default async (req: Request) => {
           return true;
         });
         if (adds.length === 0) continue;
-        const merged = [...existing, ...adds];
-        const shardJson = JSON.stringify(merged);
-        if (shardJson.length > SHARD_LIMIT) {
-          errors.push(`fl-costs-${k} would exceed 1 MB (${Math.round(shardJson.length / 1024)} KB) — ${adds.length} invoice(s) not saved; archive older invoices.`);
-          continue;
-        }
-        await setDoc(ref, { v: shardJson, ts: new Date().toISOString() });
-        imported += adds.length;
+        const res = await appendSharded(getDb(), base, shards, adds, errors);
+        imported += res.committed;
+        // Requeue only the entries that did NOT land. Anything already filtered out
+        // as a duplicate, or written before the failure, is in the ledger — treating
+        // it as failed would re-import the invoice on the next run.
+        if (!res.ok) for (const e of adds.slice(res.committed)) if (e.gmailRef) writeFailedRefs.add(e.gmailRef);
       }
     }
     if (newReviewAdds.length > 0) {
-      const ref = doc(getDb(), "kv", "fl-review-queue");
-      const snap = await getDoc(ref);
-      let existingReview: any[] = [];
-      if (snap.exists()) { try { const a = JSON.parse(snap.data().v); if (Array.isArray(a)) existingReview = a; } catch {} }
-      await setDoc(ref, { v: JSON.stringify([...existingReview, ...newReviewAdds]), ts: new Date().toISOString() });
+      const shards = await readShardedList(getDb(), "fl-review-queue");
+      // Idempotency, same as the cost path: a retry after a partial write must not
+      // append a second copy of an item that already made it in.
+      const haveRefs = new Set(shards.flatMap((s) => s.arr).map((it: any) => it && it.gmailRef).filter(Boolean));
+      const revAdds = newReviewAdds.filter((it) => !haveRefs.has(it.gmailRef));
+      const res = await appendSharded(getDb(), "fl-review-queue", shards, revAdds, errors);
+      if (!res.ok) for (const it of revAdds.slice(res.committed)) if (it.gmailRef) writeFailedRefs.add(it.gmailRef);
+    }
+
+    // ── 6b. Commit the two-phase settle: an attachment counts as done only now
+    // that its data is durably in the ledger. Anything whose write failed stays
+    // queued for the next run and takes no quarantine strike — the failure was
+    // ours, not the attachment's.
+    for (const [ref, kind] of pendingRefs) {
+      const idx = wq.items.findIndex((it) => it.gmailRef === ref);
+      if (writeFailedRefs.has(ref)) {
+        if (idx >= 0) wq.items.push(wq.items.splice(idx, 1)[0]);
+        continue;
+      }
+      delete failures[ref];
+      dedupGmailRefs.add(ref);
+      for (const n of pendingNums.get(ref) || []) dedupInvoiceNums.add(n);
+      if (idx >= 0) { wq.items.splice(idx, 1); queuedRefs.delete(ref); }
+      if (kind === "review") queued += pendingQueued.get(ref) || 0;
     }
 
     // ── 7. Persist queue, memo, dedup, failures, state.
@@ -463,20 +645,47 @@ export default async (req: Request) => {
     return json({ success: true, imported, queued, epochImported, epochQueued, processed, discovered, remaining, discoveryDone: disco.done, done, timedOut, stuck, chaining: willChain, message });
   } catch (err: any) {
     const errMsg = err?.message || "Unknown error";
-    // Keep whatever discovery/settlement survived — it's all idempotent.
+    // Keep whatever discovery/settlement survived — it's all idempotent. The dedup
+    // index MUST be persisted here too (v2.17.2): before, a throw left refs settled
+    // in the persisted work queue but absent from the persisted index, so nothing
+    // would ever re-enumerate them.
     try {
       await store.setJSON("work-queue", wq);
       await store.setJSON("seen-messages", seen);
+      await store.setJSON("dedup-index", {
+        gmailRefs: Array.from(dedupGmailRefs),
+        invoiceNums: Array.from(dedupInvoiceNums),
+      });
       await store.setJSON("failed-refs", failures);
     } catch {}
+    const remaining = wq.items.length;
     await store.setJSON("sync-state", {
       ...prevState,
       running: false,
       lastRun: new Date().toISOString(),
-      message: `✗ Sync failed: ${errMsg}`,
+      remaining,
+      message: `✗ Sync failed: ${errMsg}${remaining ? ` — ${remaining} still queued, will retry.` : ""}`,
       errors: [errMsg],
     });
-    return json({ error: errMsg, imported, queued, processed }, 500);
+    // v2.17.2: a failed link must not end the drain. Chain on only when the run got
+    // real work done first — a run that dies before processing anything would
+    // otherwise hot-loop through the whole chain budget, so leave that to the
+    // 3-hourly schedule.
+    if (processed > 0 && remaining > 0 && chainDepth < TUNING.CHAIN_MAX) {
+      try {
+        const stopped = !!((await store.get("chain-stop", { type: "json" }) as any)?.stopped);
+        const base = Netlify.env.get("URL") || "";
+        if (!stopped && base) {
+          const next = fetch(`${base}/api/auto-sync`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ daysBack, chain: chainDepth + 1, triggeredBy: "chain" }),
+          }).then((r) => r.json()).catch(() => {});
+          await Promise.race([next, new Promise((r) => setTimeout(r, TUNING.CHAIN_HANDOFF_MS))]);
+        }
+      } catch {}
+    }
+    return json({ error: errMsg, imported, queued, processed, remaining }, 500);
   }
 };
 
@@ -494,12 +703,13 @@ export default async (req: Request) => {
  */
 async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; invoiceNums: Set<string> }> {
   const kv = collection(db, "kv");
-  const prefixRange = (p: string) => query(kv, where(documentId(), ">=", p), where(documentId(), "<", p.slice(0, -1) + String.fromCharCode(p.charCodeAt(p.length - 1) + 1)));
-  const [shardSnap, archSnap, legacyDoc, reviewDoc, rejectedDoc] = await Promise.all([
-    getDocs(prefixRange("fl-costs-")),
-    getDocs(prefixRange("fl-arch-costs-")),
+  // Note: the fl-costs- / fl-arch-costs- ranges already cover overflow shards
+  // (`fl-costs-2026-05_2` sorts inside the same prefix range).
+  const [shardSnap, archSnap, legacyDoc, reviewShards, rejectedDoc] = await Promise.all([
+    getDocs(prefixRange(kv, "fl-costs-")),
+    getDocs(prefixRange(kv, "fl-arch-costs-")),
     getDoc(doc(db, "kv", "fl-costs")),
-    getDoc(doc(db, "kv", "fl-review-queue")),
+    readShardedList(db, "fl-review-queue"),
     getDoc(doc(db, "kv", "fl-rejected-refs")),
   ]);
   const gmailRefs = new Set<string>();
@@ -515,12 +725,7 @@ async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; i
   shardSnap.forEach(eatDoc);
   archSnap.forEach(eatDoc);
   if (legacyDoc.exists()) eatDoc(legacyDoc);
-  if (reviewDoc.exists()) {
-    try {
-      const items = JSON.parse(reviewDoc.data().v);
-      if (Array.isArray(items)) for (const it of items) if (it?.gmailRef) gmailRefs.add(it.gmailRef);
-    } catch {}
-  }
+  for (const s of reviewShards) for (const it of s.arr) if (it?.gmailRef) gmailRefs.add(it.gmailRef);
   if (rejectedDoc.exists()) {
     try {
       const refs = JSON.parse(rejectedDoc.data().v);
