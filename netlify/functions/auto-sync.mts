@@ -120,7 +120,7 @@ export const TUNING = {
   DISCOVERY_MS: 8000,      // sub-budget for mailbox crawling (elapsed, not duration)
   MIN_START_MS: 6000,      // don't start an item with less than this left
   ITEM_CAP_MS: 18000,      // hard per-item deadline
-  FAIR_MS: 10000,          // a timeout only counts as a failure if the item had ≥ this
+  FAIR_MS: 16000,          // a timeout only counts as a failure if the item had ≥ this
   WRITE_HEADROOM_MS: 2000, // reserved for the state writes at the end
   LIST_PAGE: 100,          // Gmail list page size (paginated — no more 50-message cap)
   GET_CONC: 8,             // parallel message-payload fetches during discovery
@@ -143,6 +143,11 @@ const FS_HARD_BYTES = 1_040_000;
 // Bump to force a one-time full re-enumeration at the next discovery epoch. v2 is
 // the recovery sweep for attachments the pre-v2.17.2 write path dropped silently.
 const MEMO_VERSION = 2;
+
+// Bump to release attachments quarantined by a rule that has since changed. v2 frees
+// the ones struck out purely on timeouts: they were never bad PDFs, they were invoices
+// too large to render in full inside one run, and compact mode now handles them.
+const QUARANTINE_RULES_VERSION = 2;
 
 const utf8Len = (s: string) => Buffer.byteLength(s, "utf8");
 
@@ -303,6 +308,43 @@ export default async (req: Request) => {
 
   // v2.16.19 failure ledger — gmailRef -> { count, error, filename, vendor, lastAt }.
   const failures = ((await store.get("failed-refs", { type: "json" }) as any) || {}) as Record<string, any>;
+  // v2.18.1: release everything struck out purely on timeouts. Those were real
+  // invoices — too large to render in full inside one run — repeating an attempt
+  // that could never fit until the ledger gave up on them. Compact mode gives them
+  // a path that fits, so they go back in the queue exactly once, on the run after
+  // this deploys. Attachments that failed for any other reason (an image-only PDF,
+  // a parser that returned nothing) keep their strikes.
+  const qRulesSeen = ((await store.get("quarantine-rules", { type: "json" }) as any)?.v || 1);
+  const releasedItems: any[] = [];
+  if (qRulesSeen < QUARANTINE_RULES_VERSION) {
+    for (const [ref, f] of Object.entries(failures)) {
+      const rec = f as any;
+      if ((rec?.count || 0) >= TUNING.MAX_ATTEMPTS && /timed out/i.test(String(rec?.error || ""))) {
+        // Clear the strikes but KEEP the knowledge that this one times out, so the
+        // retry goes straight to compact. Deleting the record outright would send it
+        // back through full detail — the attempt that already failed three times —
+        // and it would simply be re-quarantined. Records written before v2.18.1 have
+        // no `timeouts` field, but the filter above already proved every strike was
+        // a timeout, so the old count carries over.
+        failures[ref] = { count: 0, timeouts: rec.timeouts || rec.count || 1, filename: rec.filename, vendor: rec.vendor, releasedAt: new Date().toISOString() };
+        // Quarantining also dropped it from the work queue, and its message is
+        // memoized as seen, so discovery will never offer it again. The ref encodes
+        // everything needed to rebuild the queue entry, so put it back directly
+        // rather than forcing a full re-crawl of the mailbox to find it.
+        const m = /^gmail:(.+):([^:]+)$/.exec(ref);
+        if (!m) continue;
+        const vendorName = rec.vendor || "";
+        const v = vendors.find((x: any) => x.name === vendorName);
+        releasedItems.push({
+          gmailRef: ref, messageId: m[1], attachmentId: m[2],
+          filename: rec.filename || "invoice.pdf", mimeType: "application/pdf",
+          vendorName, vendorCategory: v?.category || "Other",
+        });
+      }
+    }
+    await store.setJSON("quarantine-rules", { v: QUARANTINE_RULES_VERSION, freed: releasedItems.length, at: new Date().toISOString() });
+    await store.setJSON("failed-refs", failures);
+  }
   const isQuarantined = (ref: string) => ((failures[ref]?.count || 0) >= TUNING.MAX_ATTEMPTS);
   const stuckCount = () => Object.values(failures).filter((f: any) => (f?.count || 0) >= TUNING.MAX_ATTEMPTS).length;
 
@@ -394,6 +436,10 @@ export default async (req: Request) => {
       if (front) wq.items.unshift(item); else wq.items.push(item);
       discovered++;
     };
+    // v2.18.1: attachments freed from a timeout quarantine, put back at the front so
+    // they are retried in compact mode before the run spends its budget elsewhere.
+    // Skipped if the invoice has since been imported some other way.
+    for (const it of releasedItems) if (!dedupGmailRefs.has(it.gmailRef)) enqueue(it, true);
 
     // ── 4. Crawl (resumable) or freshness check.
     if (!disco.done) {
@@ -435,9 +481,15 @@ export default async (req: Request) => {
         return;
       }
       if (r.error || r.aborted) {
+        const prev = failures[r.gmailRef] || {};
         const errText = r.aborted ? `timed out after ${Math.round(deadlineMs / 1000)}s` : r.error;
-        const count = (failures[r.gmailRef]?.count || 0) + 1;
-        failures[r.gmailRef] = { count, error: errText, filename: r.filename, vendor: r.vendor, lastAt: new Date().toISOString() };
+        const count = (prev.count || 0) + 1;
+        // v2.18.1: count timeouts separately. A timeout is not "this PDF is broken",
+        // it is "this invoice needs more output than one run can generate" — the next
+        // attempt drops to compact mode instead of repeating an attempt that cannot
+        // fit. Only a genuine parse/fetch error means the attachment itself is bad.
+        const timeouts = (prev.timeouts || 0) + (r.aborted ? 1 : 0);
+        failures[r.gmailRef] = { count, timeouts, error: errText, filename: r.filename, vendor: r.vendor, lastAt: new Date().toISOString() };
         const quarantined = count >= TUNING.MAX_ATTEMPTS;
         errors.push(`${r.gmailRef}: ${errText}${quarantined ? ` — quarantined after ${count} attempts` : ""}`);
         if (idx >= 0) {
@@ -495,7 +547,9 @@ export default async (req: Request) => {
         inFlight.add(item.gmailRef);
         const deadlineMs = Math.min(remainMs - TUNING.WRITE_HEADROOM_MS, TUNING.ITEM_CAP_MS);
         const fairAttempt = deadlineMs >= TUNING.FAIR_MS;
-        const r = await processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, AbortSignal.timeout(deadlineMs));
+        // v2.18.1: an invoice that already timed out is asked for less on the retry.
+        const compact = (failures[item.gmailRef]?.timeouts || 0) >= 1;
+        const r = await processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, AbortSignal.timeout(deadlineMs), compact);
         inFlight.delete(item.gmailRef);
         settle(r, fairAttempt, deadlineMs);
       }
@@ -934,7 +988,8 @@ async function processOne(
   truckIds: string[],
   vendors: any[],
   dedupInvoiceNums: Set<string>,
-  signal: AbortSignal
+  signal: AbortSignal,
+  compact = false
 ) {
   const { gmailRef, messageId, attachmentId, filename } = item;
   const vendor = vendors.find((v: any) => v.name === item.vendorName) || { name: item.vendorName, category: item.vendorCategory || "Other" };
@@ -972,7 +1027,7 @@ async function processOne(
     if (!pdfText) throw new Error("PDF has no extractable text (image-only PDF — needs OCR)");
 
     // Call Anthropic with strict prompt
-    const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor, signal);
+    const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor, signal, compact);
     if (!parsed || (Array.isArray(parsed) && parsed.length === 0)) {
       throw new Error("Parser returned no rows");
     }
@@ -990,7 +1045,8 @@ async function processOne(
       pricePerGallon: r.pricePerGallon || null,
       invoiceNum: r.invoiceNum || null,
       lineItems: r.lineItems || [],
-      notes: r.notes || "",
+      // Say so on the record rather than letting a thinner import look like a full one.
+      notes: (r.notes || "") + (compact ? " [Large invoice — imported without per-line detail; see the original PDF.]" : ""),
       gmailRef,
       fileUrl,
       fileKey,
@@ -1030,10 +1086,42 @@ async function processOne(
   }
 }
 
-async function callAnthropicScan(apiKey: string, pdfText: string, truckIds: string[], vendor: any, signal?: AbortSignal) {
+/**
+ * v2.18.1: `compact` exists because of how these runs actually fail. A month of fuel
+ * for a whole fleet is one invoice with hundreds of rows, and asking for every row
+ * back means generating tens of thousands of output tokens — which cannot finish
+ * inside a ~26s function no matter how many times it is retried. Those invoices
+ * failed identically three times and were quarantined as if the PDF were unreadable.
+ * Compact mode keeps every field the ledger actually sums on — truck, total, date,
+ * invoice number — and drops only the per-line breakdown, so the output is short
+ * enough to finish. The invoice gets imported and its entry says the detail was
+ * skipped; the original PDF stays one click away.
+ */
+async function callAnthropicScan(apiKey: string, pdfText: string, truckIds: string[], vendor: any, signal?: AbortSignal, compact = false) {
   // Same general schema as the existing client-side prompt, but slimmed for text input.
   const truckList = truckIds.length > 0 ? truckIds.join(", ") : "(unknown)";
-  const prompt = `You are extracting line items from an invoice for ${vendor.name} (category: ${vendor.category || "Other"}).
+  const prompt = compact ? `You are extracting invoice TOTALS for ${vendor.name} (category: ${vendor.category || "Other"}).
+This invoice is very large, so return ONLY summary rows — one row per truck. Be brief.
+Return a JSON array. Each element MUST have:
+- truckId: 4-digit truck number from the fleet (${truckList}), or "INVENTORY" if not assigned to a truck, or "UNKNOWN" if you can't tell
+- vendor: "${vendor.name}"
+- category: "Fuel", "Parts", "Labor", "Maintenance", or "Other"
+- total: number (that truck's total INCLUDING tax)
+- gallons: number (Fuel only, that truck's total gallons) or null
+- pricePerGallon: number (Fuel only, average) or null
+- invoiceNum: invoice or document number as printed
+- date: YYYY-MM-DD format
+- lineItems: [] (ALWAYS an empty array — do not list individual lines)
+- notes: "" (leave empty)
+
+ALSO add ONE meta field on the FIRST element only:
+- _confidence: "high" or "low"
+- _confidenceReason: why low
+
+INVOICE TEXT:
+${pdfText.substring(0, 30000)}
+
+Return ONLY the JSON array, no preamble.` : `You are extracting line items from an invoice for ${vendor.name} (category: ${vendor.category || "Other"}).
 Return a JSON array. Each element MUST have:
 - truckId: 4-digit truck number from the fleet (${truckList}), or "INVENTORY" if not assigned to a truck, or "UNKNOWN" if you can't tell
 - vendor: "${vendor.name}"
@@ -1064,7 +1152,8 @@ Return ONLY the JSON array, no preamble.`;
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 16384,
+      // Output length is what blows the deadline, so the compact pass caps it hard.
+      max_tokens: compact ? 4096 : 16384,
       messages: [{ role: "user", content: prompt }],
     }),
     signal,
