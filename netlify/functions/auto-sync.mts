@@ -131,7 +131,26 @@ export const TUNING = {
   EPOCH_MAX_AGE_DAYS: 1,   // reconcile at most daily, and only when the queue is empty
   CHAIN_MAX: 200,          // max self-fired links per origin trigger (~70 min of draining)
   CHAIN_HANDOFF_MS: 600,   // how long to hold the connection so the next link's request gets out
+  PARSE_CONC: 2,           // concurrent pdfParse calls — CPU-bound, so more is slower not faster
+  PDF_BIG_BYTES: 1_500_000,   // past this a PDF is treated as a big one on the FIRST pass
+  PDF_BIG_MAX_PAGES: 60,      // pages parsed for a big PDF on the first pass
+  PDF_MAX_PAGES: 15,          // pages parsed on the page-capped last attempt
 };
+
+/**
+ * pdfParse is synchronous CPU work: eight concurrent calls do not run in parallel,
+ * they queue on the one thread while all eight deadlines keep running down. This
+ * gate lets network-bound lanes stay wide while keeping parsing to a couple at a
+ * time, so a slow PDF costs its own deadline instead of everyone else's too.
+ */
+let parseActive = 0;
+const parseWaiters: (() => void)[] = [];
+async function parseGate<T>(fn: () => Promise<T>): Promise<T> {
+  if (parseActive >= TUNING.PARSE_CONC) await new Promise<void>((r) => parseWaiters.push(r));
+  parseActive++;
+  try { return await fn(); }
+  finally { parseActive--; const next = parseWaiters.shift(); if (next) next(); }
+}
 
 // Firestore caps one property value at 1,048,487 bytes. Pack shards well under it:
 // the doc also carries `ts` + field names, and a shard read/modify/write races a
@@ -147,7 +166,7 @@ const MEMO_VERSION = 2;
 // Bump to release attachments quarantined by a rule that has since changed. v2 frees
 // the ones struck out purely on timeouts: they were never bad PDFs, they were invoices
 // too large to render in full inside one run, and compact mode now handles them.
-const QUARANTINE_RULES_VERSION = 2;
+const QUARANTINE_RULES_VERSION = 3;
 
 const utf8Len = (s: string) => Buffer.byteLength(s, "utf8");
 
@@ -326,7 +345,11 @@ export default async (req: Request) => {
         // and it would simply be re-quarantined. Records written before v2.18.1 have
         // no `timeouts` field, but the filter above already proved every strike was
         // a timeout, so the old count carries over.
-        failures[ref] = { count: 0, timeouts: rec.timeouts || rec.count || 1, filename: rec.filename, vendor: rec.vendor, releasedAt: new Date().toISOString() };
+        // timeouts:1 restarts the ladder one rung up — compact, but still reading the
+        // WHOLE document. Carrying the old strike count over would jump straight to
+        // the page-capped rung, degrading the invoice to a possibly-short total before
+        // it ever got a fair full-document retry under the new pipeline.
+        failures[ref] = { count: 0, timeouts: 1, filename: rec.filename, vendor: rec.vendor, releasedAt: new Date().toISOString() };
         // Quarantining also dropped it from the work queue, and its message is
         // memoized as seen, so discovery will never offer it again. The ref encodes
         // everything needed to rebuild the queue entry, so put it back directly
@@ -482,7 +505,12 @@ export default async (req: Request) => {
       }
       if (r.error || r.aborted) {
         const prev = failures[r.gmailRef] || {};
-        const errText = r.aborted ? `timed out after ${Math.round(deadlineMs / 1000)}s` : r.error;
+        // Name the stage and the size. "timed out in parse (12.4s) — 41 pages, 6.2 MB"
+        // is a diagnosis; "timed out after 18s" was a dead end.
+        const where = r.stage ? ` in ${r.stage}` : "";
+        const detail = [r.timing, r.pages ? `${r.pages} pages` : "", r.bytes ? `${(r.bytes / 1048576).toFixed(1)} MB` : ""].filter(Boolean).join(", ");
+        const errText = (r.aborted ? `timed out${where} after ${Math.round(deadlineMs / 1000)}s` : r.error)
+          + (detail ? ` [${detail}]` : "");
         const count = (prev.count || 0) + 1;
         // v2.18.1: count timeouts separately. A timeout is not "this PDF is broken",
         // it is "this invoice needs more output than one run can generate" — the next
@@ -547,9 +575,15 @@ export default async (req: Request) => {
         inFlight.add(item.gmailRef);
         const deadlineMs = Math.min(remainMs - TUNING.WRITE_HEADROOM_MS, TUNING.ITEM_CAP_MS);
         const fairAttempt = deadlineMs >= TUNING.FAIR_MS;
-        // v2.18.1: an invoice that already timed out is asked for less on the retry.
-        const compact = (failures[item.gmailRef]?.timeouts || 0) >= 1;
-        const r = await processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, AbortSignal.timeout(deadlineMs), compact);
+        // v2.18.4: an escalation ladder, because "ask for less" has two independent
+        // dials and the first fix only turned one. Attempt 1 reads the whole PDF and
+        // asks for full detail; attempt 2 keeps the whole PDF but asks for summary
+        // rows only; attempt 3 also stops reading after PDF_MAX_PAGES, which is the
+        // dial that matters when the time is going into parsing rather than the AI.
+        const priorTimeouts = failures[item.gmailRef]?.timeouts || 0;
+        const compact = priorTimeouts >= 1;
+        const pageCap = priorTimeouts >= 2;
+        const r = await processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, AbortSignal.timeout(deadlineMs), compact, pageCap);
         inFlight.delete(item.gmailRef);
         settle(r, fairAttempt, deadlineMs);
       }
@@ -989,14 +1023,26 @@ async function processOne(
   vendors: any[],
   dedupInvoiceNums: Set<string>,
   signal: AbortSignal,
-  compact = false
+  compact = false,
+  pageCap = false
 ) {
   const { gmailRef, messageId, attachmentId, filename } = item;
   const vendor = vendors.find((v: any) => v.name === item.vendorName) || { name: item.vendorName, category: item.vendorCategory || "Other" };
   const result: any = { gmailRef, vendor: vendor.name, filename };
 
+  // v2.18.4: which stage the clock was in. Previously every failure read "timed out
+  // after 18s" with no hint where the time went, which sent the last fix at the AI
+  // call when the AI call was not the problem.
+  let stage = "start";
+  let lastAt = Date.now();
+  const marks: Record<string, number> = {};
+  const mark = (next: string) => { marks[stage] = (marks[stage] || 0) + (Date.now() - lastAt); lastAt = Date.now(); stage = next; };
+  // pdfParse and the Blobs upload are NOT abortable — the signal only reaches fetch —
+  // so check it at each boundary instead of discovering it three stages later.
+  const checkpoint = () => { if (signal.aborted) { const e: any = new Error("deadline"); e.name = "AbortError"; throw e; } };
+
   try {
-    // Fetch attachment bytes
+    stage = "download";
     const attResp = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attachmentId}`,
       { headers: { Authorization: `Bearer ${accessToken}` }, signal }
@@ -1010,8 +1056,34 @@ async function processOne(
     if (!attData.data) throw new Error("No attachment data");
     const base64 = attData.data.replace(/-/g, "+").replace(/_/g, "/");
     const pdfBuffer = Buffer.from(base64, "base64");
+    result.bytes = pdfBuffer.length;
+    mark("parse");
+    checkpoint();
 
-    // Upload to invoice-file blobs for later retrieval
+    /* Parse BEFORE uploading. The upload only exists so a human can open the original
+       from the Review Queue; paying for it on an attachment that cannot be read is
+       pure waste on exactly the items that are already short of time.
+
+       pdfParse is synchronous CPU work on the single Node thread, so running it in
+       all PROC_CONC lanes at once does not parallelise — the parses queue behind each
+       other while every one of their deadlines keeps ticking. Raising concurrency to 8
+       therefore made large PDFs fail MORE. parseGate caps how many run at once; the
+       other lanes stay free for network work, which does overlap. */
+    const pdfText = await parseGate(async () => {
+      checkpoint();
+      const big = pdfBuffer.length > TUNING.PDF_BIG_BYTES;
+      // A monthly fleet service log runs to hundreds of pages. Past a point the extra
+      // pages cost seconds and add nothing a summary needs, so cap the retry.
+      const maxPages = pageCap ? TUNING.PDF_MAX_PAGES : (big ? TUNING.PDF_BIG_MAX_PAGES : 0);
+      const d = await pdfParse(pdfBuffer, maxPages ? ({ max: maxPages } as any) : undefined);
+      result.pages = d?.numpages;
+      result.pagesParsed = maxPages || d?.numpages;
+      return (d?.text || "").trim();
+    });
+    if (!pdfText) throw new Error("PDF has no extractable text (image-only PDF — needs OCR)");
+    mark("upload");
+    checkpoint();
+
     const fileStore = getStore("invoice-files");
     const safeName = (filename || "invoice.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileKey = `${Date.now()}-${safeName}`;
@@ -1020,11 +1092,8 @@ async function processOne(
     });
     const fileUrl = `/api/invoice-file?key=${encodeURIComponent(fileKey)}`;
     result.fileUrl = fileUrl;
-
-    // Extract PDF text
-    const pdfData = await pdfParse(pdfBuffer);
-    const pdfText = (pdfData.text || "").trim();
-    if (!pdfText) throw new Error("PDF has no extractable text (image-only PDF — needs OCR)");
+    mark("ai");
+    checkpoint();
 
     // Call Anthropic with strict prompt
     const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor, signal, compact);
@@ -1046,7 +1115,9 @@ async function processOne(
       invoiceNum: r.invoiceNum || null,
       lineItems: r.lineItems || [],
       // Say so on the record rather than letting a thinner import look like a full one.
-      notes: (r.notes || "") + (compact ? " [Large invoice — imported without per-line detail; see the original PDF.]" : ""),
+      notes: (r.notes || "")
+        + (compact ? " [Large invoice — imported without per-line detail; see the original PDF.]" : "")
+        + (pageCap ? ` [Only the first ${TUNING.PDF_MAX_PAGES} pages were read — check the original PDF before trusting the total.]` : ""),
       gmailRef,
       fileUrl,
       fileKey,
@@ -1064,8 +1135,14 @@ async function processOne(
     // Evaluate confidence on the BATCH (group)
     const verdict = evaluateConfidence(entries, vendor, truckIds, vendors);
     result.entries = entries;
-    result.confidence = verdict.level;
-    result.confidenceReason = verdict.reason;
+    // A page-capped read may have missed pages, so its total can be short. That must
+    // never post straight to the ledger as though it were complete — send it to the
+    // Review Queue where a human sees the note and the original PDF. (Compact mode
+    // still reads the whole document, so its totals stand on their own.)
+    result.confidence = pageCap ? "low" : verdict.level;
+    result.confidenceReason = pageCap
+      ? `Only the first ${TUNING.PDF_MAX_PAGES} pages were read (large PDF) — verify the total against the original.`
+      : verdict.reason;
     result.invoiceNum = entries[0]?.invoiceNum;
 
     // Skip if already imported via invoiceNum dedup
@@ -1075,6 +1152,16 @@ async function processOne(
 
     return result;
   } catch (err: any) {
+    // Capture the stage BEFORE flushing its timing — mark() advances `stage`, so
+    // reading it afterwards would report where we stopped, not where we failed.
+    const failedAt = stage;
+    mark("done");
+    // On a deadline, the boundary where we noticed is not the interesting part — the
+    // stage that actually consumed the budget is. Blame that one.
+    const worst = Object.entries(marks).sort((a, b) => b[1] - a[1])[0];
+    const aborted = err?.name === "AbortError" || err?.name === "TimeoutError";
+    result.stage = aborted && worst && worst[1] > 0 ? worst[0] : failedAt;
+    result.timing = Object.entries(marks).filter(([, ms]) => ms > 0).map(([k, ms]) => `${k} ${Math.round(ms / 100) / 10}s`).join(", ");
     if (err?.name === "AbortError" || err?.name === "TimeoutError") {
       result.aborted = true;
       return result;
