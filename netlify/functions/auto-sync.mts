@@ -91,6 +91,34 @@ import pdfParse from "pdf-parse";
  * stay removed. Shard writes also merge against a fresh read of the target shard,
  * which narrows the clobber window and drops the read-every-shard-every-run setup
  * cost to just the shards being written.
+ *
+ * v2.19.0: the ledger was wrong in two ways that only showed up once enough had
+ * been imported to chart it — one truck, #0424, holding $498k of spend, ~10x the
+ * next truck in a fleet where every unit does similar work.
+ *
+ *  1. WHOLE DOCUMENTS BOOKED TO ONE TRUCK. A fuel service log is one PDF listing
+ *     every unit filled that day. The parser sometimes returned it as a single row
+ *     carrying the delivery total, pinned on whichever unit was printed first —
+ *     and 0424 is the lowest unit number in this fleet, so it was first on 104 of
+ *     them. The row's own line items said otherwise ("Diesel - Truck 0451  73.15"),
+ *     so splitMultiTruck now trusts those and splits the row back into one entry
+ *     per unit. Deterministic, not another prompt tweak: the prompt is tightened
+ *     too, but the split does not depend on the model getting it right.
+ *
+ *  2. THE SAME ATTACHMENT IMPORTED OVER AND OVER. Gmail attachment IDs are not
+ *     stable — refetching a message hands back different ones for the same parts —
+ *     so `gmail:<msg>:<attachmentId>`, the dedup key, never matched on a re-run.
+ *     156 of 386 messages had accumulated several. The invoiceNum fallback couldn't
+ *     catch it either: a service log prints no invoice number, so the parser
+ *     invented a description ("Service Log 07/14/2026", "Davis Delivery -
+ *     07/14/2026", ...) that differed every pass. One delivery was imported eight
+ *     times. Fleet-wide that was 1,335 redundant rows and $468k of phantom spend,
+ *     and it also explains why the backlog kept refilling itself.
+ *     The ref is now `gmail:<msg>:<filename>`, which is stable, and a content
+ *     fingerprint (vendor|date|truck|amount) is carried in the dedup index as a
+ *     backstop — the vendor resends the same log under new message IDs, which no
+ *     ref-based key can catch. Both are rebuilt from the ledger by reconcile, and
+ *     the old volatile refs are recognised too, so this deploy re-imports nothing.
  */
 
 const FIREBASE_CONFIG = {
@@ -321,9 +349,14 @@ export default async (req: Request) => {
   const vendors = (await store.get("vendors", { type: "json" }) as any) || DEFAULT_VENDORS;
   const truckIds = ((await store.get("truck-ids", { type: "json" }) as any) || []) as string[];
 
-  const dedup = (await store.get("dedup-index", { type: "json" }) as any) || { gmailRefs: [], invoiceNums: [] };
+  const dedup = (await store.get("dedup-index", { type: "json" }) as any) || { gmailRefs: [], invoiceNums: [], fingerprints: [] };
   let dedupGmailRefs = new Set<string>(dedup.gmailRefs);
   let dedupInvoiceNums = new Set<string>((dedup.invoiceNums as string[]).map((s) => s.toUpperCase()));
+  // v2.19.0: content-level dedup. The vendor resends the same service log from new
+  // messages under new filenames, so no key derived from the email can catch it —
+  // only what the row actually says can. Empty until the next reconcile rebuilds it
+  // from the ledger, which is safe: the ref check still runs first.
+  let dedupFingerprints = new Set<string>((dedup.fingerprints as string[]) || []);
 
   // v2.16.19 failure ledger — gmailRef -> { count, error, filename, vendor, lastAt }.
   const failures = ((await store.get("failed-refs", { type: "json" }) as any) || {}) as Record<string, any>;
@@ -349,17 +382,22 @@ export default async (req: Request) => {
         // WHOLE document. Carrying the old strike count over would jump straight to
         // the page-capped rung, degrading the invoice to a possibly-short total before
         // it ever got a fair full-document retry under the new pipeline.
-        failures[ref] = { count: 0, timeouts: 1, filename: rec.filename, vendor: rec.vendor, releasedAt: new Date().toISOString() };
+        failures[ref] = { count: 0, timeouts: 1, filename: rec.filename, vendor: rec.vendor, messageId: rec.messageId, attachmentId: rec.attachmentId, releasedAt: new Date().toISOString() };
         // Quarantining also dropped it from the work queue, and its message is
         // memoized as seen, so discovery will never offer it again. The ref encodes
         // everything needed to rebuild the queue entry, so put it back directly
         // rather than forcing a full re-crawl of the mailbox to find it.
+        // v2.19.0: the ref no longer carries the attachment ID (it was never stable
+        // enough to be a key), so the record does. Older records predate that field
+        // and still have the ID inside the ref.
         const m = /^gmail:(.+):([^:]+)$/.exec(ref);
-        if (!m) continue;
+        const messageId = rec.messageId || (m ? m[1] : "");
+        const attachmentId = rec.attachmentId || (m ? m[2] : "");
+        if (!messageId || !attachmentId) continue;
         const vendorName = rec.vendor || "";
         const v = vendors.find((x: any) => x.name === vendorName);
         releasedItems.push({
-          gmailRef: ref, messageId: m[1], attachmentId: m[2],
+          gmailRef: ref, messageId, attachmentId,
           filename: rec.filename || "invoice.pdf", mimeType: "application/pdf",
           vendorName, vendorCategory: v?.category || "Other",
         });
@@ -439,6 +477,7 @@ export default async (req: Request) => {
       }
       dedupGmailRefs = truth.gmailRefs;
       dedupInvoiceNums = truth.invoiceNums;
+      dedupFingerprints = truth.fingerprints;
       disco = {
         coveredDays: Math.max(daysBack, 0),
         done: false,
@@ -489,6 +528,7 @@ export default async (req: Request) => {
     const pendingRefs = new Map<string, "cost" | "review">();
     const pendingQueued = new Map<string, number>();
     const pendingNums = new Map<string, string[]>();
+    const pendingFps = new Map<string, string[]>();
     const settle = (r: any, fairAttempt: boolean, deadlineMs: number) => {
       const idx = wq.items.findIndex((it) => it.gmailRef === r.gmailRef);
       // A timeout against a squeezed end-of-run deadline says nothing about the
@@ -517,7 +557,7 @@ export default async (req: Request) => {
         // attempt drops to compact mode instead of repeating an attempt that cannot
         // fit. Only a genuine parse/fetch error means the attachment itself is bad.
         const timeouts = (prev.timeouts || 0) + (r.aborted ? 1 : 0);
-        failures[r.gmailRef] = { count, timeouts, error: errText, filename: r.filename, vendor: r.vendor, lastAt: new Date().toISOString() };
+        failures[r.gmailRef] = { count, timeouts, error: errText, filename: r.filename, vendor: r.vendor, messageId: r.messageId, attachmentId: r.attachmentId, lastAt: new Date().toISOString() };
         const quarantined = count >= TUNING.MAX_ATTEMPTS;
         errors.push(`${r.gmailRef}: ${errText}${quarantined ? ` — quarantined after ${count} attempts` : ""}`);
         if (idx >= 0) {
@@ -542,6 +582,8 @@ export default async (req: Request) => {
       // un-written invoice as an already-imported duplicate and skip it forever.
       const nums = (r.entries || []).map((e: any) => e.invoiceNum).filter(Boolean).map((n: any) => String(n).toUpperCase());
       if (nums.length) pendingNums.set(r.gmailRef, nums);
+      const fps = (r.entries || []).map((e: any) => entryFingerprint(e));
+      if (fps.length) pendingFps.set(r.gmailRef, fps);
       if (r.confidence === "high") {
         newCostsAdds.push(...r.entries);
         pendingRefs.set(r.gmailRef, "cost");
@@ -583,7 +625,7 @@ export default async (req: Request) => {
         const priorTimeouts = failures[item.gmailRef]?.timeouts || 0;
         const compact = priorTimeouts >= 1;
         const pageCap = priorTimeouts >= 2;
-        const r = await processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, AbortSignal.timeout(deadlineMs), compact, pageCap);
+        const r = await processOne(item, accessToken, anthropicKey, truckIds, vendors, dedupInvoiceNums, dedupFingerprints, AbortSignal.timeout(deadlineMs), compact, pageCap);
         inFlight.delete(item.gmailRef);
         settle(r, fairAttempt, deadlineMs);
       }
@@ -615,8 +657,32 @@ export default async (req: Request) => {
         const existing = shards.flatMap((s) => s.arr);
         const haveIds = new Set(existing.map((e) => e.id));
         const haveNums = new Set(existing.map((e) => String(e.invoiceNum || "").toUpperCase()).filter(Boolean));
+        /* v2.19.0: the last line of defence, and the only one that holds for a document
+           with no invoice number on it. Checked against a fresh read of the shard being
+           written, so it catches a re-import no in-memory index knows about.
+
+           Judged per DOCUMENT, not per row: a document counts as already imported only
+           when EVERY row of it is already there. Dropping individual matching rows
+           would silently delete 23 real rows of a 24-truck log because the vendor
+           corrected one amount — losing invoices is the failure this whole path exists
+           to prevent, and it is worse than importing one twice. */
+        const docs = new Map<string, any[]>();
+        for (const e of byShard[k]) {
+          const ref = e.gmailRef || String(e.id);
+          if (!docs.has(ref)) docs.set(ref, []);
+          docs.get(ref)!.push(e);
+        }
+        // Grows as documents are accepted, so two lanes parsing the same resent log in
+        // one run don't both write it.
+        const claimed = new Set<string>(existing.map((e) => entryFingerprint(e)));
+        const fullDup = new Set<string>();
+        for (const [ref, rows] of docs) {
+          if (rows.every((e) => claimed.has(entryFingerprint(e)))) { fullDup.add(ref); continue; }
+          for (const e of rows) claimed.add(entryFingerprint(e));
+        }
         const adds = byShard[k].filter((e) => {
           if (haveIds.has(e.id)) return false;
+          if (fullDup.has(e.gmailRef || String(e.id))) return false;
           const num = e.invoiceNum ? String(e.invoiceNum).toUpperCase() : "";
           if (!num) return true;
           if (haveNums.has(num)) return false;
@@ -657,6 +723,7 @@ export default async (req: Request) => {
       delete failures[ref];
       dedupGmailRefs.add(ref);
       for (const n of pendingNums.get(ref) || []) dedupInvoiceNums.add(n);
+      for (const f of pendingFps.get(ref) || []) dedupFingerprints.add(f);
       if (idx >= 0) { wq.items.splice(idx, 1); queuedRefs.delete(ref); }
       if (kind === "review") queued += pendingQueued.get(ref) || 0;
     }
@@ -668,6 +735,7 @@ export default async (req: Request) => {
     await store.setJSON("dedup-index", {
       gmailRefs: Array.from(dedupGmailRefs),
       invoiceNums: Array.from(dedupInvoiceNums),
+      fingerprints: Array.from(dedupFingerprints),
     });
     await store.setJSON("failed-refs", failures);
 
@@ -743,6 +811,7 @@ export default async (req: Request) => {
       await store.setJSON("dedup-index", {
         gmailRefs: Array.from(dedupGmailRefs),
         invoiceNums: Array.from(dedupInvoiceNums),
+        fingerprints: Array.from(dedupFingerprints),
       });
       await store.setJSON("failed-refs", failures);
     } catch {}
@@ -789,7 +858,7 @@ export default async (req: Request) => {
  * stale client's shard write, and it is what lets the Purge-vendor buttons
  * actually re-scan: purged refs lose their trace on purpose.
  */
-async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; invoiceNums: Set<string> }> {
+async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; invoiceNums: Set<string>; fingerprints: Set<string> }> {
   const kv = collection(db, "kv");
   // Note: the fl-costs- / fl-arch-costs- ranges already cover overflow shards
   // (`fl-costs-2026-05_2` sorts inside the same prefix range).
@@ -802,25 +871,46 @@ async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; i
   ]);
   const gmailRefs = new Set<string>();
   const invoiceNums = new Set<string>();
+  const fingerprints = new Set<string>();
+  /* v2.19.0: an entry stored before this version carries the old volatile ref, which
+     nothing will ever produce again. Its Blobs file key is the attachment's filename
+     behind a timestamp, so the stable ref can be rebuilt from it — without that, the
+     first crawl after this deploy would treat every attachment ever imported as new. */
+  const addRefs = (e: any) => {
+    if (!e?.gmailRef) return;
+    gmailRefs.add(e.gmailRef);
+    const messageId = String(e.gmailRef).split(":")[1];
+    if (!messageId) return;
+    let key = e.fileKey ? String(e.fileKey) : "";
+    if (!key && e.fileUrl) {
+      const m = /[?&]key=([^&]+)/.exec(String(e.fileUrl));
+      if (m) { try { key = decodeURIComponent(m[1]); } catch { key = m[1]; } }
+    }
+    const name = key.replace(/^\d+-/, "");
+    if (name) gmailRefs.add(`gmail:${messageId}:${name}`);
+  };
   const eat = (arr: any) => {
     if (!Array.isArray(arr)) return;
     for (const e of arr) {
-      if (e?.gmailRef) gmailRefs.add(e.gmailRef);
+      addRefs(e);
       if (e?.invoiceNum) invoiceNums.add(String(e.invoiceNum).toUpperCase());
+      fingerprints.add(entryFingerprint(e));
     }
   };
   const eatDoc = (d: any) => { try { eat(JSON.parse(d.data().v)); } catch {} };
   shardSnap.forEach(eatDoc);
   archSnap.forEach(eatDoc);
   if (legacyDoc.exists()) eatDoc(legacyDoc);
-  for (const s of reviewShards) for (const it of s.arr) if (it?.gmailRef) gmailRefs.add(it.gmailRef);
+  // A review item is not in the ledger yet, so its rows must NOT seed fingerprints —
+  // approving it would then look like a duplicate of itself. Its ref is enough.
+  for (const s of reviewShards) for (const it of s.arr) addRefs(it);
   if (rejectedDoc.exists()) {
     try {
       const refs = JSON.parse(rejectedDoc.data().v);
       if (Array.isArray(refs)) for (const r of refs) if (typeof r === "string") gmailRefs.add(r);
     } catch {}
   }
-  return { gmailRefs, invoiceNums };
+  return { gmailRefs, invoiceNums, fingerprints };
 }
 
 /**
@@ -915,8 +1005,15 @@ function enqueueMessagePdfs(
     if (!a.attachmentId) continue; // inline-data parts can't be fetched via the attachments endpoint
     const isPdf = (a.mimeType || "").includes("pdf") || (a.filename || "").toLowerCase().endsWith(".pdf");
     if (!isPdf) continue;
-    const gmailRef = `gmail:${m.emailId}:${a.attachmentId}`;
-    if (dedupGmailRefs.has(gmailRef) || isQuarantined(gmailRef)) continue;
+    // v2.19.0: keyed on the filename, not the attachment ID. Gmail hands back a new
+    // attachment ID every time a message is fetched, so the old key matched nothing
+    // on a re-crawl and every attachment was imported again on every pass.
+    const gmailRef = stableGmailRef(m.emailId, a.filename);
+    // The volatile form is still checked so work settled before this deploy isn't
+    // re-imported when the ledger happens to carry a matching ID.
+    const legacyRef = `gmail:${m.emailId}:${a.attachmentId}`;
+    if (dedupGmailRefs.has(gmailRef) || dedupGmailRefs.has(legacyRef)) continue;
+    if (isQuarantined(gmailRef) || isQuarantined(legacyRef)) continue;
     enqueue({
       gmailRef,
       messageId: m.emailId,
@@ -945,6 +1042,92 @@ function stuckList(failures: Record<string, any>): string[] {
 function costShardKey(e: any): string {
   const m = String(e?.date || "").slice(0, 7);
   return /^\d{4}-\d{2}$/.test(m) ? m : "unknown";
+}
+
+/* ── v2.19.0 dedup + multi-truck split. Mirrored in App.jsx (splitMultiTruck /
+   entryFingerprint) so an invoice imported by the browser and one imported by the
+   server produce the same rows and the same keys. Change one, change both. ── */
+
+// Gmail attachment IDs are regenerated per messages.get, so they cannot identify an
+// attachment across runs. The filename can. Matches the safeName transform used for
+// the Blobs file key, so a stable ref can be recovered from an already-stored entry.
+function attachmentSlug(filename: string): string {
+  return (filename || "invoice.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+function stableGmailRef(messageId: string, filename: string): string {
+  return `gmail:${messageId}:${attachmentSlug(filename)}`;
+}
+
+// What the ledger actually sums on. Deliberately excludes invoiceNum: for documents
+// that print no invoice number the parser invents one, and it invents a different
+// one every pass — that field is the reason the duplicates got through.
+function entryFingerprint(e: any): string {
+  return [
+    String(e?.vendor || "").trim().toLowerCase(),
+    String(e?.date || "").slice(0, 10),
+    String(e?.truckId || ""),
+    (Number(e?.total) || 0).toFixed(2),
+  ].join("|");
+}
+
+const TRUCK_IN_DESC = /\b(?:truck|unit)\s*#?\s*(\d{3,5})\b/i;
+// Generous ceiling on one fill: the largest tank here is ~150 gal, and the collapsed
+// service logs carried 700–1,500. Anything between is ambiguous, so it passes.
+const TANK_GALLONS = 250;
+
+/**
+ * One row whose line items name several trucks is a DOCUMENT total, not a truck's
+ * cost — a fuel service log collapsed onto whichever unit was printed first. Split
+ * it back out, one entry per unit, using the amounts the document itself gives.
+ *
+ * Whatever the lines don't account for — tax, delivery, or trucks the parser dropped
+ * — becomes one INVENTORY row rather than being spread across the trucks that ARE
+ * named: inflating a real truck's fuel to make the total balance is the same class of
+ * error as the bug being fixed. INVENTORY is where this app already parks unallocated
+ * fuel cost, and the Redistribute Overhead button already knows how to hand it out.
+ */
+function splitMultiTruckEntry(e: any): any[] {
+  const lines = Array.isArray(e?.lineItems) ? e.lineItems : [];
+  const per = new Map<string, number>();
+  for (const l of lines) {
+    const m = TRUCK_IN_DESC.exec(String(l?.desc || ""));
+    if (!m) continue;
+    per.set(m[1], (per.get(m[1]) || 0) + (Number(l?.amount) || 0));
+  }
+  if (per.size < 2) return [e];
+  const lineSum = [...per.values()].reduce((s, v) => s + v, 0);
+  const stated = Number(e.total) || 0;
+  const gallons = Number(e.gallons) || 0;
+  const baseNum = e.invoiceNum ? String(e.invoiceNum) : "";
+  const stamp = `Split from a ${per.size}-truck service log (document total $${stated.toFixed(2)}).`;
+  const out = [...per.entries()].map(([truckId, amt], i) => ({
+    ...e,
+    // Distinct id and invoiceNum per truck: siblings sharing either would be culled
+    // by the shard-level dedup on the way in.
+    id: Date.now() + Math.random() + i,
+    truckId,
+    total: Math.round(amt * 100) / 100,
+    gallons: gallons && lineSum > 0 ? Math.round((gallons * amt / lineSum) * 10) / 10 : null,
+    invoiceNum: baseNum ? `${baseNum}-${truckId}` : null,
+    lineItems: [{ desc: `Diesel - Truck ${truckId}`, amount: Math.round(amt * 100) / 100 }],
+    notes: [String(e.notes || "").trim(), stamp].filter(Boolean).join(" "),
+  }));
+  const rest = Math.round((stated - lineSum) * 100) / 100;
+  if (rest > 0.5) out.push({
+    ...e,
+    id: Date.now() + Math.random() + per.size,
+    truckId: "INVENTORY",
+    total: rest,
+    gallons: null,
+    invoiceNum: baseNum ? `${baseNum}-UNALLOCATED` : null,
+    lineItems: [{ desc: "Not itemized by truck on the document", amount: rest }],
+    notes: [String(e.notes || "").trim(), stamp, "This part of the document was not broken out per truck — allocate it from the Inventory view."]
+      .filter(Boolean).join(" "),
+  });
+  return out;
+}
+function splitMultiTruck(entries: any[]): any[] {
+  return entries.flatMap((e) => splitMultiTruckEntry(e));
 }
 
 function afterDateStr(daysBack: number): string {
@@ -1022,13 +1205,16 @@ async function processOne(
   truckIds: string[],
   vendors: any[],
   dedupInvoiceNums: Set<string>,
+  dedupFingerprints: Set<string>,
   signal: AbortSignal,
   compact = false,
   pageCap = false
 ) {
   const { gmailRef, messageId, attachmentId, filename } = item;
   const vendor = vendors.find((v: any) => v.name === item.vendorName) || { name: item.vendorName, category: item.vendorCategory || "Other" };
-  const result: any = { gmailRef, vendor: vendor.name, filename };
+  // messageId/attachmentId ride on the result so the failure ledger can rebuild a
+  // queue item for a released quarantine — the ref no longer encodes them.
+  const result: any = { gmailRef, messageId, attachmentId, vendor: vendor.name, filename };
 
   // v2.18.4: which stage the clock was in. Previously every failure read "timed out
   // after 18s" with no hint where the time went, which sent the last fix at the AI
@@ -1103,7 +1289,7 @@ async function processOne(
 
     // Normalize: parsed is an array of entries
     const rows = Array.isArray(parsed) ? parsed : [parsed];
-    const entries = rows.map((r: any) => ({
+    const built = rows.map((r: any) => ({
       id: Date.now() + Math.random(),
       date: r.date || new Date().toISOString().split("T")[0],
       truckId: r.truckId || "INVENTORY",
@@ -1123,6 +1309,11 @@ async function processOne(
       fileKey,
       addedAt: new Date().toISOString(),
     }));
+    // v2.19.0: a row whose own line items name several trucks is the whole document,
+    // not one truck's cost. Split before anything downstream — confidence, dedup and
+    // the shard key all have to see the per-truck rows.
+    const entries = splitMultiTruck(built);
+    result.split = entries.length - built.length;
     // v2.17.0: carry the AI's own confidence flag through — the explicit field list
     // above dropped it, so evaluateConfidence never saw "low" and the AI's uncertainty
     // was silently ignored (only the independent field gate ever routed to review).
@@ -1146,8 +1337,13 @@ async function processOne(
     result.invoiceNum = entries[0]?.invoiceNum;
 
     // Skip if already imported via invoiceNum dedup
-    if (entries.every((e) => e.invoiceNum && dedupInvoiceNums.has(e.invoiceNum.toUpperCase()))) {
+    if (entries.every((e) => e.invoiceNum && dedupInvoiceNums.has(String(e.invoiceNum).toUpperCase()))) {
       result.skipReason = "duplicate invoiceNum";
+    } else if (dedupFingerprints.size > 0 && entries.every((e) => dedupFingerprints.has(entryFingerprint(e)))) {
+      // v2.19.0: same vendor, date, truck and amount as something already in the
+      // ledger. This is what catches the vendor resending a service log from a new
+      // message under a new name, which no ref or invoice number can.
+      result.skipReason = "already imported (same vendor/date/truck/amount)";
     }
 
     return result;
@@ -1201,6 +1397,9 @@ Return a JSON array. Each element MUST have:
 - lineItems: [] (ALWAYS an empty array — do not list individual lines)
 - notes: "" (leave empty)
 
+The total is ALWAYS one truck's own charge. A fuel service log lists every unit
+filled that day — return one row per unit, never the document total on a single unit.
+
 ALSO add ONE meta field on the FIRST element only:
 - _confidence: "high" or "low"
 - _confidenceReason: why low
@@ -1220,6 +1419,11 @@ Return a JSON array. Each element MUST have:
 - date: YYYY-MM-DD format
 - lineItems: array of {desc, amount}
 - notes: brief context
+
+CRITICAL — a fuel service log lists EVERY unit filled that day, one row per unit
+(columns: Unit Number, Gallons, Price Per Gallon, Total Charge). Return ONE OBJECT
+PER UNIT, and set total to that unit's own Total Charge — NEVER the document total,
+and never the whole delivery pinned on the first unit listed. Skip the "Total" row.
 
 ALSO add ONE meta field on the FIRST element only:
 - _confidence: "high" or "low"
@@ -1283,6 +1487,14 @@ function evaluateConfidence(entries: any[], vendor: any, truckIds: string[], ven
     }
     if (!knownVendors.has((e.vendor || "").toLowerCase())) {
       return { level: "low", reason: `Unknown vendor: ${e.vendor}` };
+    }
+    // v2.19.0: physical sanity. The biggest tank in this fleet is nowhere near
+    // TANK_GALLONS, so a single truck row carrying more than that is a whole
+    // delivery collapsed onto one unit. splitMultiTruck fixes those it can see, but
+    // a compact-mode row has no line items to split by — so it goes to a human
+    // rather than silently landing another four-figure charge on one truck.
+    if (e.truckId !== "INVENTORY" && Number(e.gallons) > TANK_GALLONS) {
+      return { level: "low", reason: `${e.gallons} gallons on one truck — likely a whole service log booked to truck ${e.truckId}` };
     }
   }
   return { level: "high", reason: "All fields valid" };
