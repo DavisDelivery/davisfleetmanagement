@@ -1,5 +1,17 @@
 [build]
   publish = "."
+  # There used to be nothing between `git push` and the yard: a single bad character
+  # in App.jsx shipped a white screen to every driver and mechanic at once. esbuild
+  # parses the file and fails the deploy instead.
+  command = "npm run check"
 
 [build.environment]
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+
+# App.jsx was served as application/octet-stream, which Netlify does not compress —
+# 526 KB over the wire on every load, on phones in a yard. Declaring the real type
+# makes it compressible and is what the browser should have been told anyway.
+[[headers]]
+  for = "/App.jsx"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"

@@ -1,0 +1,13 @@
+# No trailing slash: some test dirs symlink node_modules to .uitest/node_modules,
+# and a trailing slash matches directories only, so the symlinks would be committed.
+node_modules
+
+# Third-party bundles the browser tests serve locally instead of hitting a CDN.
+# Fetched on first run by .uitest/vendor.mjs — babel.min.js alone is 2.8 MB.
+.uitest/vendor/
+
+# Build artifacts and captured output from test runs.
+.uitest2/app.compiled.js
+*-output.txt
+*.png
+*.pdf

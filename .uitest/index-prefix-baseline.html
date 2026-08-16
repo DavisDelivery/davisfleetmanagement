@@ -126,26 +126,17 @@
      one used to mean either closing the whole ticket or leaving no record at all, so
      each entry is now a work item: its own ✓, its own sub-notes. The ✓ is a 34px
      target on the left so a mechanic can tick a job off one-handed in the bay. */
-  /* The ✓ sits IN the meta line, not pinned in a left gutter. Pinned, it reserved
-     48px down the whole card, and on a 320px screen that left a nested note body
-     about 170px wide. Inline it costs nothing horizontally and is still a 32px
-     touch target. */
-  .item-done-btn { width: 32px; height: 32px; min-width: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: transparent; font-size: 16px; font-weight: 800; line-height: 1; cursor: pointer; padding: 0; flex-shrink: 0; }
+  .item-done-btn { position: absolute; top: 6px; left: 6px; width: 34px; height: 34px; min-width: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: transparent; font-size: 16px; font-weight: 800; line-height: 1; cursor: pointer; padding: 0; }
   .item-done-btn.on { background: var(--green, #16a34a); border-color: var(--green, #16a34a); color: #fff; }
+  .note-entry.has-item { padding-left: 48px; }
   .note-entry.item-done .note-text { text-decoration: line-through; color: var(--muted); }
   .item-doneline { font-size: 11px; font-weight: 700; color: var(--green, #16a34a); margin-top: 4px; }
-  /* Sub-notes stack for exactly the reason the parent note does. As one flex ROW —
-     time | text | author | ✕ — the text was left about 100px wide inside an already
-     indented item, so a real write-up came out one word per line and ran for a
-     screenful. Meta on top, body FULL WIDTH underneath. */
-  .subnotes { margin-top: 6px; border-left: 2px solid var(--border); padding-left: 8px; display: flex; flex-direction: column; gap: 8px; }
-  .subnote { display: block; }
-  .subnote-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 20px; }
-  .subnote-ts { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
-  .subnote-by { font-size: 10px; color: var(--brand); font-weight: 700; white-space: nowrap; }
-  .subnote-del { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 8px; min-width: 30px; min-height: 30px; flex-shrink: 0; }
-  .subnote-del:hover { color: var(--red); }
-  .subnote-text { display: block; width: 100%; font-size: 13px; color: var(--text); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
+  .subnotes { margin-top: 6px; border-left: 2px solid var(--border); padding-left: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .subnote { display: flex; gap: 6px; align-items: flex-start; }
+  .subnote-ts { font-family: var(--mono); font-size: 9px; color: var(--muted); white-space: nowrap; margin-top: 3px; }
+  .subnote-text { font-size: 12px; color: var(--text); line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; flex: 1; }
+  .subnote-by { font-size: 9px; color: var(--brand); font-weight: 700; white-space: nowrap; margin-top: 3px; }
+  .subnote-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; line-height: 1; padding: 4px 6px; min-width: 28px; flex-shrink: 0; }
   .item-note-btn { margin-top: 6px; background: none; border: none; color: var(--brand); font-family: var(--sans); font-size: 12px; font-weight: 700; padding: 6px 0; cursor: pointer; }
   .item-note-row { display: flex; gap: 6px; margin-top: 6px; }
   .item-note-input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--brand); color: var(--text); font-family: var(--sans); font-size: 16px; padding: 9px 10px; border-radius: 6px; outline: none; }
@@ -453,24 +444,19 @@ function noteEntryHtml(repairId, entry, idx) {
   const subs = Array.isArray(entry.notes) ? entry.notes : [];
   const subsHtml = subs.length ? `<div class="subnotes">${subs.map((n, ni) => `
       <div class="subnote">
-        <div class="subnote-meta">
-          <span class="subnote-ts">${shortTs(n.ts)}</span>
-          ${n.by ? `<span class="subnote-by">— ${escHtml(n.by)}</span>` : ""}
-          <button class="subnote-del" onclick="if(confirm('Delete this note?'))deleteItemNote('${repairId}',${idx},${ni})" title="Delete note" aria-label="Delete note">✕</button>
-        </div>
-        <div class="subnote-text">${escHtml(n.text)}</div>
+        <span class="subnote-ts">${shortTs(n.ts)}</span>
+        <span class="subnote-text">${escHtml(n.text)}</span>
+        ${n.by ? `<span class="subnote-by">— ${escHtml(n.by)}</span>` : ""}
+        <button class="subnote-del" onclick="deleteItemNote('${repairId}',${idx},${ni})" title="Delete note" aria-label="Delete note">✕</button>
       </div>`).join("")}</div>` : "";
   return `<div class="note-entry has-item${done ? " item-done" : ""}" id="note-${repairId}-${idx}">
+    <button class="item-done-btn${done ? " on" : ""}" onclick="toggleItem('${repairId}',${idx})"
+      title="${done ? "Reopen this item" : "Mark this item done"}" aria-label="${done ? "Reopen this item" : "Mark this item done"}">✓</button>
     <span class="note-acts">
       <button class="note-edit" onclick="startEditNote('${repairId}',${idx})" title="Edit item" aria-label="Edit item">✎</button>
-      <!-- v2.19.1: confirm at the click site, not inside deleteNote() — the empty-note
-           path in saveEditNote() already confirms before calling it, and a second
-           prompt there would be worse than none. This ✕ sits next to ✎. -->
-      <button class="note-del" onclick="if(confirm('Delete this work item and all of its notes?'))deleteNote('${repairId}',${idx})" title="Delete item" aria-label="Delete item">✕</button>
+      <button class="note-del" onclick="deleteNote('${repairId}',${idx})" title="Delete item" aria-label="Delete item">✕</button>
     </span>
     <div class="note-meta">
-      <button class="item-done-btn${done ? " on" : ""}" onclick="toggleItem('${repairId}',${idx})"
-        title="${done ? "Reopen this item" : "Mark this item done"}" aria-label="${done ? "Reopen this item" : "Mark this item done"}">✓</button>
       <span class="note-ts">${shortTs(entry.ts)}</span>
       ${entry.by ? `<span class="note-by" title="Added by ${escHtml(entry.by)}">— ${escHtml(entry.by)}</span>` : ""}
     </div>

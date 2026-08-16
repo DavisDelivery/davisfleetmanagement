@@ -38,16 +38,55 @@ window.storage = {
   async get(key) { try { const doc = await db.collection("kv").doc(key).get(); if (!doc.exists) throw new Error("not found"); return { key, value: doc.data().v }; } catch (e) { window.__lastStorageError = e.message || String(e); throw e; } },
   async set(key, value) { try { const bytes = (typeof TextEncoder !== "undefined") ? new TextEncoder().encode(value).length : value.length; if (bytes > 1048000) { const msg = "Firestore 1 MB document limit exceeded for key=" + key + " (" + bytes + " bytes). Not saved."; console.error(msg); window.__lastStorageError = msg; return null; } await db.collection("kv").doc(key).set({ v: value, ts: new Date().toISOString() }); return { key, value }; } catch (e) { console.error("storage.set failed for key=", key, "error=", e); window.__lastStorageError = e.message || String(e); return null; } },
   async delete(key) { try { await db.collection("kv").doc(key).delete(); return { key, deleted: true }; } catch (e) { return null; } },
-  async list(prefix) { try { const snap = await db.collection("kv").get(); const keys = []; snap.forEach(doc => { if (!prefix || doc.id.startsWith(prefix)) keys.push(doc.id); }); return { keys }; } catch (e) { console.error("storage.list failed:", e); window.__lastStorageError = e.message || String(e); return { keys: [], error: e.message || String(e) }; } }
+  // A prefix list used to download EVERY document in the collection and filter client
+  // side — three full scans before first paint, growing with every week of history.
+  // A documentId() range query reads only the matching span. The documents arrive with
+  // that query anyway, so return their values too and let callers skip re-fetching each
+  // key one at a time. An empty prefix still means "everything" (the admin dump).
+  async list(prefix) { try { let q = db.collection("kv"); if (prefix) { const end = prefix.slice(0, -1) + String.fromCharCode(prefix.charCodeAt(prefix.length - 1) + 1); q = q.where(firebase.firestore.FieldPath.documentId(), ">=", prefix).where(firebase.firestore.FieldPath.documentId(), "<", end); } const snap = await q.get(); const keys = []; const values = {}; snap.forEach(doc => { keys.push(doc.id); const d = doc.data(); if (d && d.v !== undefined) values[doc.id] = d.v; }); return { keys, values }; } catch (e) { console.error("storage.list failed:", e); window.__lastStorageError = e.message || String(e); return { keys: [], error: e.message || String(e) }; } }
 };
 </script>
-<script type="text/babel">
+<!-- data-presets is not cosmetic. With no presets attribute Babel defaults to
+     ["react","env"] plus three plugins plus inline source maps. On this file that is
+     14.6s of blocked main thread producing 2.3MB of output, against 0.8s and 485KB
+     for the one preset we actually need — 18.7x, measured in Chromium by
+     .uitest/transpile-bench.mjs (re-run it if you doubt the number). A phone's CPU is
+     several times slower again, and none of it is cacheable.
+     App.jsx uses optional chaining but no ??, class fields or private fields, so
+     dropping `env` costs us nothing above Chrome 80 / Safari 13.4 (2020). -->
+<script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 </script>
-<script type="text/babel" src="App.jsx"></script>
-<script type="text/babel">
+<script type="text/babel" data-presets="react" src="App.jsx"></script>
+<script type="text/babel" data-presets="react">
+// A throw anywhere inside App() used to leave the loading spinner up forever and take
+// DVIRs, the repair board and the cost ledger down together, on phones with no console.
+// Contain it and give the person on the yard something to act on.
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err, info) { console.error("Fleet app crashed:", err, info); }
+  render() {
+    if (!this.state.err) return this.props.children;
+    return (
+      <div style={{ padding: "28px 20px", maxWidth: 520, margin: "0 auto", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#243447" }}>
+        <h1 style={{ fontSize: 20, margin: "0 0 10px" }}>The app hit an error and stopped</h1>
+        <p style={{ fontSize: 15, lineHeight: 1.5, color: "#5b6b7a", margin: "0 0 18px" }}>
+          Your saved work is not affected — this screen failed to draw. Reloading usually clears it.
+          If it keeps happening, send this message to the office.
+        </p>
+        <button onClick={() => location.reload()} style={{ background: "#1e5b92", color: "#fff", border: 0, borderRadius: 6, padding: "12px 20px", fontSize: 16, fontWeight: 600, minHeight: 44 }}>
+          Reload
+        </button>
+        <pre style={{ marginTop: 20, padding: 12, background: "#f1f4f7", border: "1px solid #dde3ea", borderRadius: 6, fontSize: 12, whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#6b7785" }}>
+          {String(this.state.err && (this.state.err.stack || this.state.err.message) || this.state.err)}
+        </pre>
+      </div>
+    );
+  }
+}
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(App));
+root.render(React.createElement(ErrorBoundary, null, React.createElement(App)));
 </script>
 </body>
 </html>
