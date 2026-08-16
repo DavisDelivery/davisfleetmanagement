@@ -1,8 +1,10 @@
 name: checks
 
 on:
+  # Only main on push. Every other branch is covered by the pull_request trigger, and
+  # listening to both would run the whole suite twice for each commit on a PR.
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
 
 jobs:
