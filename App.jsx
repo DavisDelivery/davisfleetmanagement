@@ -1,4 +1,4 @@
-const APP_VERSION = "2.19.1";
+const APP_VERSION = "2.20.0";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -111,6 +111,60 @@ const MAKES=["Freightliner","Hino","International","Ford","Isuzu","Kenworth","Pe
 const C={brand:"#1e5b92",dark:"#153f66",light:"#e8f0f7",accent:"#d4841b",red:"#c0392b",green:"#27ae60",yellow:"#e6a817",purple:"#7b5ea7",cyan:"#2596be"};
 const SC={available:C.green,assigned:C.brand,repair:C.yellow,oos:C.red,"for-sale":C.purple,unassigned:C.accent};
 const SL={available:"Available",assigned:"Assigned",repair:"In Repair",oos:"Out of Service","for-sale":"For Sale",unassigned:"Needs Assignment"};
+
+/* ── Motive mileage folding (v2.20.0) ────────────────────────────────────────
+   Pure, so it can be tested without a browser or a Motive key. Folds one page of
+   /api/motive?action=miles periods into the accumulator.
+
+   The one rule that matters: Motive answers "0 miles" for a truck with no
+   gateway AND for a truck that genuinely sat in the yard, and it distinguishes
+   them only by an English message on the row. The proxy turns that message into
+   a `quality` field; here, only `ok` and `zero_reported` become stored numbers.
+   Everything else is recorded as a gap and the month is left absent — because a
+   month stored as 0 miles turns into a divide-by-zero on the cost-per-mile page,
+   and a truck that never reported would rank as the most expensive in the fleet. */
+function foldMilePeriods(periods,byMotiveId,acc){
+  const out=acc||{byTruck:{},gaps:[],unmapped:new Set(),emptyMonths:[]};
+  for(const p of periods||[]){
+    let reported=0;
+    for(const v of (p.vehicles||[])){
+      const truckId=byMotiveId[String(v.vehicleId)];
+      if(!truckId){if(v.vehicleId!=null)out.unmapped.add(String(v.vehicleId));continue;}
+      if(v.quality==="ok"||v.quality==="zero_reported"){
+        (out.byTruck[truckId]=out.byTruck[truckId]||{})[p.month]=Math.round(v.miles||0);
+        if(v.quality==="ok")reported++;
+      }else{
+        out.gaps.push({truckId,month:p.month,reason:v.quality,note:v.message||""});
+      }
+    }
+    if(reported===0)out.emptyMonths.push(p.month);
+  }
+  return out;
+}
+
+/* Drop the trailing run of months where nothing reported. We only fetched those
+   to prove Motive has no data that far back; keeping them would show a cliff of
+   zero-mile months on every chart. */
+function trimEmptyTail(fold,stopAfterEmpty){
+  const empty=new Set(fold.emptyMonths);
+  // The month universe has to include gap-only months. A month where NOTHING
+  // reported produces no byTruck entries at all — so building this list from
+  // byTruck alone makes the dead tail invisible to the very code meant to trim it.
+  const months=new Set();
+  Object.values(fold.byTruck).forEach(m=>Object.keys(m).forEach(k=>months.add(k)));
+  fold.gaps.forEach(g=>months.add(g.month));
+  const sorted=[...months].sort();
+  let cut=0;
+  while(cut<sorted.length&&empty.has(sorted[cut]))cut++;
+  if(cut<stopAfterEmpty)return fold;                 // not a retention floor, just a quiet month
+  const drop=new Set(sorted.slice(0,cut));
+  Object.keys(fold.byTruck).forEach(t=>{
+    drop.forEach(m=>{delete fold.byTruck[t][m];});
+    if(!Object.keys(fold.byTruck[t]).length)delete fold.byTruck[t];
+  });
+  fold.gaps=fold.gaps.filter(g=>!drop.has(g.month));
+  return fold;
+}
 
 function gM(d){const dt=new Date(d);const dy=dt.getDay();dt.setDate(dt.getDate()-dy+(dy===0?-6:1));dt.setHours(0,0,0,0);return dt;}
 function wK(d){const m=gM(d);return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,"0")}-${String(m.getDate()).padStart(2,"0")}`;}
@@ -470,7 +524,7 @@ function App(){
   // week change with dep [wk], which re-fetched week-independent collections and
   // could snap costs/trucks back to a pre-save value mid-flight.
   useEffect(()=>{(async()=>{
-    const[tR,dR,rR,rtR,coresR,rqR,rdR,mmR]=await Promise.all([
+    const[tR,dR,rR,rtR,coresR,rqR,rdR,mmR,milesR]=await Promise.all([
       window.storage.get("fl-trucks").catch(()=>null),
       window.storage.get("fl-drivers").catch(()=>null),
       window.storage.get("fl-repairs").catch(()=>null),
@@ -479,6 +533,7 @@ function App(){
       loadReviewQueue().catch(()=>[]), // v2.10.48, sharded since v2.17.2
       window.storage.get("fl-retired-drivers").catch(()=>null),
       window.storage.get("fl-motive-map").catch(()=>null),
+      window.storage.get("fl-miles").catch(()=>null), // v2.20.0
     ]);
     const t=pj(tR,null);setTrucks(Array.isArray(t)&&t.length?t:[...ST,...TR]);
     const d=pj(dR,null);setDrivers(sortDrivers(Array.isArray(d)&&d.length?d:[...ID]));
@@ -488,6 +543,8 @@ function App(){
     setReviewQueue(Array.isArray(rqR)?rqR:[]); // v2.10.48 — loadReviewQueue returns items, not a record
     setRetiredDrivers(sortDrivers(pj(rdR,[])));
     const m=pj(mmR,null);if(m)setMotiveMap({vehicles:m.vehicles||{},drivers:m.drivers||{}});
+    const mi=pj(milesR,null);
+    if(mi&&mi.byTruck){setTruckMiles(mi.byTruck);setMilesMeta({updatedAt:mi.updatedAt,gaps:mi.gaps||[],source:mi.source});}
 
     await loadCostsFromShards(true);
 
@@ -742,6 +799,22 @@ function App(){
   const[motiveLiveFlags,setMotiveLiveFlags]=useState({}); // { truckId: {status, motiveName, boardName, ts} }
   const[motiveLiveOn,setMotiveLiveOn]=useState(true);
   const[motiveDismissAt,setMotiveDismissAt]=useState(0); // hide drift banner for flags older than this
+
+  // ── Motive mileage (v2.20.0) ──
+  // Miles are the missing denominator under every cost question worth asking:
+  // cost per mile, PM intervals, "is this truck expensive or just busy". We hold
+  // them as { truckId: { "YYYY-MM": miles } } in fl-miles.
+  //
+  // A month is present only when Motive actually reported distance for it. A
+  // truck with no gateway comes back as 0.0 miles WITH an explanatory message —
+  // storing that as a real zero would make a truck that never reported look
+  // infinitely expensive per mile. Those land in `gaps` instead, and any month
+  // that isn't in byTruck is treated as unknown, never as zero.
+  const[truckMiles,setTruckMiles]=useState({});      // { truckId: { "YYYY-MM": miles } }
+  const[milesMeta,setMilesMeta]=useState(null);      // { updatedAt, months, gaps:[], earliest, latest }
+  const[milesSyncing,setMilesSyncing]=useState(false);
+  const[milesProgress,setMilesProgress]=useState(null); // { done, total, month }
+  const[milesError,setMilesError]=useState("");
   const saveMotiveMap=useCallback(m=>{setMotiveMap(m);sv("fl-motive-map",m);},[sv]);
   // Auto-suggest a mapping by matching our truck number to Motive vehicle.number and
   // our driver name to Motive first_name+last_name. Never overwrites a confirmed entry.
@@ -782,6 +855,102 @@ function App(){
     }catch(e){setMotiveError(e.message||"Could not reach Motive. Check MOTIVE_API_KEY.");}
     setMotiveLoading(false);
   };
+  // ── Pull mileage from Motive ──
+  // /api/motive?action=miles walks backwards a month at a time and returns a
+  // cursor when it runs out of its server-side time budget, so a 24-month
+  // backfill is a handful of round trips rather than one request that times out.
+  //
+  // Motive publishes no data-retention policy, so "how far back can we go" isn't
+  // answerable from the docs — we walk back until the data dries up and record
+  // where that happened. `stopAfterEmpty` consecutive months with nothing
+  // reported is treated as the floor.
+  const syncMotiveMiles=useCallback(async({months=24,stopAfterEmpty=3,baseMap}={})=>{
+    setMilesSyncing(true);setMilesError("");setMilesProgress({done:0,total:months,month:""});
+    const map=(baseMap||motiveMap).vehicles||{};
+    // fl-motive-map is truckId → motiveVehicleId; we need the reverse to label
+    // what comes back. Ids arrive as numbers from Motive and are stored as
+    // whatever the mapping UI wrote, so compare as strings.
+    const byMotiveId={};
+    Object.keys(map).forEach(truckId=>{const v=map[truckId];if(v!==undefined&&v!==null&&v!=="")byMotiveId[String(v)]=truckId;});
+    if(!Object.keys(byMotiveId).length){
+      setMilesSyncing(false);setMilesProgress(null);
+      setMilesError("No trucks are mapped to Motive vehicles yet. Open “Confirm truck & driver mapping” above and map at least one truck first.");
+      return null;
+    }
+
+    const now=new Date();
+    let through=`${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
+    const fold={byTruck:{},gaps:[],unmapped:new Set(),emptyMonths:[]};
+    let fetched=0,emptyRun=0,stoppedEarly=false;
+
+    try{
+      while(fetched<months){
+        const chunk=Math.min(6,months-fetched);
+        const r=await fetch(`/api/motive?action=miles&through=${through}&months=${chunk}`);
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok&&!(j.periods&&j.periods.length))throw new Error(j.error||`Motive miles request failed (HTTP ${r.status})`);
+        const periods=j.periods||[];
+        if(!periods.length)break;
+
+        for(const p of periods){
+          const before=fold.emptyMonths.length;
+          foldMilePeriods([p],byMotiveId,fold);
+          fetched++;
+          setMilesProgress({done:fetched,total:months,month:p.month});
+          if(fold.emptyMonths.length>before){
+            emptyRun++;
+            if(emptyRun>=stopAfterEmpty){stoppedEarly=true;break;}
+          }else emptyRun=0;
+        }
+        if(stoppedEarly)break;
+        if(j.done&&!j.nextThrough)break;
+        if(j.nextThrough)through=j.nextThrough;else break;
+        if(j.error)setMilesError(j.error); // partial chunk — keep going, surface the reason
+      }
+
+      if(stoppedEarly)trimEmptyTail(fold,stopAfterEmpty);
+      const byTruck=fold.byTruck,gaps=fold.gaps,unmapped=fold.unmapped;
+      const months_=new Set();Object.values(byTruck).forEach(m=>Object.keys(m).forEach(k=>months_.add(k)));
+      const sortedMonths=[...months_].sort();
+      const payload={
+        byTruck,
+        gaps:gaps.slice(0,2000), // bounded so a fleet-wide gateway outage can't blow the doc size
+        gapCount:gaps.length,
+        source:"v2_vehicle_utilization",
+        updatedAt:new Date().toISOString(),
+        earliest:sortedMonths[0]||null,
+        latest:sortedMonths[sortedMonths.length-1]||null,
+        monthsFetched:fetched,
+        reachedRetentionFloor:stoppedEarly,
+        unmappedMotiveVehicles:[...unmapped].slice(0,200),
+      };
+      const saved=await sv("fl-miles",payload);
+      setTruckMiles(byTruck);
+      setMilesMeta({updatedAt:payload.updatedAt,gaps:payload.gaps,source:payload.source,
+        earliest:payload.earliest,latest:payload.latest,reachedRetentionFloor:stoppedEarly,
+        gapCount:gaps.length,unmapped:[...unmapped]});
+      if(!saved)setMilesError("Pulled the mileage but could not save it — check the storage warning above.");
+      return payload;
+    }catch(e){
+      setMilesError(e.message||"Could not reach Motive. Check MOTIVE_API_KEY.");
+      return null;
+    }finally{
+      setMilesSyncing(false);setMilesProgress(null);
+    }
+  },[motiveMap,sv]);
+
+  // Miles for a truck across a list of "YYYY-MM" keys. Returns both the total and
+  // how many of those months we actually have, because a cost-per-mile figure
+  // built on 3 of 12 months is a different animal from one built on 12 of 12 —
+  // and the caller has to be able to tell the difference.
+  const milesFor=useCallback((truckId,months)=>{
+    const m=truckMiles[truckId]||{};
+    let total=0,have=0;
+    for(const k of months){if(m[k]!==undefined){total+=m[k];have++;}}
+    return{miles:total,monthsWithData:have,monthsRequested:months.length,
+      coverage:months.length?have/months.length:0};
+  },[truckMiles]);
+
   const openMotiveSync=async()=>{
     setShowMotiveSync(true);setMotiveSyncLog([]);setMotiveError("");
     setMotiveSyncDay(DAYS[Math.min(todayDI(),4)]);
@@ -4060,6 +4229,42 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   </label>
                 </div>
                 {motiveError&&<div style={{fontSize:11,color:C.red,background:"#fef2f2",border:`1px solid ${C.red}44`,borderRadius:6,padding:"6px 10px"}}>⚠️ {motiveError}</div>}
+
+                {/* v2.20.0 — mileage pull. Lives here because it runs off the same
+                    truck↔Motive mapping the driver check already depends on. */}
+                <div style={{marginTop:6,border:"1px solid #e2e8f0",borderRadius:8,padding:"9px 11px",background:"#f8fbfe"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:C.brand}}>Odometer &amp; mileage</div>
+                  <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 7px",lineHeight:1.45}}>
+                    Pulls miles driven per truck per month from Motive. This is what makes cost per mile,
+                    PM intervals and “expensive vs. just busy” possible — none of it works without miles.
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                    <button onClick={()=>syncMotiveMiles({months:12,baseMap:motiveMap})} disabled={milesSyncing} style={s.wBtn}>
+                      {milesSyncing?"Pulling…":"↻ Last 12 months"}
+                    </button>
+                    <button onClick={()=>syncMotiveMiles({months:36,baseMap:motiveMap})} disabled={milesSyncing} style={s.wBtn}>
+                      Full backfill (36 mo)
+                    </button>
+                    {milesProgress&&<span style={{fontSize:11,color:C.brand,fontWeight:700}}>
+                      {milesProgress.month||"…"} · {milesProgress.done}/{milesProgress.total}
+                    </span>}
+                  </div>
+                  {milesError&&<div style={{fontSize:11,color:C.red,background:"#fef2f2",border:`1px solid ${C.red}44`,borderRadius:6,padding:"6px 10px",marginTop:7}}>⚠️ {milesError}</div>}
+                  {milesMeta&&!milesSyncing&&(()=>{
+                    const trucksWith=Object.keys(truckMiles).length;
+                    const totalMi=Object.values(truckMiles).reduce((s,m)=>s+Object.values(m).reduce((a,b)=>a+b,0),0);
+                    return <div style={{fontSize:11,color:"#475569",marginTop:7,lineHeight:1.6}}>
+                      <div><b>{trucksWith}</b> trucks · <b>{totalMi.toLocaleString()}</b> miles · {milesMeta.earliest||"?"} → {milesMeta.latest||"?"}</div>
+                      <div style={{color:"#94a3b8"}}>Updated {new Date(milesMeta.updatedAt).toLocaleString()}</div>
+                      {milesMeta.reachedRetentionFloor&&
+                        <div style={{color:"#8a5405"}}>Stopped at {milesMeta.earliest} — Motive returned nothing before that.</div>}
+                      {milesMeta.gapCount>0&&
+                        <div style={{color:"#8a5405"}}>{milesMeta.gapCount} truck-months had no gateway data (left blank, not counted as zero miles).</div>}
+                      {milesMeta.unmapped&&milesMeta.unmapped.length>0&&
+                        <div style={{color:"#8a5405"}}>{milesMeta.unmapped.length} Motive vehicles aren’t mapped to a truck — their miles were skipped.</div>}
+                    </div>;
+                  })()}
+                </div>
 
                 <details open={motiveShowMap} onToggle={e=>setMotiveShowMap(e.target.open)} style={{marginTop:4,border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px"}}>
                   <summary style={{fontSize:12,fontWeight:700,color:C.brand,cursor:"pointer"}}>Confirm truck &amp; driver mapping</summary>
