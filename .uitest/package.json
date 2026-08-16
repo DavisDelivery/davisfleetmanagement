@@ -1,0 +1,1 @@
+{ "name": "uitest", "private": true, "type": "module", "dependencies": { "puppeteer": "23.10.4", "esbuild": "0.24.2", "react": "18.3.1", "react-dom": "18.3.1" } }

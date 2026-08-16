@@ -1,7 +1,13 @@
 {
   "name": "davis-fleet-management",
-  "version": "2.6.4",
+  "version": "2.19.1",
   "private": true,
+  "scripts": {
+    "check": "esbuild App.jsx --loader:.jsx=jsx --outfile=/dev/null"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  },
   "dependencies": {
     "@netlify/blobs": "^8.1.0",
     "@netlify/functions": "^2.8.0",

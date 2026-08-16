@@ -1,0 +1,73 @@
+name: checks
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  # The gate that matters most: App.jsx is served to the browser untranspiled and
+  # unbundled, so a syntax error there is a white screen for every driver and mechanic
+  # at once. Netlify runs this same command as its build step.
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - name: App.jsx parses
+        run: npm run check
+
+  # Money logic. These run the real functions out of App.jsx — no browser needed.
+  ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+        working-directory: .uitest
+      - name: cost shard merge (server imports must survive a browser write)
+        run: node cost-merge.mjs
+        working-directory: .uitest
+      - name: repairCostLedger fixtures
+        run: node ledger.mjs
+        working-directory: .uitest
+
+  # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
+  # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+        working-directory: .uitest
+      - name: shop portal boots
+        run: node portal-syntax.mjs
+        working-directory: .uitest
+      - name: fleet app boots and storage.list is correct
+        run: node app-boot.mjs
+        working-directory: .uitest
+
+  # The invoice import pipeline, stubbed end to end.
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+        working-directory: .synctest
+      - name: sync harness
+        run: node harness.mjs
+        working-directory: .synctest
+      - name: sync stages
+        run: node stages.mjs
+        working-directory: .synctest
