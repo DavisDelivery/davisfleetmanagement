@@ -56,6 +56,9 @@ jobs:
       - name: fleet app boots and storage.list is correct
         run: node app-boot.mjs
         working-directory: .uitest
+      - name: dashboard carries both halves of the merged screen
+        run: node dashboard-merge.mjs
+        working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
   sync:
