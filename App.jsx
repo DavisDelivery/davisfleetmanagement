@@ -1,4 +1,4 @@
-const APP_VERSION = "2.21.0";
+const APP_VERSION = "2.22.0";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -215,6 +215,43 @@ function dedupById(items){const seen=new Set();const out=[];for(const it of item
 //   in snapshot, not in memory              → deleted here on purpose → drop
 // Merge-by-absence without the snapshot would resurrect every deleted row.
 // Rows with no id can't be told apart from a deletion, so they are never merged.
+// v2.22.0: a repair invoice belongs to ONE truck, in full. Complete Fleet Services bills
+// labour, parts, shop supplies and tax on a single job for a single unit — none of it is
+// shelf stock. The prompts say so, but a prompt is a request; this makes it true. If the
+// model still splits a repair across the truck and an INVENTORY/UNKNOWN bucket, fold the
+// strays back onto the truck rather than leaving money parked where nobody looks.
+//
+// Deliberately narrow: only rows sharing one invoiceNum, only when EXACTLY ONE real truck
+// appears among them. A repair that genuinely names two trucks is left alone for a human,
+// because silently merging that would be the same class of error as splitting this one.
+function coalesceRepairInvoice(entries){
+  const rows=Array.isArray(entries)?entries:[];
+  const isRepair=e=>String((e&&e.category)||"").toLowerCase()==="repair";
+  const isBucket=t=>{const v=String(t==null?"":t).toUpperCase();return v===""||v==="INVENTORY"||v==="UNKNOWN";};
+  const byInv=new Map();
+  for(const e of rows){
+    if(!isRepair(e)||!e||!e.invoiceNum)continue;
+    const k=String(e.invoiceNum);
+    (byInv.get(k)||byInv.set(k,[]).get(k)).push(e);
+  }
+  const absorbed=new Set();
+  const merged=new Map();
+  for(const[,group]of byInv){
+    if(group.length<2)continue;
+    const trucks=[...new Set(group.filter(e=>!isBucket(e.truckId)).map(e=>String(e.truckId)))];
+    if(trucks.length!==1)continue;                 // 0 or 2+ real trucks → leave it for a human
+    const keep=group.find(e=>String(e.truckId)===trucks[0]);
+    const strays=group.filter(e=>e!==keep);
+    if(!strays.length)continue;
+    const total=group.reduce((sum,e)=>sum+(Number(e.total)||0),0);
+    const lines=group.flatMap(e=>Array.isArray(e.lineItems)?e.lineItems:[]);
+    merged.set(keep,{...keep,total:Math.round(total*100)/100,lineItems:lines.length?lines:keep.lineItems,
+      notes:[String(keep.notes||"").trim(),`Whole repair invoice booked to #${trucks[0]} (${strays.length} unassigned row${strays.length===1?"":"s"} folded in).`].filter(Boolean).join(" ")});
+    strays.forEach(e=>absorbed.add(e));
+  }
+  if(!absorbed.size)return rows;
+  return rows.filter(e=>!absorbed.has(e)).map(e=>merged.get(e)||e);
+}
 function costAdditionsToKeep(stored,prevArr,memArr){
   const idsOf=arr=>new Set((arr||[]).map(e=>e&&e.id!=null?String(e.id):null).filter(x=>x!==null));
   const prevIds=idsOf(prevArr),memIds=idsOf(memArr);
@@ -253,6 +290,26 @@ function shardKeysOf(base,keys){
       different one every pass. A fingerprint of what the ledger actually sums on
       (vendor, date, truck, amount) is stable across all of that. */
 const TRUCK_IN_DESC=/\b(?:truck|unit)\s*#?\s*(\d{3,5})\b/i;
+// v2.22.0: some vendors print the unit with a yard prefix — Complete Fleet Services
+// bills "BX0424" and "GP2883" in the Customer PO / Unit # cell, and the same value is
+// the last six characters of the VIN. The fleet knows those trucks as 0424 and 2883.
+// Strip the prefix deterministically rather than asking the model again: a parse that
+// silently books a repair to a truck that does not exist is how #0424 ended up with
+// $498k against it. Only rewrites when the bare digits ARE a real fleet number, so a
+// genuinely unknown unit still surfaces as unknown instead of being coerced into one.
+function normalizeTruckId(raw,fleetIds){
+  const id=String(raw==null?"":raw).trim();
+  if(!id)return id;
+  const known=fleetIds instanceof Set?fleetIds:new Set(fleetIds||[]);
+  if(known.has(id))return id;                       // already a fleet number
+  const m=/^[A-Za-z]{1,3}[-\s]?(\d{3,5})$/.exec(id);  // BX0424, GP-2883, BX 0424
+  if(m&&known.has(m[1]))return m[1];
+  if(m){                                            // 424 stored as 0424, and back
+    const n=m[1].replace(/^0+/,"");
+    for(const k of known)if(String(k).replace(/^0+/,"")===n)return k;
+  }
+  return id;
+}
 function entryFingerprint(e){
   return [String((e&&e.vendor)||"").trim().toLowerCase(),String((e&&e.date)||"").slice(0,10),
     String((e&&e.truckId)||""),(Number(e&&e.total)||0).toFixed(2)].join("|");
@@ -1312,7 +1369,7 @@ function App(){
   };
 
   // ── Invoice Scanner AI ──
-  const COST_CATS=["Parts","Tires","Labor","Fuel","Oil","Body/Paint","Electrical","Inspection","Towing","Registration","Insurance","Inventory","Core","Credit","Other"];
+  const COST_CATS=["Parts","Tires","Labor","Repair","Fuel","Oil","Body/Paint","Electrical","Inspection","Towing","Registration","Insurance","Inventory","Core","Credit","Other"];
 
   // Normalize vendor names so "Peach State Freightliner" and "Peach State Freightliner, LLC" become the same
   const normalizeVendor=(name)=>{
@@ -1339,6 +1396,7 @@ function App(){
     {pattern:"fuelfox",name:"FuelFox Atlanta",category:"Fuel"},
     {pattern:"peachstate",name:"Peach State Freightliner",category:"Parts"},
     {pattern:"quickfuel",name:"Quick Fuel",category:"Fuel"},
+    {pattern:"completefleet",name:"Complete Fleet Services",category:"Repair"},
   ];
   const[knownVendors,setKnownVendors]=useState(DEFAULT_VENDORS);
   const[showAddVendor,setShowAddVendor]=useState(false);
@@ -1758,7 +1816,9 @@ Format your response as clear sections with headers using ** for bold. Use speci
     if(!item)return;
     // v2.19.0: a service log that reached review as one row carrying the whole
     // delivery is split per truck on the way into the ledger, same as the server does.
-    const newCosts=[...costEntries,...splitMultiTruck(item.parsed||[])];
+    const fleetIds=new Set([...trucks.map(t=>t.id),...retiredTrucks.map(t=>t.id)]);
+    const approved=coalesceRepairInvoice((item.parsed||[]).map(e=>({...e,truckId:normalizeTruckId(e.truckId,fleetIds)})));
+    const newCosts=[...costEntries,...splitMultiTruck(approved)];
     saveCosts(newCosts);
     saveReviewQueue(reviewQueue.filter(q=>q.id!==itemId));
   };
@@ -1941,8 +2001,71 @@ Format your response as clear sections with headers using ** for bold. Use speci
     setGmailProcessing(null);
   };
 
-  const handleFileUpload=async(e)=>{
-    const files=Array.from(e.target.files);
+  // v2.22.0: a file dropped anywhere other than a drop zone makes the browser navigate
+  // to that file, throwing away a half-filled form with no warning. Swallow those.
+  // A drop INSIDE a zone never reaches here — DropZone stops propagation — so this only
+  // catches the misses.
+  useEffect(()=>{
+    const stop=e=>{e.preventDefault();};
+    window.addEventListener("dragover",stop);
+    window.addEventListener("drop",stop);
+    return()=>{window.removeEventListener("dragover",stop);window.removeEventListener("drop",stop);};
+  },[]);
+
+  // v2.22.0: lifted out of the inline onChange so the picker and a dropped file share
+  // one path. Takes the File directly.
+  const importHistoricalJson=async(f)=>{
+              if(!f)return;
+              try{
+                const text=await f.text();
+                const data=JSON.parse(text);
+                if(!Array.isArray(data)){toast("JSON must be an array of invoice objects");return;}
+                const existing=new Set(costEntries.filter(c=>c.invoiceNum).map(c=>c.invoiceNum));
+                const activeFleetIds=new Set(trucks.map(t=>t.id));
+                const existingRetiredIds=new Set(retiredTrucks.map(t=>t.id));
+                const newRetired=new Set();
+                const newEntries=[];let skipped=0;
+                data.forEach(row=>{
+                  if(row.invoiceNum&&existing.has(row.invoiceNum)){skipped++;return;}
+                  if(row.invoiceNum&&newEntries.find(n=>n.invoiceNum===row.invoiceNum)){skipped++;return;}
+                  // Auto-convert UNKNOWN/null trucks to INVENTORY
+                  const isInv=!row.truckId||row.truckId==="UNKNOWN"||row.truckId==="INVENTORY";
+                  // Detect retired trucks — in invoices but not in current fleet
+                  if(!isInv&&row.truckId&&!activeFleetIds.has(row.truckId)&&!existingRetiredIds.has(row.truckId)){
+                    newRetired.add(row.truckId);
+                  }
+                  newEntries.push({
+                    id:Date.now()+Math.random(),
+                    truckId:isInv?"INVENTORY":row.truckId,
+                    vendor:normalizeVendor(row.vendor),
+                    date:row.date||todayYMD(),
+                    invoiceNum:row.invoiceNum||null,
+                    total:Number(row.total)||0,
+                    category:isInv?"Inventory":(row.category||"Parts"),
+                    lineItems:row.lineItems||[],
+                    notes:row.notes||(row.sourceStmt?`Imported from ${row.sourceStmt}`:"Bulk import"),
+                    sourceFile:row.sourceStmt||"bulk-import",
+                    allocatedToTruck:null,
+                    allocatedDate:null,
+                    addedAt:new Date().toISOString(),
+                  });
+                });
+                if(newEntries.length>0){
+                  const next=[...newEntries,...costEntries];
+                  saveCosts(next);
+                }
+                if(newRetired.size>0){
+                  const retiredList=[...retiredTrucks,...Array.from(newRetired).map(id=>({id,mk:"UNKNOWN",retiredDate:todayYMD(),reason:"Auto-detected from historical invoices"}))];
+                  saveRetiredTrucks(retiredList);
+                }
+                toast(`Imported ${newEntries.length} invoices.\nSkipped ${skipped} duplicates.${newRetired.size>0?`\n\nDetected ${newRetired.size} retired truck${newRetired.size>1?"s":""}: ${Array.from(newRetired).join(", ")}`:""}`);
+                e.target.value="";
+              }catch(err){toast("Import failed: "+err.message);}
+  };
+  const handleFileUpload=async(input)=>{
+    // Accepts either a change event (the hidden <input>) or a plain array of File
+    // objects (a drop), so both entry points share one code path.
+    const files=Array.isArray(input)?input:Array.from((input&&input.target&&input.target.files)||[]);
     const queue=[];
     for(const file of files){
       if(file.type==="application/pdf"){
@@ -2389,6 +2512,29 @@ SPECIAL RULE FOR FUELFOX ATLANTA (from "accounting@fuelfox.net"):
        - lineItems: [{"desc": "Diesel Taxes", "amount": tax}, {"desc": "Delivery Fee", "amount": fee}]
        - notes: "FuelFox Invoice DDxxx overhead (tax+delivery). Distribute across Service Log trucks via Redistribute Overhead button."
 
+SPECIAL RULE FOR COMPLETE FLEET SERVICES L.L.C. (Oakwood GA, complete.fleet@outlook.com):
+- A repair-shop invoice, usually 2 pages. Header shows "Invoice: <number>" and "Date: M/D/YYYY".
+- THE TRUCK comes from the row under the header "Service Order | Terms | Due Date | Authorizer | Customer PO | Unit #".
+  That value carries a yard prefix — e.g. "BX0424", "GP2883" — and repeats further down as
+  "Unit: <X>", "Fleet #: <X>", and as the last six characters of the VIN.
+  truckId = THE TRAILING 4 DIGITS ONLY: "BX0424" -> "0424", "GP2883" -> "2883". Never return the prefixed form.
+  If the parenthetical after "Unit:" disagrees with the Unit # cell — one real invoice reads
+  "Unit: GP2883 (GO2883)" — trust the Unit # cell.
+- Return EXACTLY ONE object for the whole invoice. These invoices bill ONE truck. Several
+  "Complaint:" blocks each ending in their own "Subtotal" are separate jobs on the SAME truck.
+  Never split them into separate rows or separate trucks.
+- total: the "Total" line near the bottom, AFTER the "GEORGIA" and "HALL COUNTY" tax lines.
+  NOT "Pre-Charge Subtotal", NOT any "Subtotal", and NOT "Balance Due" (that is net of payments).
+- invoiceNum: "CFS-<invoice number>" — e.g. "CFS-10785".
+- vendor: "Complete Fleet Services"
+- category: "Repair"
+- THE ENTIRE INVOICE TOTAL GOES TO THAT ONE TRUCK. This is a repair, not a parts purchase for
+  the shelf. Never route any part of it to "INVENTORY", never emit a second row for parts,
+  shop supplies or tax, and never use category "Inventory". One row, one truck, the full Total.
+- date: the "Date:" at the top, as YYYY-MM-DD.
+- lineItems: one per "Parts ..." row and per Labor line — desc = the description as printed, amount = the Amount column.
+- notes: one short line summarising the "Complaint:" text.
+
 Known truck numbers in this fleet: ${truckIds}
 
 Always match to the closest fleet number. Use the TOTAL line (including tax) for the total amount. For the date, use DATE INVOICE (not DATE SHIPPED). Return ONLY the JSON array.`}
@@ -2806,7 +2952,11 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     if(newEntries.length>0){
       // v2.19.0: same split the server applies — a manually uploaded service log must
       // not book the whole delivery to the first unit printed on it either.
-      const next=[...splitMultiTruck(newEntries),...costEntries];
+      // Strip any yard prefix the vendor prints on the unit (BX0424 -> 0424) before the
+      // rows are split or stored, so a repair lands on a truck the fleet actually knows.
+      const fleetIds=new Set([...trucks.map(t=>t.id),...retiredTrucks.map(t=>t.id)]);
+      const normalized=coalesceRepairInvoice(newEntries.map(e=>({...e,truckId:normalizeTruckId(e.truckId,fleetIds)})));
+      const next=[...splitMultiTruck(normalized),...costEntries];
       saveCosts(next);
     }
     // v2.10.0: save core tracker updates
@@ -5740,7 +5890,12 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           <div style={s.secT}>Invoice Scanner</div>
           <div style={{...s.addForm,marginBottom:16}}>
             <div style={{fontSize:12,color:"#6b7785",marginBottom:4}}>Upload scanned invoices (PDF or images). AI will read each one and extract truck #, vendor, amount, and details automatically.</div>
-            <input type="file" accept="image/*,application/pdf" multiple onChange={handleFileUpload} style={{fontSize:13,padding:8}}/>
+            <DropZone
+              accept="image/*,application/pdf" multiple
+              onFiles={handleFileUpload}
+              busy={scanning}
+              title="Drop invoices here, or click to choose files"
+              hint="PDF or images · several at once"/>
             {scanQueue.length>0&&(()=>{
               // v2.11: status-aware summary + collapse + scroll so a 150-item queue
               // doesn't bury the action buttons off the bottom of the page.
@@ -5856,54 +6011,11 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           <div style={s.secT}>Bulk Import Historical Data</div>
           <div style={{...s.addForm,marginBottom:16}}>
             <div style={{fontSize:12,color:"#6b7785",marginBottom:8}}>Upload a JSON file with historical invoice data (from AR statements, QuickBooks exports, etc.). Duplicates by invoice number are automatically skipped.</div>
-            <input type="file" accept="application/json,.json" onChange={async(e)=>{
-              const f=e.target.files?.[0];if(!f)return;
-              try{
-                const text=await f.text();
-                const data=JSON.parse(text);
-                if(!Array.isArray(data)){toast("JSON must be an array of invoice objects");return;}
-                const existing=new Set(costEntries.filter(c=>c.invoiceNum).map(c=>c.invoiceNum));
-                const activeFleetIds=new Set(trucks.map(t=>t.id));
-                const existingRetiredIds=new Set(retiredTrucks.map(t=>t.id));
-                const newRetired=new Set();
-                const newEntries=[];let skipped=0;
-                data.forEach(row=>{
-                  if(row.invoiceNum&&existing.has(row.invoiceNum)){skipped++;return;}
-                  if(row.invoiceNum&&newEntries.find(n=>n.invoiceNum===row.invoiceNum)){skipped++;return;}
-                  // Auto-convert UNKNOWN/null trucks to INVENTORY
-                  const isInv=!row.truckId||row.truckId==="UNKNOWN"||row.truckId==="INVENTORY";
-                  // Detect retired trucks — in invoices but not in current fleet
-                  if(!isInv&&row.truckId&&!activeFleetIds.has(row.truckId)&&!existingRetiredIds.has(row.truckId)){
-                    newRetired.add(row.truckId);
-                  }
-                  newEntries.push({
-                    id:Date.now()+Math.random(),
-                    truckId:isInv?"INVENTORY":row.truckId,
-                    vendor:normalizeVendor(row.vendor),
-                    date:row.date||todayYMD(),
-                    invoiceNum:row.invoiceNum||null,
-                    total:Number(row.total)||0,
-                    category:isInv?"Inventory":(row.category||"Parts"),
-                    lineItems:row.lineItems||[],
-                    notes:row.notes||(row.sourceStmt?`Imported from ${row.sourceStmt}`:"Bulk import"),
-                    sourceFile:row.sourceStmt||"bulk-import",
-                    allocatedToTruck:null,
-                    allocatedDate:null,
-                    addedAt:new Date().toISOString(),
-                  });
-                });
-                if(newEntries.length>0){
-                  const next=[...newEntries,...costEntries];
-                  saveCosts(next);
-                }
-                if(newRetired.size>0){
-                  const retiredList=[...retiredTrucks,...Array.from(newRetired).map(id=>({id,mk:"UNKNOWN",retiredDate:todayYMD(),reason:"Auto-detected from historical invoices"}))];
-                  saveRetiredTrucks(retiredList);
-                }
-                toast(`Imported ${newEntries.length} invoices.\nSkipped ${skipped} duplicates.${newRetired.size>0?`\n\nDetected ${newRetired.size} retired truck${newRetired.size>1?"s":""}: ${Array.from(newRetired).join(", ")}`:""}`);
-                e.target.value="";
-              }catch(err){toast("Import failed: "+err.message);}
-            }} style={{fontSize:13,padding:8}}/>
+            <DropZone
+              accept="application/json,.json"
+              onFiles={files=>importHistoricalJson(files[0])}
+              title="Drop a JSON file here, or click to choose one"
+              hint="Duplicates by invoice number are skipped automatically."/>
           </div>
 
           {/* Inventory Tracking + Cores (v2.10.16: Cores relocated from standalone tab) */}
@@ -7341,6 +7453,41 @@ function TSRow({t,tStat,ec,ev,sev,se,ce,gs,onOOS}){
     })}
   </tr>;
 }
+// v2.22.0: drag-and-drop for the two upload boxes. Both were bare <input type="file">,
+// which on a phone or a tablet in the office means tapping through a file picker, and on
+// a desktop means you cannot do the obvious thing with an invoice sitting on the desktop.
+// The input is kept (hidden) rather than replaced, so click-to-browse, keyboard focus and
+// the accept filter all still work exactly as before — this only adds a second way in.
+function DropZone({accept,multiple,onFiles,title,hint,busy}){
+  const[over,setOver]=useState(false);
+  const inputRef=useRef(null);
+  const depth=useRef(0);            // dragenter/leave fire per child element; count them
+  const take=(list)=>{const files=Array.from(list||[]);if(files.length)onFiles(files);};
+  const open=()=>{if(!busy&&inputRef.current)inputRef.current.click();};
+  return <div
+    onDragEnter={e=>{e.preventDefault();e.stopPropagation();depth.current++;setOver(true);}}
+    onDragOver={e=>{e.preventDefault();e.stopPropagation();}}
+    onDragLeave={e=>{e.preventDefault();e.stopPropagation();depth.current=Math.max(0,depth.current-1);if(depth.current===0)setOver(false);}}
+    onDrop={e=>{e.preventDefault();e.stopPropagation();depth.current=0;setOver(false);if(!busy)take(e.dataTransfer&&e.dataTransfer.files);}}
+    onClick={open}
+    onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}}}
+    role="button" tabIndex={0} aria-label={title}
+    style={{
+      border:`2px dashed ${over?C.brand:"#cbd5e1"}`,borderRadius:10,
+      background:over?C.light:"#fff",padding:"18px 16px",textAlign:"center",
+      cursor:busy?"default":"pointer",transition:"background .12s,border-color .12s",
+      opacity:busy?0.6:1,
+    }}>
+    <input ref={inputRef} type="file" accept={accept} multiple={multiple} disabled={busy}
+      style={{display:"none"}}
+      onChange={e=>{take(e.target.files);e.target.value="";}}/>
+    <div style={{fontSize:13,fontWeight:700,color:over?C.brand:"#334155"}}>
+      {over?"Drop to upload":title}
+    </div>
+    {hint&&<div style={{fontSize:11,color:"#6b7785",marginTop:4}}>{hint}</div>}
+  </div>;
+}
+
 function Stat({l,v,sub,c,onClick}){
   const[h,setH]=useState(false);
   const clickable=!!onClick;

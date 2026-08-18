@@ -264,7 +264,12 @@ for (let i = 0; i < 24; i++) GMAIL.push(mkMsg("fuelfox", i, 3 + i * 6, { conf: "
   t("37 invoices in the ledger (40 psf − 2 dups − 1 to review)", allShardEntries().length === 37, `n=${allShardEntries().length}`);
   const before = JSON.parse(JSON.stringify(COUNTS));
   const d = await runOnce(30);
-  t("steady state: 3 list calls, zero AI", d.done === true && COUNTS.list - before.list === 3 && JSON.stringify(COUNTS.aiStart) === JSON.stringify(before.aiStart));
+  // One Gmail list call per configured vendor, and no AI at all. Derived from the real
+  // VENDOR_QUERIES so adding a vendor does not fail this check for the wrong reason.
+  const nVendors = Object.keys(mod.VENDOR_QUERIES || {}).length;
+  t(`steady state: ${nVendors} list calls (one per vendor), zero AI`,
+    d.done === true && COUNTS.list - before.list === nVendors && JSON.stringify(COUNTS.aiStart) === JSON.stringify(before.aiStart),
+    `list=${COUNTS.list - before.list} vendors=${nVendors}`);
 }
 
 // ══ S5 — the $498k truck ═════════════════════════════════════════════════
