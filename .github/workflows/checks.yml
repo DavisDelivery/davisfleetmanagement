@@ -71,6 +71,9 @@ jobs:
       - name: upload boxes accept a dragged file
         run: node dropzone.mjs
         working-directory: .uitest
+      - name: classic stays the default and New renders
+        run: node view-toggle.mjs
+        working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
   sync:
