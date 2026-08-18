@@ -146,6 +146,15 @@ const DEFAULT_VENDORS = [
   { name: "Complete Fleet Services", category: "Repair" },
 ];
 
+function mergeVendors(stored: any, defaults: any[]): any[] {
+  const list = Array.isArray(stored) ? stored.filter((v) => v && v.name) : [];
+  const seen = new Set(list.map((v) => String(v.name).toLowerCase().trim()));
+  for (const d of defaults) {
+    if (!seen.has(String(d.name).toLowerCase().trim())) list.push(d);
+  }
+  return list.length ? list : defaults;
+}
+
 // Exported so the test harness can shrink the clocks; production never touches it.
 export const TUNING = {
   BUDGET_MS: 22000,        // total run budget
@@ -158,6 +167,7 @@ export const TUNING = {
   GET_CONC: 8,             // parallel message-payload fetches during discovery
   PROC_CONC: 8,            // worker-pool lanes for attachment processing
   MAX_ATTEMPTS: 3,         // quarantine threshold (v2.16.19)
+  RETRY_QUARANTINE_MS: 21600000, // 6h — a timeout-only quarantine cools off and retries (v2.23.0)
   FRESH_SLACK_DAYS: 3,     // freshness check re-lists this far back (dedup makes overlap free)
   LOCK_STALE_MS: 90000,    // a "running" flag older than this is a crashed run — ignore it
   EPOCH_MAX_AGE_DAYS: 1,   // reconcile at most daily, and only when the queue is empty
@@ -350,7 +360,13 @@ export default async (req: Request) => {
     return json({ error: "Server env vars missing" }, 500);
   }
 
-  const vendors = (await store.get("vendors", { type: "json" }) as any) || DEFAULT_VENDORS;
+  // v2.23.0: this used to be `stored || DEFAULT_VENDORS`, so DEFAULT_VENDORS only applied
+  // to an install that had never pushed a vendor list. Every real install has — the app
+  // POSTs its list to /api/save-sync-config whenever vendors or trucks change — so adding
+  // a built-in vendor here did nothing: the crawler never iterated it and its invoices
+  // were never fetched, silently, with no error anywhere. Merge instead, keyed by name,
+  // with the stored entry winning so a category the office edited in the UI is preserved.
+  const vendors = mergeVendors((await store.get("vendors", { type: "json" }) as any), DEFAULT_VENDORS);
   const truckIds = ((await store.get("truck-ids", { type: "json" }) as any) || []) as string[];
 
   const dedup = (await store.get("dedup-index", { type: "json" }) as any) || { gmailRefs: [], invoiceNums: [], fingerprints: [] };
@@ -410,6 +426,42 @@ export default async (req: Request) => {
     await store.setJSON("quarantine-rules", { v: QUARANTINE_RULES_VERSION, freed: releasedItems.length, at: new Date().toISOString() });
     await store.setJSON("failed-refs", failures);
   }
+
+  // v2.23.0: a timeout is not a verdict on the attachment, it is one run's luck with API
+  // latency. The same 24-truck service log that overran the 18s cap at 09:00 often fits
+  // at noon. Striking those out permanently means real invoices nobody will ever import
+  // unless a person notices a line in a status panel — which is exactly how two August
+  // FuelFox logs ended up invisible while the sync reported "All caught up".
+  //
+  // So a quarantine whose every strike was a timeout cools off and goes back in the
+  // queue. `timeouts` is preserved, so the retry resumes at the highest rung of the
+  // ladder rather than repeating the full-detail attempt that already failed. Anything
+  // that failed for a real reason — an image-only PDF, a parser that returned nothing —
+  // keeps its strikes and stays put.
+  let cooled = 0;
+  for (const [ref, f] of Object.entries(failures)) {
+    const rec = f as any;
+    if ((rec?.count || 0) < TUNING.MAX_ATTEMPTS) continue;
+    if (!/timed out/i.test(String(rec?.error || ""))) continue;
+    const last = Date.parse(rec?.lastAt || rec?.releasedAt || "");
+    if (!Number.isFinite(last) || Date.now() - last < TUNING.RETRY_QUARANTINE_MS) continue;
+    const m = /^gmail:(.+):([^:]+)$/.exec(ref);
+    const messageId = rec.messageId || (m ? m[1] : "");
+    const attachmentId = rec.attachmentId || (m ? m[2] : "");
+    if (!messageId || !attachmentId) continue;
+    const v = vendors.find((x: any) => x.name === (rec.vendor || ""));
+    // One attempt per cooling period: back to the queue at MAX-1, so a still-too-slow
+    // invoice re-quarantines after that single try and waits another 6h instead of
+    // burning the whole run budget on it every time.
+    failures[ref] = { ...rec, count: TUNING.MAX_ATTEMPTS - 1, cooledAt: new Date().toISOString() };
+    releasedItems.push({
+      gmailRef: ref, messageId, attachmentId,
+      filename: rec.filename || "invoice.pdf", mimeType: "application/pdf",
+      vendorName: rec.vendor || "", vendorCategory: v?.category || "Other",
+    });
+    cooled++;
+  }
+  if (cooled) await store.setJSON("failed-refs", failures);
   const isQuarantined = (ref: string) => ((failures[ref]?.count || 0) >= TUNING.MAX_ATTEMPTS);
   const stuckCount = () => Object.values(failures).filter((f: any) => (f?.count || 0) >= TUNING.MAX_ATTEMPTS).length;
 
@@ -483,7 +535,15 @@ export default async (req: Request) => {
       dedupInvoiceNums = truth.invoiceNums;
       dedupFingerprints = truth.fingerprints;
       disco = {
-        coveredDays: Math.max(daysBack, 0),
+        // v2.23.0: never NARROW the horizon. The scheduled run asks for 30 days, so a
+        // fresh epoch used to reset coveredDays to 30 and quietly undo a 365-day or
+        // 2-year Catch Up sweep — which is why a manual wide scan kept turning up
+        // hundreds of "new" emails that the unattended sync had never once looked for.
+        // Widening is cheap: the full crawl runs at most once per epoch (daily), it is
+        // resumable across runs via pageToken, and once complete freshAfter drops every
+        // later run back to a 3-day list. Dedup happens before the paid AI call, so
+        // re-seeing an old invoice costs nothing.
+        coveredDays: Math.max(daysBack, disco?.coveredDays || 0, 0),
         done: false,
         vendorIdx: 0,
         pageToken: null,
@@ -1446,7 +1506,7 @@ This invoice is very large, so return ONLY summary rows — one row per truck. B
 Return a JSON array. Each element MUST have:
 - truckId: 4-digit truck number from the fleet (${truckList}), or "INVENTORY" if not assigned to a truck, or "UNKNOWN" if you can't tell
 - vendor: "${vendor.name}"
-- category: "Fuel", "Parts", "Labor", "Maintenance", or "Other"
+- category: "Fuel", "Parts", "Labor", "Repair", "Maintenance", or "Other"
 - total: number (that truck's total INCLUDING tax)
 - gallons: number (Fuel only, that truck's total gallons) or null
 - pricePerGallon: number (Fuel only, average) or null
@@ -1478,7 +1538,7 @@ Return ONLY the JSON array, no preamble.` : `You are extracting line items from 
 Return a JSON array. Each element MUST have:
 - truckId: 4-digit truck number from the fleet (${truckList}), or "INVENTORY" if not assigned to a truck, or "UNKNOWN" if you can't tell
 - vendor: "${vendor.name}"
-- category: "Fuel", "Parts", "Labor", "Maintenance", or "Other"
+- category: "Fuel", "Parts", "Labor", "Repair", "Maintenance", or "Other"
 - total: number (final total INCLUDING tax)
 - gallons: number (Fuel only) or null
 - pricePerGallon: number (Fuel only) or null

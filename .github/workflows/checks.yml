@@ -44,6 +44,9 @@ jobs:
       - name: a repair invoice lands whole on one truck
         run: node repair-whole.mjs
         working-directory: .uitest
+      - name: completion timestamps keep their time
+        run: node repair-time.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
@@ -84,4 +87,7 @@ jobs:
         working-directory: .synctest
       - name: sync stages
         run: node stages.mjs
+        working-directory: .synctest
+      - name: built-in vendors reach an install that already saved a list
+        run: node vendor-merge.mjs
         working-directory: .synctest

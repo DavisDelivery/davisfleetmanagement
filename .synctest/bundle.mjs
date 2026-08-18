@@ -118,6 +118,14 @@ var DEFAULT_VENDORS = [
   { name: "Quick Fuel", category: "Fuel" },
   { name: "Complete Fleet Services", category: "Repair" }
 ];
+function mergeVendors(stored, defaults) {
+  const list = Array.isArray(stored) ? stored.filter((v) => v && v.name) : [];
+  const seen = new Set(list.map((v) => String(v.name).toLowerCase().trim()));
+  for (const d of defaults) {
+    if (!seen.has(String(d.name).toLowerCase().trim())) list.push(d);
+  }
+  return list.length ? list : defaults;
+}
 var TUNING = {
   BUDGET_MS: 22e3,
   // total run budget
@@ -139,6 +147,8 @@ var TUNING = {
   // worker-pool lanes for attachment processing
   MAX_ATTEMPTS: 3,
   // quarantine threshold (v2.16.19)
+  RETRY_QUARANTINE_MS: 216e5,
+  // 6h — a timeout-only quarantine cools off and retries (v2.23.0)
   FRESH_SLACK_DAYS: 3,
   // freshness check re-lists this far back (dedup makes overlap free)
   LOCK_STALE_MS: 9e4,
@@ -292,7 +302,7 @@ var auto_sync_default = async (req) => {
   if (!clientId || !clientSecret || !anthropicKey) {
     return json({ error: "Server env vars missing" }, 500);
   }
-  const vendors = await store.get("vendors", { type: "json" }) || DEFAULT_VENDORS;
+  const vendors = mergeVendors(await store.get("vendors", { type: "json" }), DEFAULT_VENDORS);
   const truckIds = await store.get("truck-ids", { type: "json" }) || [];
   const dedup = await store.get("dedup-index", { type: "json" }) || { gmailRefs: [], invoiceNums: [], fingerprints: [] };
   let dedupGmailRefs = new Set(dedup.gmailRefs);
@@ -326,6 +336,31 @@ var auto_sync_default = async (req) => {
     await store.setJSON("quarantine-rules", { v: QUARANTINE_RULES_VERSION, freed: releasedItems.length, at: (/* @__PURE__ */ new Date()).toISOString() });
     await store.setJSON("failed-refs", failures);
   }
+  let cooled = 0;
+  for (const [ref, f] of Object.entries(failures)) {
+    const rec = f;
+    if ((rec?.count || 0) < TUNING.MAX_ATTEMPTS) continue;
+    if (!/timed out/i.test(String(rec?.error || ""))) continue;
+    const last = Date.parse(rec?.lastAt || rec?.releasedAt || "");
+    if (!Number.isFinite(last) || Date.now() - last < TUNING.RETRY_QUARANTINE_MS) continue;
+    const m = /^gmail:(.+):([^:]+)$/.exec(ref);
+    const messageId = rec.messageId || (m ? m[1] : "");
+    const attachmentId = rec.attachmentId || (m ? m[2] : "");
+    if (!messageId || !attachmentId) continue;
+    const v = vendors.find((x) => x.name === (rec.vendor || ""));
+    failures[ref] = { ...rec, count: TUNING.MAX_ATTEMPTS - 1, cooledAt: (/* @__PURE__ */ new Date()).toISOString() };
+    releasedItems.push({
+      gmailRef: ref,
+      messageId,
+      attachmentId,
+      filename: rec.filename || "invoice.pdf",
+      mimeType: "application/pdf",
+      vendorName: rec.vendor || "",
+      vendorCategory: v?.category || "Other"
+    });
+    cooled++;
+  }
+  if (cooled) await store.setJSON("failed-refs", failures);
   const isQuarantined = (ref) => (failures[ref]?.count || 0) >= TUNING.MAX_ATTEMPTS;
   const stuckCount = () => Object.values(failures).filter((f) => (f?.count || 0) >= TUNING.MAX_ATTEMPTS).length;
   const wq = await store.get("work-queue", { type: "json" }) || { items: [], discovery: null };
@@ -377,7 +412,15 @@ var auto_sync_default = async (req) => {
       dedupInvoiceNums = truth.invoiceNums;
       dedupFingerprints = truth.fingerprints;
       disco = {
-        coveredDays: Math.max(daysBack, 0),
+        // v2.23.0: never NARROW the horizon. The scheduled run asks for 30 days, so a
+        // fresh epoch used to reset coveredDays to 30 and quietly undo a 365-day or
+        // 2-year Catch Up sweep — which is why a manual wide scan kept turning up
+        // hundreds of "new" emails that the unattended sync had never once looked for.
+        // Widening is cheap: the full crawl runs at most once per epoch (daily), it is
+        // resumable across runs via pageToken, and once complete freshAfter drops every
+        // later run back to a 3-day list. Dedup happens before the paid AI call, so
+        // re-seeing an old invoice costs nothing.
+        coveredDays: Math.max(daysBack, disco?.coveredDays || 0, 0),
         done: false,
         vendorIdx: 0,
         pageToken: null,
@@ -1122,7 +1165,7 @@ This invoice is very large, so return ONLY summary rows \u2014 one row per truck
 Return a JSON array. Each element MUST have:
 - truckId: 4-digit truck number from the fleet (${truckList}), or "INVENTORY" if not assigned to a truck, or "UNKNOWN" if you can't tell
 - vendor: "${vendor.name}"
-- category: "Fuel", "Parts", "Labor", "Maintenance", or "Other"
+- category: "Fuel", "Parts", "Labor", "Repair", "Maintenance", or "Other"
 - total: number (that truck's total INCLUDING tax)
 - gallons: number (Fuel only, that truck's total gallons) or null
 - pricePerGallon: number (Fuel only, average) or null
@@ -1154,7 +1197,7 @@ Return ONLY the JSON array, no preamble.` : `You are extracting line items from 
 Return a JSON array. Each element MUST have:
 - truckId: 4-digit truck number from the fleet (${truckList}), or "INVENTORY" if not assigned to a truck, or "UNKNOWN" if you can't tell
 - vendor: "${vendor.name}"
-- category: "Fuel", "Parts", "Labor", "Maintenance", or "Other"
+- category: "Fuel", "Parts", "Labor", "Repair", "Maintenance", or "Other"
 - total: number (final total INCLUDING tax)
 - gallons: number (Fuel only) or null
 - pricePerGallon: number (Fuel only) or null

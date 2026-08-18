@@ -337,6 +337,87 @@ GMAIL.push(mkMsg("fuelfox", 0, 2, { filename: "FuelFox ServiceLog 07-21.pdf", mu
 }
 
 // ══ S6 — compact mode has no line items to split by ══════════════════════
+// ══ S7 — a timeout quarantine cools off instead of being a life sentence ══
+// Production had two August FuelFox service logs struck out on AI timeouts while the
+// status line read "✓ All caught up". Nothing would ever have retried them: the only
+// release was gated on a one-shot rules-version bump. A timeout is one run's luck with
+// API latency, not a verdict on the attachment, so it now gets another go after a
+// cooling period — while a genuinely broken PDF still stays put.
+console.log("\n═ S7 a timeout quarantine cools off and retries ═");
+resetWorld();
+Object.assign(TUNING, { ...FAST, PROC_CONC: 2, BUDGET_MS: 900, ITEM_CAP_MS: 300, FAIR_MS: 250, MIN_START_MS: 120, DISCOVERY_MS: 250, WRITE_HEADROOM_MS: 50 });
+NET.getDelay = 5;
+GMAIL.push(mkMsg("psf", 0, 1, { num: "COOLED" }));
+GMAIL.push(mkMsg("psf", 1, 2, { num: "STILLBAD", image: true }));
+{
+  const OLD = new Date(Date.now() - 7 * 3600 * 1000).toISOString();   // 7h ago, past the 6h cool-off
+  const NEW = new Date(Date.now() - 60 * 1000).toISOString();         // a minute ago
+  blobSet("work-queue", { items: [], discovery: { coveredDays: 365, done: true, vendorIdx: 9, pageToken: null, epochAt: new Date().toISOString(), freshAfter: "2020/01/01" } });
+  blobSet("seen-messages", { "psf-m0": 1, "psf-m1": 1 });
+  blobSet("failed-refs", {
+    "gmail:psf-m0:a1": { count: 3, timeouts: 3, lastAt: OLD, error: "timed out in ai after 18s", filename: "sl-COOLED.pdf", vendor: "Peach State Freightliner", messageId: "psf-m0", attachmentId: "a1" },
+    "gmail:psf-m1:a1": { count: 3, lastAt: OLD, error: "PDF has no extractable text (image-only PDF — needs OCR)", filename: "sl-STILLBAD.pdf", vendor: "Peach State Freightliner", messageId: "psf-m1", attachmentId: "a1" },
+  });
+  blobSet("quarantine-rules", { v: 99 });   // one-shot release already spent — only the cool-off can save it
+
+  const runs = await drain(365, 30);
+  const last = runs[runs.length - 1];
+  t("run completes", last.done === true);
+  // Released, re-fetched and parsed. It lands in the REVIEW QUEUE rather than the
+  // ledger, and that is right: the retry runs at the top of the ladder (compact +
+  // page-capped), so it returns a summary without per-line detail, and a summary is
+  // not something to book into the money silently. The point is that it reached a
+  // human at all instead of sitting quarantined forever behind a status line.
+  t("the timed-out invoice was retried, not abandoned",
+    !blobGet("failed-refs")["gmail:psf-m0:a1"], JSON.stringify(Object.keys(blobGet("failed-refs"))));
+  t("and it reached a human or the ledger",
+    readList("fl-review-queue").length + allShardEntries().length === 1,
+    `review=${readList("fl-review-queue").length} ledger=${allShardEntries().length}`);
+  t("it is no longer counted as stuck", last.stuck === 1, `stuck=${last.stuck}`);
+  t("no mailbox re-crawl was needed", (COUNTS.get["psf-m0"] || 0) === 0);
+  t("the image-only PDF is NOT released by the cool-off", blobGet("failed-refs")["gmail:psf-m1:a1"]?.count === 3);
+  t("it was never re-fetched", !COUNTS.att["gmail:psf-m1:a1"]);
+}
+{
+  // A quarantine that only just happened must NOT be retried on the very next run,
+  // or a permanently-too-slow invoice would eat the budget of every single sweep.
+  resetWorld();
+  Object.assign(TUNING, { ...FAST, PROC_CONC: 2, BUDGET_MS: 900, ITEM_CAP_MS: 300, FAIR_MS: 250, MIN_START_MS: 120, DISCOVERY_MS: 250, WRITE_HEADROOM_MS: 50 });
+  GMAIL.push(mkMsg("psf", 0, 1, { num: "TOOSOON" }));
+  blobSet("work-queue", { items: [], discovery: { coveredDays: 365, done: true, vendorIdx: 9, pageToken: null, epochAt: new Date().toISOString(), freshAfter: "2020/01/01" } });
+  blobSet("seen-messages", { "psf-m0": 1 });
+  blobSet("failed-refs", {
+    "gmail:psf-m0:a1": { count: 3, timeouts: 3, lastAt: new Date(Date.now() - 60 * 1000).toISOString(), error: "timed out in ai after 18s", filename: "x.pdf", vendor: "Peach State Freightliner", messageId: "psf-m0", attachmentId: "a1" },
+  });
+  blobSet("quarantine-rules", { v: 99 });
+  await drain(365, 20);
+  t("a fresh quarantine waits out its cooling period", !allShardEntries().some((e) => e.invoiceNum === "TOOSOON"));
+}
+
+// ══ S8 — the nightly 30-day run must not undo a wide Catch Up sweep ══════
+// The scheduled function asks for 30 days. A new epoch used to reset coveredDays to
+// exactly that, so the day after someone ran a 2-year backlog sweep the unattended sync
+// silently went back to looking at only the last month — which is why a manual wide scan
+// kept finding hundreds of emails it had never once looked for.
+console.log("\n═ S8 a scheduled 30-day run does not narrow the horizon ═");
+resetWorld();
+Object.assign(TUNING, FAST);
+blobSet("truck-ids", ["0424"]);
+{
+  blobSet("work-queue", { items: [], discovery: { coveredDays: 730, done: true, vendorIdx: 9, pageToken: null, epochAt: new Date(Date.now() - 3 * 86400000).toISOString(), freshAfter: null } });
+  await drain(30, 20);                       // exactly what scheduled-sync.mts sends
+  const cov = blobGet("work-queue").discovery.coveredDays;
+  t("a 2-year horizon survives a 30-day scheduled run", cov === 730, `coveredDays=${cov}`);
+}
+{
+  resetWorld();
+  Object.assign(TUNING, FAST);
+  blobSet("work-queue", { items: [], discovery: { coveredDays: 30, done: true, vendorIdx: 9, pageToken: null, epochAt: new Date(Date.now() - 3 * 86400000).toISOString(), freshAfter: null } });
+  await drain(365, 20);
+  const cov = blobGet("work-queue").discovery.coveredDays;
+  t("asking for MORE still widens it", cov === 365, `coveredDays=${cov}`);
+}
+
 console.log("\n═ S6 a collapsed log with no detail goes to a human ═");
 resetWorld();
 Object.assign(TUNING, FAST);
