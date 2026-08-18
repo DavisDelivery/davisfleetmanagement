@@ -215,6 +215,43 @@ function dedupById(items){const seen=new Set();const out=[];for(const it of item
 //   in snapshot, not in memory              → deleted here on purpose → drop
 // Merge-by-absence without the snapshot would resurrect every deleted row.
 // Rows with no id can't be told apart from a deletion, so they are never merged.
+// v2.22.0: a repair invoice belongs to ONE truck, in full. Complete Fleet Services bills
+// labour, parts, shop supplies and tax on a single job for a single unit — none of it is
+// shelf stock. The prompts say so, but a prompt is a request; this makes it true. If the
+// model still splits a repair across the truck and an INVENTORY/UNKNOWN bucket, fold the
+// strays back onto the truck rather than leaving money parked where nobody looks.
+//
+// Deliberately narrow: only rows sharing one invoiceNum, only when EXACTLY ONE real truck
+// appears among them. A repair that genuinely names two trucks is left alone for a human,
+// because silently merging that would be the same class of error as splitting this one.
+function coalesceRepairInvoice(entries){
+  const rows=Array.isArray(entries)?entries:[];
+  const isRepair=e=>String((e&&e.category)||"").toLowerCase()==="repair";
+  const isBucket=t=>{const v=String(t==null?"":t).toUpperCase();return v===""||v==="INVENTORY"||v==="UNKNOWN";};
+  const byInv=new Map();
+  for(const e of rows){
+    if(!isRepair(e)||!e||!e.invoiceNum)continue;
+    const k=String(e.invoiceNum);
+    (byInv.get(k)||byInv.set(k,[]).get(k)).push(e);
+  }
+  const absorbed=new Set();
+  const merged=new Map();
+  for(const[,group]of byInv){
+    if(group.length<2)continue;
+    const trucks=[...new Set(group.filter(e=>!isBucket(e.truckId)).map(e=>String(e.truckId)))];
+    if(trucks.length!==1)continue;                 // 0 or 2+ real trucks → leave it for a human
+    const keep=group.find(e=>String(e.truckId)===trucks[0]);
+    const strays=group.filter(e=>e!==keep);
+    if(!strays.length)continue;
+    const total=group.reduce((sum,e)=>sum+(Number(e.total)||0),0);
+    const lines=group.flatMap(e=>Array.isArray(e.lineItems)?e.lineItems:[]);
+    merged.set(keep,{...keep,total:Math.round(total*100)/100,lineItems:lines.length?lines:keep.lineItems,
+      notes:[String(keep.notes||"").trim(),`Whole repair invoice booked to #${trucks[0]} (${strays.length} unassigned row${strays.length===1?"":"s"} folded in).`].filter(Boolean).join(" ")});
+    strays.forEach(e=>absorbed.add(e));
+  }
+  if(!absorbed.size)return rows;
+  return rows.filter(e=>!absorbed.has(e)).map(e=>merged.get(e)||e);
+}
 function costAdditionsToKeep(stored,prevArr,memArr){
   const idsOf=arr=>new Set((arr||[]).map(e=>e&&e.id!=null?String(e.id):null).filter(x=>x!==null));
   const prevIds=idsOf(prevArr),memIds=idsOf(memArr);
@@ -1332,7 +1369,7 @@ function App(){
   };
 
   // ── Invoice Scanner AI ──
-  const COST_CATS=["Parts","Tires","Labor","Fuel","Oil","Body/Paint","Electrical","Inspection","Towing","Registration","Insurance","Inventory","Core","Credit","Other"];
+  const COST_CATS=["Parts","Tires","Labor","Repair","Fuel","Oil","Body/Paint","Electrical","Inspection","Towing","Registration","Insurance","Inventory","Core","Credit","Other"];
 
   // Normalize vendor names so "Peach State Freightliner" and "Peach State Freightliner, LLC" become the same
   const normalizeVendor=(name)=>{
@@ -1359,7 +1396,7 @@ function App(){
     {pattern:"fuelfox",name:"FuelFox Atlanta",category:"Fuel"},
     {pattern:"peachstate",name:"Peach State Freightliner",category:"Parts"},
     {pattern:"quickfuel",name:"Quick Fuel",category:"Fuel"},
-    {pattern:"completefleet",name:"Complete Fleet Services",category:"Labor"},
+    {pattern:"completefleet",name:"Complete Fleet Services",category:"Repair"},
   ];
   const[knownVendors,setKnownVendors]=useState(DEFAULT_VENDORS);
   const[showAddVendor,setShowAddVendor]=useState(false);
@@ -1780,7 +1817,7 @@ Format your response as clear sections with headers using ** for bold. Use speci
     // v2.19.0: a service log that reached review as one row carrying the whole
     // delivery is split per truck on the way into the ledger, same as the server does.
     const fleetIds=new Set([...trucks.map(t=>t.id),...retiredTrucks.map(t=>t.id)]);
-    const approved=(item.parsed||[]).map(e=>({...e,truckId:normalizeTruckId(e.truckId,fleetIds)}));
+    const approved=coalesceRepairInvoice((item.parsed||[]).map(e=>({...e,truckId:normalizeTruckId(e.truckId,fleetIds)})));
     const newCosts=[...costEntries,...splitMultiTruck(approved)];
     saveCosts(newCosts);
     saveReviewQueue(reviewQueue.filter(q=>q.id!==itemId));
@@ -2490,7 +2527,10 @@ SPECIAL RULE FOR COMPLETE FLEET SERVICES L.L.C. (Oakwood GA, complete.fleet@outl
   NOT "Pre-Charge Subtotal", NOT any "Subtotal", and NOT "Balance Due" (that is net of payments).
 - invoiceNum: "CFS-<invoice number>" — e.g. "CFS-10785".
 - vendor: "Complete Fleet Services"
-- category: "Labor"
+- category: "Repair"
+- THE ENTIRE INVOICE TOTAL GOES TO THAT ONE TRUCK. This is a repair, not a parts purchase for
+  the shelf. Never route any part of it to "INVENTORY", never emit a second row for parts,
+  shop supplies or tax, and never use category "Inventory". One row, one truck, the full Total.
 - date: the "Date:" at the top, as YYYY-MM-DD.
 - lineItems: one per "Parts ..." row and per Labor line — desc = the description as printed, amount = the Amount column.
 - notes: one short line summarising the "Complaint:" text.
@@ -2915,7 +2955,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       // Strip any yard prefix the vendor prints on the unit (BX0424 -> 0424) before the
       // rows are split or stored, so a repair lands on a truck the fleet actually knows.
       const fleetIds=new Set([...trucks.map(t=>t.id),...retiredTrucks.map(t=>t.id)]);
-      const normalized=newEntries.map(e=>({...e,truckId:normalizeTruckId(e.truckId,fleetIds)}));
+      const normalized=coalesceRepairInvoice(newEntries.map(e=>({...e,truckId:normalizeTruckId(e.truckId,fleetIds)})));
       const next=[...splitMultiTruck(normalized),...costEntries];
       saveCosts(next);
     }

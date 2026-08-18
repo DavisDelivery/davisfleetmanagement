@@ -143,7 +143,7 @@ const DEFAULT_VENDORS = [
   { name: "FuelFox Atlanta", category: "Fuel" },
   { name: "Peach State Freightliner", category: "Parts" },
   { name: "Quick Fuel", category: "Fuel" },
-  { name: "Complete Fleet Services", category: "Labor" },
+  { name: "Complete Fleet Services", category: "Repair" },
 ];
 
 // Exported so the test harness can shrink the clocks; production never touches it.
@@ -1149,6 +1149,41 @@ function splitMultiTruckEntry(e: any): any[] {
   });
   return out;
 }
+// v2.22.0: mirror of coalesceRepairInvoice() in App.jsx. A repair invoice belongs to ONE
+// truck in full — labour, parts, shop supplies and tax on a single job for a single unit.
+// If the model still splits it across the truck and an INVENTORY/UNKNOWN bucket, fold the
+// strays back on. Narrow on purpose: only rows sharing one invoiceNum, only when exactly
+// one real truck appears among them; a repair naming two trucks is left for a human.
+function coalesceRepairInvoice(entries: any[]): any[] {
+  const rows = Array.isArray(entries) ? entries : [];
+  const isRepair = (e: any) => String(e?.category || "").toLowerCase() === "repair";
+  const isBucket = (t: any) => { const v = String(t == null ? "" : t).toUpperCase(); return v === "" || v === "INVENTORY" || v === "UNKNOWN"; };
+  const byInv = new Map<string, any[]>();
+  for (const e of rows) {
+    if (!isRepair(e) || !e?.invoiceNum) continue;
+    const k = String(e.invoiceNum);
+    if (!byInv.has(k)) byInv.set(k, []);
+    byInv.get(k)!.push(e);
+  }
+  const absorbed = new Set<any>();
+  const merged = new Map<any, any>();
+  for (const [, group] of byInv) {
+    if (group.length < 2) continue;
+    const trucks = [...new Set(group.filter((e) => !isBucket(e.truckId)).map((e) => String(e.truckId)))];
+    if (trucks.length !== 1) continue;
+    const keep = group.find((e) => String(e.truckId) === trucks[0]);
+    const strays = group.filter((e) => e !== keep);
+    if (!keep || !strays.length) continue;
+    const total = group.reduce((sum, e) => sum + (Number(e.total) || 0), 0);
+    const lines = group.flatMap((e) => (Array.isArray(e.lineItems) ? e.lineItems : []));
+    merged.set(keep, { ...keep, total: Math.round(total * 100) / 100, lineItems: lines.length ? lines : keep.lineItems,
+      notes: [String(keep.notes || "").trim(), `Whole repair invoice booked to #${trucks[0]} (${strays.length} unassigned row${strays.length === 1 ? "" : "s"} folded in).`].filter(Boolean).join(" ") });
+    strays.forEach((e) => absorbed.add(e));
+  }
+  if (!absorbed.size) return rows;
+  return rows.filter((e) => !absorbed.has(e)).map((e) => merged.get(e) || e);
+}
+
 function splitMultiTruck(entries: any[]): any[] {
   return entries.flatMap((e) => splitMultiTruckEntry(e));
 }
@@ -1335,7 +1370,7 @@ async function processOne(
     // v2.19.0: a row whose own line items name several trucks is the whole document,
     // not one truck's cost. Split before anything downstream — confidence, dedup and
     // the shard key all have to see the per-truck rows.
-    const entries = splitMultiTruck(built);
+    const entries = splitMultiTruck(coalesceRepairInvoice(built));
     result.split = entries.length - built.length;
     // v2.17.0: carry the AI's own confidence flag through — the explicit field list
     // above dropped it, so evaluateConfidence never saw "low" and the AI's uncertainty
@@ -1429,7 +1464,8 @@ COMPLETE FLEET SERVICES L.L.C. (complete.fleet@outlook.com): the truck is the la
 prefix — "BX0424", "GP2883". truckId is THE TRAILING 4 DIGITS ONLY ("BX0424" -> "0424").
 One row for the whole invoice — the several "Complaint:"/"Subtotal" blocks are jobs on the SAME
 truck. total = the "Total" line after the GEORGIA/HALL COUNTY tax lines, not "Pre-Charge
-Subtotal" and not "Balance Due". invoiceNum "CFS-<number>". category "Labor".
+Subtotal" and not "Balance Due". invoiceNum "CFS-<number>". category "Repair".
+The ENTIRE total goes to that ONE truck — never "INVENTORY", never a second row for parts or tax.
 
 ALSO add ONE meta field on the FIRST element only:
 - _confidence: "high" or "low"
@@ -1472,7 +1508,10 @@ SPECIAL RULE FOR COMPLETE FLEET SERVICES L.L.C. (Oakwood GA, complete.fleet@outl
   NOT "Pre-Charge Subtotal", NOT any "Subtotal", and NOT "Balance Due" (that is net of payments).
 - invoiceNum: "CFS-<invoice number>" — e.g. "CFS-10785".
 - vendor: "Complete Fleet Services"
-- category: "Labor"
+- category: "Repair"
+- THE ENTIRE INVOICE TOTAL GOES TO THAT ONE TRUCK. This is a repair, not a parts purchase for
+  the shelf. Never route any part of it to "INVENTORY", never emit a second row for parts,
+  shop supplies or tax, and never use category "Inventory". One row, one truck, the full Total.
 - date: the "Date:" at the top, as YYYY-MM-DD.
 - lineItems: one per "Parts ..." row and per Labor line — desc = the description as printed, amount = the Amount column.
 - notes: one short line summarising the "Complaint:" text.
