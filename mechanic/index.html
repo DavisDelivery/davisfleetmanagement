@@ -401,6 +401,18 @@ function dateStr(iso) {
   const d = new Date(iso);
   return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
 }
+// v2.23.0: dateIn/dateClosed have always stored a full ISO timestamp; only the display
+// dropped the time, so a repair opened and closed the same day gave no clue how long it
+// was in the shop. A date-only value has no recorded time — render it as a plain date
+// rather than inventing midnight. Mirrors dateTimeStr() in App.jsx.
+function dateTimeStr(iso) {
+  if (!iso) return "—";
+  if (typeof iso === "string" && /^\d{4}-\d{2}-\d{2}$/.test(iso)) return dateStr(iso);
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return dateStr(iso);
+  return d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) + " " +
+         d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+}
 function shortTs(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -766,8 +778,8 @@ function renderHistory(closed) {
       </div>
       <div style="font-size:12px;color:var(--red);font-weight:600;margin-top:4px;">${r.reason}</div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
-        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">In: <span style="color:var(--text)">${dateStr(r.dateIn)}</span>${r.openedBy ? ` by <span style="color:var(--brand)">${escHtml(r.openedBy)}</span>` : ""}</span>
-        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">Closed: <span style="color:var(--green)">${dateStr(r.dateClosed)}</span>${r.closedBy ? ` by <span style="color:var(--green)">${escHtml(r.closedBy)}</span>` : ""}</span>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">In: <span style="color:var(--text)">${dateTimeStr(r.dateIn)}</span>${r.openedBy ? ` by <span style="color:var(--brand)">${escHtml(r.openedBy)}</span>` : ""}</span>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">Closed: <span style="color:var(--green)">${dateTimeStr(r.dateClosed)}</span>${r.closedBy ? ` by <span style="color:var(--green)">${escHtml(r.closedBy)}</span>` : ""}</span>
         ${r.shop ? `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">Shop: <span style="color:var(--text)">${escHtml(r.shop)}</span></span>` : ""}
       </div>
       ${notesSummary}

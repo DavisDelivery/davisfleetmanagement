@@ -1,4 +1,4 @@
-const APP_VERSION = "2.22.0";
+const APP_VERSION = "2.24.0";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -178,6 +178,20 @@ function localDate(d){return (typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)
 function wkOf(d){return d?wK(localDate(d)):"";}
 function todayYMD(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function dateStr(d){return d?localDate(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";}
+// v2.23.0: dateIn and dateClosed have ALWAYS stored a full ISO timestamp — the time was
+// recorded, the display just dropped it. A repair opened and closed on the same day read
+// as "Aug 17 → Aug 17", with no way to tell twenty minutes from ten hours in the shop.
+// A value stored date-only (legacy rows, or a hand-typed date) genuinely has no recorded
+// time, so it renders as a plain date rather than inventing midnight.
+const DATE_ONLY=/^\d{4}-\d{2}-\d{2}$/;
+function dateTimeStr(d){
+  if(!d)return"—";
+  if(typeof d==="string"&&DATE_ONLY.test(d))return dateStr(d);
+  const dt=localDate(d);
+  if(isNaN(dt.getTime()))return String(d);   // dateStr would render "Invalid Date"
+  return dt.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})+" "+
+         dt.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+}
 // v2.16.16: drivers were rendered in stored order — i.e. the order they were added —
 // so anyone created after the initial roster landed at the BOTTOM of every list rather
 // than in place. Sort by name centrally (on load and on save) so every consumer is
@@ -855,6 +869,17 @@ function App(){
   // check is scoped to the current day; other days use the manual Motive Check.)
   const[motiveLiveFlags,setMotiveLiveFlags]=useState({}); // { truckId: {status, motiveName, boardName, ts} }
   const[motiveLiveOn,setMotiveLiveOn]=useState(true);
+  // v2.23.0 — Classic vs New view on Maintenance & Costs. Defaults to classic,
+  // so production looks exactly as it did until someone presses the switch.
+  // Stored per-device rather than in Firestore: it's a personal preference, and
+  // it must survive a reload without waiting on a network round-trip.
+  const[viewMode,setViewModeState]=useState(()=>{
+    try{const v=localStorage.getItem("fl-view-mode");return v==="new"?"new":"classic";}catch(e){return "classic";}
+  });
+  const setViewMode=useCallback(v=>{
+    setViewModeState(v);
+    try{localStorage.setItem("fl-view-mode",v);}catch(e){}
+  },[]);
   const[motiveDismissAt,setMotiveDismissAt]=useState(0); // hide drift banner for flags older than this
 
   // ── Motive mileage (v2.20.0) ──
@@ -1404,7 +1429,20 @@ function App(){
 
   // Load vendors from storage
   useEffect(()=>{(async()=>{
-    try{const r=await window.storage.get("fl-vendors");if(r)setKnownVendors(JSON.parse(r.value));}catch(e){}
+    // v2.23.0: the stored list used to REPLACE the built-ins, so a vendor added to
+    // DEFAULT_VENDORS never appeared for an install that had already saved a list — it
+    // was missing from the UI and from the list POSTed to the sync config, which is what
+    // the crawler iterates. Merge by name, stored entry wins so UI edits survive.
+    try{
+      const r=await window.storage.get("fl-vendors");
+      if(r){
+        const stored=JSON.parse(r.value);
+        const list=Array.isArray(stored)?stored.filter(v=>v&&v.name):[];
+        const seen=new Set(list.map(v=>String(v.name).toLowerCase().trim()));
+        for(const d of DEFAULT_VENDORS)if(!seen.has(String(d.name).toLowerCase().trim()))list.push(d);
+        setKnownVendors(list.length?list:DEFAULT_VENDORS);
+      }
+    }catch(e){}
   })();},[]);
   const saveVendors=useCallback(v=>{setKnownVendors(v);sv("fl-vendors",v);},[sv]);
   const removeVendor=(name)=>saveVendors(knownVendors.filter(v=>v.name!==name));
@@ -5014,7 +5052,30 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         </div>}
 
         {/* ══ MAINTENANCE ══ */}
-        {tab==="maint"&&(()=>{
+        {/* v2.23.0 — Classic ⇄ New. Same data, two ways of reading it. */}
+        {(tab==="maint"||tab==="costs")&&(
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:14,
+            background:"linear-gradient(90deg,#eef5fb,#f8fbfe)",border:"1px solid #cfe0ef",
+            borderRadius:10,padding:"8px 12px"}}>
+            <span style={{fontSize:11,fontWeight:700,color:C.dark,letterSpacing:.3,textTransform:"uppercase"}}>
+              {tab==="maint"?"Maintenance view":"Cost view"}
+            </span>
+            <div style={{display:"flex",background:"#fff",border:"1px solid #cfe0ef",borderRadius:8,padding:2,gap:2}}>
+              {[["classic","Classic"],["new","New"]].map(([k,l])=>(
+                <button key={k} onClick={()=>setViewMode(k)}
+                  style={{padding:"6px 15px",fontSize:11.5,fontWeight:700,border:"none",borderRadius:6,cursor:"pointer",
+                    background:viewMode===k?C.brand:"transparent",color:viewMode===k?"#fff":"#6b7785"}}>{l}</button>
+              ))}
+            </div>
+            <span style={{fontSize:11,color:"#6b7785",marginLeft:"auto",lineHeight:1.4}}>
+              {viewMode==="classic"
+                ?"The page as you know it. Switch to New for cost per mile and problem-truck flags."
+                :"Rebuilt around miles driven. Everything you had is still under Classic."}
+            </span>
+          </div>
+        )}
+
+        {tab==="maint"&&viewMode==="classic"&&(()=>{
           const {toClose:dupToClose}=findDuplicateOpenRepairs();
           const openCount=repairs.filter(r=>r.status==="open").length;
           return <div>
@@ -5292,7 +5353,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 })}
               </div>}
               <div style={{fontSize:10,color:"#94a3b8",marginTop:4}}>
-                In: {dateStr(r.dateIn)}{r.openedBy&&<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>}{r.dateClosed&&` · Resolved: ${dateStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
+                In: {dateTimeStr(r.dateIn)}{r.openedBy&&<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>}{r.dateClosed&&` · Resolved: ${dateTimeStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
               </div>
             </div>;
           })}
@@ -5517,8 +5578,14 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         </div>;
         })()}
 
+        {/* v2.23.0 — new maintenance view */}
+        {tab==="maint"&&viewMode==="new"&&
+          <MaintNewView trucks={trucks} repairs={repairs}
+            onOpenTicket={r=>setHistoryTruck(r.truckId)}/>}
+
+
         {/* ══ COSTS / INVOICE SCANNER ══ */}
-        {tab==="costs"&&<div>
+        {tab==="costs"&&viewMode==="classic"&&<div>
           {/* v2.16.7: ledger backup + archive — export the full cost ledger for accounting,
               or archive old invoices out of the active log (they're kept in the database). */}
           <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:16,background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,padding:"10px 12px"}}>
@@ -7111,6 +7178,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           })()}
         </div>}
 
+        {/* v2.23.0 — new cost view */}
+        {tab==="costs"&&viewMode==="new"&&
+          <CostsNewView trucks={trucks} costEntries={costEntries} repairs={repairs}
+            truckMiles={truckMiles} milesMeta={milesMeta}
+            onOpenMotive={()=>openMotiveSync()}/>}
+
+
       </div>
 
       {/* ── Repair Form Modal (from truck status board) ── */}
@@ -7250,7 +7324,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               </div>
               {r.notes&&<div style={{fontSize:11,color:"#6b7785"}}>{r.notes}</div>}
               <div style={{fontSize:10,color:"#94a3b8"}}>
-                In: {dateStr(r.dateIn)}{r.openedBy&&<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>}{r.dateClosed&&` · Out: ${dateStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
+                In: {dateTimeStr(r.dateIn)}{r.openedBy&&<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>}{r.dateClosed&&` · Out: ${dateTimeStr(r.dateClosed)}`}{r.closedBy&&<span style={{color:C.green,fontWeight:600}}> by {r.closedBy}</span>}{r.cost>0&&` · $${r.cost.toLocaleString()}`}{r.shop&&` · ${r.shop}`}
               </div>
             </div>
           )}
@@ -7416,6 +7490,539 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 }
 
 // ── Sub-components ──
+/* ══════════════════════════════════════════════════════════════════════════
+   NEW VIEW (v2.23.0) — Maintenance & Costs redesign.
+
+   Lives alongside the classic view, never replaces it. `viewMode` defaults to
+   "classic", so nothing changes for anyone until they press the switch.
+
+   Everything below runs on data that already exists in production: costEntries,
+   repairs, trucks, and the per-truck monthly mileage that now comes from Motive.
+   Nothing here invents a field. Where a number ISN'T derivable from today's
+   schema (VMRS system codes, wrench-vs-wait split, PM intervals, truck resale
+   value) it is simply absent rather than estimated — a made-up denominator is
+   worse than a missing chart.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Validated categorical palette — fixed order, never cycled. Checked for
+   colour-blind separation against the chart surface; the app's C.accent is too
+   light to carry a large fill, so the repair bucket uses a darker step. */
+const FV={c1:"#1e5b92",c2:"#c47a12",c3:"#2596be",c4:"#7b5ea7",c5:"#94a3b8",
+          a1:"#7ba5cc",a2:"#4478ad",a3:"#1e5b92",
+          ok:"#27ae60",warn:"#d4841b",bad:"#c0392b"};
+
+/* The 16 ledger categories collapse into 5 reporting buckets. Kept as one map so
+   a new category can never silently vanish from a chart — anything unmapped
+   falls to Other and still shows up in the totals. */
+const FV_BUCKET={Fuel:"Fuel",Oil:"Scheduled PM",Inspection:"Scheduled PM",Tires:"Tires",
+  Parts:"Repair",Labor:"Repair",Repair:"Repair","Body/Paint":"Repair",Electrical:"Repair",Towing:"Repair",
+  Core:"Repair",Credit:"Repair",
+  Registration:"Other",Insurance:"Other",Other:"Other",Inventory:"Other"};
+const FV_BUCKETS=["Fuel","Repair","Scheduled PM","Tires","Other"];
+const FV_BCOLOR={Fuel:FV.c1,Repair:FV.c2,"Scheduled PM":FV.c3,Tires:FV.c4,Other:FV.c5};
+const fvBucket=cat=>FV_BUCKET[cat]||"Other";
+
+function fvMonths(n,from){
+  const out=[];const d=from?new Date(from):new Date();
+  let y=d.getFullYear(),m=d.getMonth()+1;
+  for(let i=0;i<n;i++){out.push(`${y}-${String(m).padStart(2,"0")}`);m--;if(m===0){m=12;y--;}}
+  return out.reverse();
+}
+function fvMedian(a){const s=a.slice().sort((x,y)=>x-y);if(!s.length)return 0;const h=s.length>>1;return s.length%2?s[h]:(s[h-1]+s[h])/2;}
+const fvMoney=n=>"$"+Math.round(n||0).toLocaleString();
+const fvRate=n=>"$"+(n||0).toFixed(2);
+const fvNum=n=>Math.round(n||0).toLocaleString();
+const fvDays=(a,b)=>Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));
+
+/* Per-truck rollup for a month window. Pure — no React, no globals — so the
+   arithmetic can be tested without a browser. */
+function fvRollup({costEntries,repairs,trucks,truckMiles,months}){
+  const inRange=new Set(months);
+  const per={};
+  const seed=id=>{
+    if(!per[id]){
+      const t=trucks.find(x=>x.id===id)||null;
+      per[id]={truckId:id,t,buckets:{},total:0,miles:0,monthsWithMiles:0,
+               repairCount:0,unsched90:0,downDays:0,openNow:0};
+      FV_BUCKETS.forEach(b=>per[id].buckets[b]=0);
+    }
+    return per[id];
+  };
+  trucks.forEach(t=>seed(t.id));
+
+  (costEntries||[]).forEach(c=>{
+    if(!c||c.truckId==="INVENTORY"||c.category==="Inventory")return;   // not truck-attributed
+    if(!c.truckId)return;
+    const mo=String(c.date||"").slice(0,7);
+    if(!inRange.has(mo))return;
+    const r=seed(c.truckId);
+    // Do NOT re-sign credits. The extraction prompt already stores a credit memo
+    // and a core return as a NEGATIVE total ("Set total to a NEGATIVE number.
+    // NEVER return it as positive"), and the classic costAnalytics sums c.total
+    // raw. Flipping the sign here would turn a $482 credit into $482 of extra
+    // spend — the opposite of what a credit means.
+    const amt=Number(c.total)||0;
+    r.buckets[fvBucket(c.category)]+=amt;
+    r.total+=amt;
+  });
+
+  Object.keys(per).forEach(id=>{
+    const m=(truckMiles||{})[id]||{};
+    let mi=0,have=0;
+    months.forEach(k=>{if(m[k]!==undefined){mi+=m[k];have++;}});
+    per[id].miles=mi;per[id].monthsWithMiles=have;
+  });
+
+  const now=Date.now(),cut90=now-90*86400000;
+  const start=new Date(months[0]+"-01T00:00:00").getTime();
+  (repairs||[]).forEach(r=>{
+    if(!r||!r.truckId)return;
+    const p=seed(r.truckId);
+    const din=new Date(r.dateIn).getTime();
+    if(r.status==="open")p.openNow++;
+    if(!(din>=start))return;
+    p.repairCount++;
+    p.downDays+=r.dateClosed?fvDays(r.dateIn,r.dateClosed):fvDays(r.dateIn,new Date().toISOString());
+    // "Unscheduled" is everything that isn't planned upkeep — the closest this
+    // schema gets to a scheduled/non-scheduled split.
+    if(din>=cut90&&r.reason!=="Planned Maintenance"&&r.reason!=="DOT Inspection")p.unsched90++;
+  });
+
+  Object.values(per).forEach(p=>{
+    p.repairSpend=p.buckets["Repair"]+p.buckets["Scheduled PM"]+p.buckets["Tires"];
+    p.rate=p.miles>0?p.repairSpend/p.miles:null;          // null, never Infinity
+    p.allInRate=p.miles>0?p.total/p.miles:null;
+    p.age=p.t&&p.t.year?(new Date().getFullYear()-Number(p.t.year)):null;
+    p.coverage=months.length?p.monthsWithMiles/months.length:0;
+  });
+  return per;
+}
+
+/* Two independent money signals plus a frequency signal. A truck trips any one
+   of them on its own: rate catches the quietly expensive unit, totals catch the
+   one simply eating the budget, and neither subsumes the other. */
+function fvFlags(p,medRate,medTotal){
+  const f=[];
+  if(p.rate!==null&&medRate>0&&p.rate>medRate*1.5)
+    f.push({k:"rate",label:"Money pit",color:FV.bad,
+      why:`${fvRate(p.rate)}/mi in repairs is ${(p.rate/medRate).toFixed(1)}× the fleet median of ${fvRate(medRate)}`});
+  if(medTotal>0&&p.repairSpend>medTotal*1.5)
+    f.push({k:"total",label:"Big spender",color:FV.bad,
+      why:`${fvMoney(p.repairSpend)} of repairs is ${(p.repairSpend/medTotal).toFixed(1)}× the fleet median of ${fvMoney(medTotal)}`});
+  if(p.unsched90>=3)
+    f.push({k:"freq",label:"Frequent flyer",color:FV.warn,
+      why:`${p.unsched90} unscheduled repairs in the last 90 days`});
+  return f;
+}
+function fvCall(f){
+  if(!f.length)return "";
+  const has=k=>f.some(x=>x.k===k);
+  if(has("rate")&&has("total"))return "Audit invoices";
+  if(has("total")&&!has("rate"))return "Volume, not rate";
+  if(has("rate"))return "Expensive per mile";
+  return "Check repeats";
+}
+
+/* ── small presentational pieces ─────────────────────────────────────────── */
+function FvTile({label,value,sub,color,extra}){
+  return <div style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"12px 13px",minWidth:0}}>
+    <div style={{fontSize:9.5,fontWeight:700,color:"#6b7785",textTransform:"uppercase",letterSpacing:.5}}>{label}</div>
+    <div style={{fontSize:23,fontWeight:800,color:color||"#1e293b",marginTop:3,lineHeight:1.05}}>{value}</div>
+    {sub?<div style={{fontSize:10.5,color:"#94a3b8",marginTop:3,lineHeight:1.35}}>{sub}</div>:null}
+    {extra||null}
+  </div>;
+}
+function FvChip({label,color,title}){
+  return <span title={title||""} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",
+    borderRadius:10,fontSize:10,fontWeight:700,whiteSpace:"nowrap",marginRight:4,
+    background:color+"1a",color:color,border:`1px solid ${color}44`}}>
+    <span style={{width:6,height:6,borderRadius:"50%",background:color}}/>{label}</span>;
+}
+function FvBarRow({label,value,pct,color,flagged}){
+  return <div style={{display:"grid",gridTemplateColumns:"56px 1fr 92px",alignItems:"center",gap:9,padding:"2.5px 0"}}>
+    <span style={{fontSize:11,fontWeight:700,textAlign:"right",fontFamily:"ui-monospace,Menlo,monospace",color:"#334155"}}>#{label}</span>
+    <span style={{height:15,background:"#f1f5f9",borderRadius:"0 4px 4px 0",display:"block"}}>
+      <span style={{display:"block",height:15,width:Math.max(0,Math.min(100,pct))+"%",minWidth:2,
+        background:color,borderRadius:"0 4px 4px 0"}}/></span>
+    <span style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#334155"}}>
+      {value}{flagged?<span style={{color:FV.bad}}> ⚑</span>:null}</span>
+  </div>;
+}
+
+/* ── COSTS — new view ────────────────────────────────────────────────────── */
+function CostsNewView({trucks,costEntries,repairs,truckMiles,milesMeta,onOpenMotive}){
+  const[range,setRange]=useState(12);
+  const[metric,setMetric]=useState("rate");     // rate | allin | dollars
+  const[scope,setScope]=useState("worst");      // worst | flagged | all
+  const[type,setType]=useState("all");
+
+  const months=useMemo(()=>fvMonths(range),[range]);
+  const per=useMemo(()=>fvRollup({costEntries,repairs,trucks,truckMiles,months}),
+    [costEntries,repairs,trucks,truckMiles,months]);
+
+  const rows=useMemo(()=>Object.values(per)
+    .filter(p=>p.t&&(type==="all"||p.t.type===type)),[per,type]);
+
+  const withMiles=rows.filter(p=>p.rate!==null);
+  const medRate=fvMedian(withMiles.map(p=>p.rate));
+  const medTotal=fvMedian(rows.map(p=>p.repairSpend));
+  const flagged=rows.map(p=>({p,f:fvFlags(p,medRate,medTotal)})).filter(x=>x.f.length);
+
+  const totMiles=rows.reduce((s,p)=>s+p.miles,0);
+  const totAll=rows.reduce((s,p)=>s+p.total,0);
+  const totFuel=rows.reduce((s,p)=>s+p.buckets["Fuel"],0);
+  const totRepair=rows.reduce((s,p)=>s+p.repairSpend,0);
+  const mrCpm=totMiles>0?totRepair/totMiles:null;
+  const noMiles=rows.filter(p=>p.rate===null).length;
+
+  // Benchmark band for light/medium-duty M&R + tires. Shown only when we have
+  // enough mileage coverage for the number to mean anything.
+  const band=mrCpm===null?null:(mrCpm<0.18?{t:"✓ under the $0.18–0.22 industry band",ok:true}
+    :mrCpm<=0.22?{t:"✓ inside the $0.18–0.22 industry band",ok:true}
+    :{t:"⚠ above the $0.18–0.22 industry band",ok:false});
+
+  const val=p=>metric==="dollars"?p.repairSpend:(metric==="allin"?p.allInRate:p.rate);
+  const med=metric==="dollars"?medTotal:(metric==="allin"?fvMedian(withMiles.map(p=>p.allInRate)):medRate);
+  const hot=med*1.5;
+  const fmtV=v=>metric==="dollars"?fvMoney(v):fvRate(v);
+
+  let list=rows.filter(p=>val(p)!==null).sort((a,b)=>val(b)-val(a));
+  if(scope==="worst")list=list.slice(0,15);
+  else if(scope==="flagged")list=list.filter(p=>val(p)>hot);
+  const mx=Math.max.apply(null,list.map(val).concat([hot*1.15,1]));
+
+  const btn=(on)=>({padding:"5px 11px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",
+    border:`1px solid ${on?C.dark:"#e2e8f0"}`,background:on?C.dark:"#fff",color:on?"#fff":"#6b7785"});
+  const card={background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14};
+  const th={padding:"8px",textAlign:"left",background:"#f8fafc",color:"#6b7785",fontWeight:700,fontSize:9.5,
+    textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap"};
+  const td={padding:"8px",borderBottom:"1px solid #f1f5f9",whiteSpace:"nowrap",fontSize:12};
+  const tdN={...td,textAlign:"right",fontVariantNumeric:"tabular-nums"};
+
+  return <div>
+    {/* filters */}
+    <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",background:"#fff",
+      border:"1px solid #e2e8f0",borderRadius:10,padding:"9px 11px",marginBottom:14}}>
+      <span style={{fontSize:10,fontWeight:700,color:"#6b7785",textTransform:"uppercase",letterSpacing:.4}}>Range</span>
+      <select value={range} onChange={e=>setRange(Number(e.target.value))} style={{padding:"6px 9px",fontSize:12,
+        background:"#f8fafc",border:"1px solid #d1d9e0",borderRadius:6}}>
+        <option value={3}>Last 3 months</option><option value={6}>Last 6 months</option>
+        <option value={12}>Last 12 months</option><option value={24}>Last 24 months</option>
+      </select>
+      <span style={{fontSize:10,fontWeight:700,color:"#6b7785",textTransform:"uppercase",letterSpacing:.4}}>Fleet</span>
+      <select value={type} onChange={e=>setType(e.target.value)} style={{padding:"6px 9px",fontSize:12,
+        background:"#f8fafc",border:"1px solid #d1d9e0",borderRadius:6}}>
+        <option value="all">All trucks</option><option value="straight">Box trucks</option><option value="tractor">Tractors</option>
+      </select>
+      <span style={{marginLeft:"auto",fontSize:10.5,color:"#94a3b8"}}>
+        {milesMeta&&milesMeta.updatedAt
+          ?<span>Motive mileage synced {new Date(milesMeta.updatedAt).toLocaleDateString()} · {fvNum(totMiles)} mi in range</span>
+          :<span style={{color:C.accent,fontWeight:700,cursor:"pointer"}} onClick={onOpenMotive}>
+             ⚠ No mileage pulled yet — click to sync from Motive</span>}
+      </span>
+    </div>
+
+    {/* tiles */}
+    <div style={{display:"grid",gap:9,gridTemplateColumns:"repeat(auto-fit,minmax(158px,1fr))",marginBottom:14}}>
+      <FvTile label="Total cost / mile" value={totMiles>0?fvRate(totAll/totMiles):"—"}
+        sub={totMiles>0?"everything, fuel included":"needs mileage"}/>
+      <FvTile label="Fuel / mile" value={totMiles>0?fvRate(totFuel/totMiles):"—"} sub="fuel only"/>
+      <FvTile label="Repairs + tires / mile" value={mrCpm===null?"—":fvRate(mrCpm)}
+        sub={band?null:"needs mileage"}
+        extra={band?<div style={{marginTop:4,fontSize:10,fontWeight:600,padding:"2px 6px",borderRadius:4,
+          display:"inline-block",background:band.ok?"#eaf7ef":"#fdecea",color:band.ok?"#1d7a45":"#a3312a"}}>{band.t}</div>:null}/>
+      <FvTile label="Total spend" value={fvMoney(totAll)} sub={`${rows.length} trucks · ${range} mo`}/>
+      <FvTile label="Miles driven" value={totMiles>0?fvNum(totMiles):"—"}
+        sub={noMiles>0?`${noMiles} truck${noMiles>1?"s":""} without mileage`:"from Motive"}
+        color={noMiles>0?C.accent:null}/>
+      <FvTile label="Trucks flagged" value={flagged.length}
+        sub={`median ${medRate?fvRate(medRate):"—"}/mi · ${fvMoney(medTotal)}`}
+        color={flagged.length?FV.bad:FV.ok}/>
+    </div>
+
+    {/* ranking */}
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🚩 Worst trucks — by rate and by total</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px",lineHeight:1.45}}>
+        Ranked against the fleet <b>median</b>, not the average — one bad truck drags an average up until every
+        healthy truck looks below par. Rate and total catch different trucks, which is why both are flags.
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+        <button style={btn(scope==="worst")} onClick={()=>setScope("worst")}>Worst 15</button>
+        <button style={btn(scope==="flagged")} onClick={()=>setScope("flagged")}>Over the line</button>
+        <button style={btn(scope==="all")} onClick={()=>setScope("all")}>All trucks</button>
+        <span style={{width:1,height:20,background:"#e2e8f0",margin:"0 4px"}}/>
+        <button style={btn(metric==="rate")} onClick={()=>setMetric("rate")}>Repair $/mi</button>
+        <button style={btn(metric==="allin")} onClick={()=>setMetric("allin")}>All-in $/mi</button>
+        <button style={btn(metric==="dollars")} onClick={()=>setMetric("dollars")}>Total repair $</button>
+      </div>
+      {list.length===0
+        ?<div style={{padding:20,textAlign:"center",color:"#94a3b8"}}>
+           {metric==="dollars"?"No cost data in this range.":"No mileage yet — pull it from Motive to rank by cost per mile."}</div>
+        :<div style={{position:"relative"}}>
+          <div style={{position:"absolute",left:65,right:92,top:0,bottom:0,pointerEvents:"none"}}>
+            <div style={{position:"absolute",left:(med/mx*100)+"%",top:0,bottom:0,borderLeft:"1px solid #6b7785"}}/>
+            <div style={{position:"absolute",left:(hot/mx*100)+"%",top:0,bottom:0,borderLeft:`1px dashed ${FV.bad}`}}/>
+          </div>
+          {list.map(p=><FvBarRow key={p.truckId} label={p.truckId} value={fmtV(val(p))}
+            pct={val(p)/mx*100} color={val(p)>hot?FV.bad:FV.c1} flagged={val(p)>hot}/>)}
+        </div>}
+      <div style={{display:"flex",gap:18,flexWrap:"wrap",marginTop:11,paddingLeft:65,fontSize:10.5,color:"#6b7785"}}>
+        <span>│ fleet median <b>{fmtV(med)}</b></span>
+        <span style={{color:FV.bad}}>┆ 1.5× median <b>{fmtV(hot)}</b> — flag line</span>
+        <span style={{color:"#94a3b8"}}>{metric==="dollars"
+          ?"Total repair, PM and tire spend — the budget question, not the rate question."
+          :metric==="allin"?"Everything, fuel included."
+          :"Repairs, PM and tires only — fuel measures how hard a truck works, not how sick it is."}</span>
+      </div>
+    </div>
+
+    {/* flags */}
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>⚠️ Trucks that need a decision</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>
+        Each signal has its own published threshold. A truck only has to trip one to appear here.
+      </div>
+      <div style={{overflowX:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <th style={th}>Truck</th><th style={th}>Yr</th><th style={{...th,textAlign:"right"}}>Miles</th>
+          <th style={{...th,textAlign:"right"}}>Repair $</th><th style={{...th,textAlign:"right"}}>vs med $</th>
+          <th style={{...th,textAlign:"right"}}>$/mi</th><th style={{...th,textAlign:"right"}}>vs med rate</th>
+          <th style={{...th,textAlign:"right"}}>Unsched 90d</th><th style={{...th,textAlign:"right"}}>Days down</th>
+          <th style={th}>Flags</th><th style={th}>Call</th>
+        </tr></thead><tbody>
+        {flagged.length===0
+          ?<tr><td colSpan={11} style={{...td,textAlign:"center",color:FV.ok,padding:22}}>Nothing tripped a threshold in this range. 👍</td></tr>
+          :flagged.sort((a,b)=>
+             ((b.p.repairSpend/(medTotal||1))+((b.p.rate||0)/(medRate||1)))
+            -((a.p.repairSpend/(medTotal||1))+((a.p.rate||0)/(medRate||1))))
+           .map(({p,f})=><tr key={p.truckId} style={{background:"#fdf6f5"}}>
+            <td style={td}><span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{p.truckId}</span>
+              <span style={{fontSize:10.5,color:"#94a3b8"}}> {p.t?p.t.mk:""}</span></td>
+            <td style={{...td,color:"#6b7785"}}>{p.t&&p.t.year?p.t.year:"—"}</td>
+            <td style={tdN}>{p.miles>0?fvNum(p.miles):<span style={{color:"#94a3b8"}}>no data</span>}</td>
+            <td style={{...tdN,fontWeight:800}}>{fvMoney(p.repairSpend)}</td>
+            <td style={{...tdN,fontWeight:800,color:medTotal&&p.repairSpend>medTotal*1.5?FV.bad:"#334155"}}>
+              {medTotal?(p.repairSpend/medTotal).toFixed(2)+"×":"—"}</td>
+            <td style={{...tdN,fontWeight:800}}>{p.rate===null?"—":fvRate(p.rate)}</td>
+            <td style={{...tdN,fontWeight:800,color:p.rate!==null&&medRate&&p.rate>medRate*1.5?FV.bad:"#334155"}}>
+              {p.rate===null||!medRate?"—":(p.rate/medRate).toFixed(2)+"×"}</td>
+            <td style={{...tdN,fontWeight:700,color:p.unsched90>=3?FV.warn:"#334155"}}>{p.unsched90}</td>
+            <td style={tdN}>{p.downDays}</td>
+            <td style={td}>{f.map(x=><FvChip key={x.k} label={x.label} color={x.color} title={x.why}/>)}</td>
+            <td style={{...td,fontSize:11.5,color:"#6b7785"}}>{fvCall(f)}</td>
+          </tr>)}
+        </tbody></table>
+      </div>
+      <div style={{fontSize:10.5,color:"#94a3b8",marginTop:8,lineHeight:1.5}}>
+        <b>Money pit</b> — repair cost per mile above 1.5× the fleet median.
+        <b> Big spender</b> — total repair spend above 1.5× the median; catches the high-mileage truck whose rate looks fine but whose cheque doesn't.
+        <b> Frequent flyer</b> — 3 or more unscheduled repairs in 90 days.
+      </div>
+    </div>
+
+    {/* full table */}
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>📒 Every truck</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>The table behind the charts. Sorted by repair cost per mile.</div>
+      <div style={{overflowX:"auto",maxHeight:440,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <th style={{...th,position:"sticky",top:0}}>Truck</th><th style={{...th,position:"sticky",top:0}}>Type</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Miles</th>
+          {FV_BUCKETS.map(b=><th key={b} style={{...th,position:"sticky",top:0,textAlign:"right"}}>{b}</th>)}
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Total</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>$/mi</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Repairs</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Days down</th>
+        </tr></thead><tbody>
+        {rows.slice().sort((a,b)=>(b.rate||-1)-(a.rate||-1)).map(p=>{
+          const f=fvFlags(p,medRate,medTotal);
+          return <tr key={p.truckId} style={f.length?{background:"#fdf6f5"}:null}>
+            <td style={td}><span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{p.truckId}</span>
+              {f.length?<span style={{color:FV.bad}}> ⚑</span>:null}</td>
+            <td style={{...td,fontSize:11,color:"#6b7785"}}>{p.t?(p.t.type==="straight"?"Box":"Tractor"):"—"} · {p.t?p.t.mk:""}</td>
+            <td style={tdN}>{p.miles>0?fvNum(p.miles):<span style={{color:"#94a3b8"}}>—</span>}</td>
+            {FV_BUCKETS.map(b=><td key={b} style={tdN}>{fvMoney(p.buckets[b])}</td>)}
+            <td style={{...tdN,fontWeight:700}}>{fvMoney(p.total)}</td>
+            <td style={{...tdN,fontWeight:800,color:f.length?FV.bad:"#334155"}}>{p.rate===null?"—":fvRate(p.rate)}</td>
+            <td style={tdN}>{p.repairCount}</td>
+            <td style={tdN}>{p.downDays}</td>
+          </tr>;
+        })}
+        </tbody></table>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ── MAINTENANCE — new view ──────────────────────────────────────────────────
+   Everything here comes from the existing repair record. What a professional
+   shop system would also show — VMRS system codes, wrench-vs-wait time, PM
+   intervals, complaint/cause/correction — needs fields this schema doesn't
+   have, so those sections are absent rather than faked. `reason` is the only
+   categorisation available, and it's used as such: a coarse grouping, labelled
+   honestly, not dressed up as a system code. */
+function MaintNewView({trucks,repairs,onOpenTicket}){
+  const[status,setStatus]=useState("open");
+  const[sort,setSort]=useState("days");
+
+  const now=new Date().toISOString();
+  const open=useMemo(()=>(repairs||[]).filter(r=>r.status==="open"),[repairs]);
+  const months12=useMemo(()=>fvMonths(12),[]);
+  const start12=new Date(months12[0]+"-01T00:00:00").getTime();
+  const closed12=useMemo(()=>(repairs||[]).filter(r=>r.status!=="open"&&r.dateClosed
+    &&new Date(r.dateIn).getTime()>=start12),[repairs,start12]);
+
+  // Repeat repair: the same truck back in for the same reason inside 30 days.
+  // `reason` is coarse, so this is a prompt to look, not a verdict — which is
+  // also how the industry treats comeback detection.
+  const repeats=useMemo(()=>{
+    const byTruck={};
+    (repairs||[]).forEach(r=>{(byTruck[r.truckId]=byTruck[r.truckId]||[]).push(r);});
+    const flag=new Set();
+    Object.values(byTruck).forEach(list=>{
+      const s=list.slice().sort((a,b)=>new Date(a.dateIn)-new Date(b.dateIn));
+      for(let i=1;i<s.length;i++)for(let j=i-1;j>=0;j--){
+        if(s[j].reason!==s[i].reason)continue;
+        const gap=fvDays(s[j].dateIn,s[i].dateIn);
+        if(gap<=30)flag.add(s[i].id);
+        break;
+      }
+    });
+    return flag;
+  },[repairs]);
+
+  const byReason=useMemo(()=>{
+    const m={};closed12.forEach(r=>{m[r.reason||"Other"]=(m[r.reason||"Other"]||0)+(Number(r.cost)||0);});
+    return Object.keys(m).map(k=>({reason:k,amt:m[k],n:closed12.filter(r=>(r.reason||"Other")===k).length}))
+      .sort((a,b)=>b.amt-a.amt);
+  },[closed12]);
+
+  const downByTruck=useMemo(()=>{
+    const m={};
+    closed12.forEach(r=>{m[r.truckId]=(m[r.truckId]||0)+fvDays(r.dateIn,r.dateClosed);});
+    open.forEach(r=>{m[r.truckId]=(m[r.truckId]||0)+fvDays(r.dateIn,now);});
+    return Object.keys(m).map(k=>({truckId:k,days:m[k]})).sort((a,b)=>b.days-a.days).slice(0,10);
+  },[closed12,open,now]);
+
+  const shown=useMemo(()=>{
+    const base=status==="open"?open:(repairs||[]).filter(r=>r.status!=="open").slice(0,200);
+    const s=base.slice();
+    if(sort==="days")s.sort((a,b)=>new Date(a.dateIn)-new Date(b.dateIn));
+    else if(sort==="cost")s.sort((a,b)=>(Number(b.cost)||0)-(Number(a.cost)||0));
+    else s.sort((a,b)=>String(a.truckId).localeCompare(String(b.truckId)));
+    return s;
+  },[status,open,repairs,sort]);
+
+  const avgDown=closed12.length?closed12.reduce((s,r)=>s+fvDays(r.dateIn,r.dateClosed),0)/closed12.length:0;
+  const planned=closed12.filter(r=>r.reason==="Planned Maintenance"||r.reason==="DOT Inspection").length;
+  const openRepeat=open.filter(r=>repeats.has(r.id)).length;
+
+  const btn=on=>({padding:"5px 11px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",
+    border:`1px solid ${on?C.dark:"#e2e8f0"}`,background:on?C.dark:"#fff",color:on?"#fff":"#6b7785"});
+  const card={background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14};
+  const th={padding:"8px",textAlign:"left",background:"#f8fafc",color:"#6b7785",fontWeight:700,fontSize:9.5,
+    textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap"};
+  const td={padding:"8px",borderBottom:"1px solid #f1f5f9",whiteSpace:"nowrap",fontSize:12};
+  const tdN={...td,textAlign:"right",fontVariantNumeric:"tabular-nums"};
+  const maxReason=byReason.length?byReason[0].amt:1;
+  const maxDown=downByTruck.length?downByTruck[0].days:1;
+
+  return <div>
+    <div style={{display:"grid",gap:9,gridTemplateColumns:"repeat(auto-fit,minmax(158px,1fr))",marginBottom:14}}>
+      <FvTile label="Trucks down now" value={new Set(open.map(r=>r.truckId)).size}
+        sub={`${open.length} open ticket${open.length===1?"":"s"}`} color={open.length?FV.bad:FV.ok}/>
+      <FvTile label="Longest open" value={open.length?Math.max.apply(null,open.map(r=>fvDays(r.dateIn,now)))+" d":"—"}
+        sub="days since it went in"/>
+      <FvTile label="Avg days down" value={avgDown.toFixed(1)} sub={`${closed12.length} closed, 12 mo`}/>
+      <FvTile label="Planned work" value={closed12.length?Math.round(100*planned/closed12.length)+"%":"—"}
+        sub="target 70–80% of all repairs" color={closed12.length&&planned/closed12.length<0.5?FV.warn:null}/>
+      <FvTile label="Repeat visits" value={openRepeat} sub="same reason inside 30 days"
+        color={openRepeat?FV.warn:FV.ok}/>
+      <FvTile label="Repair spend" value={fvMoney(closed12.reduce((s,r)=>s+(Number(r.cost)||0),0))}
+        sub="closed tickets, 12 mo"/>
+    </div>
+
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🔧 Shop board</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>
+        Sortable, so the ticket that's been sitting longest is one click away instead of buried in a card.
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+        <button style={btn(status==="open")} onClick={()=>setStatus("open")}>Open ({open.length})</button>
+        <button style={btn(status==="closed")} onClick={()=>setStatus("closed")}>Recently closed</button>
+        <span style={{width:1,height:20,background:"#e2e8f0",margin:"0 4px"}}/>
+        <button style={btn(sort==="days")} onClick={()=>setSort("days")}>Longest first</button>
+        <button style={btn(sort==="cost")} onClick={()=>setSort("cost")}>Most expensive</button>
+        <button style={btn(sort==="truck")} onClick={()=>setSort("truck")}>By truck</button>
+      </div>
+      <div style={{overflowX:"auto",maxHeight:460,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <th style={{...th,position:"sticky",top:0}}>Truck</th>
+          <th style={{...th,position:"sticky",top:0}}>Reason</th>
+          <th style={{...th,position:"sticky",top:0}}>What's wrong</th>
+          <th style={{...th,position:"sticky",top:0}}>Shop</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Days down</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Cost</th>
+        </tr></thead><tbody>
+        {shown.length===0
+          ?<tr><td colSpan={6} style={{...td,textAlign:"center",color:"#94a3b8",padding:22}}>Nothing here.</td></tr>
+          :shown.map(r=>{
+            const t=trucks.find(x=>x.id===r.truckId);
+            const d=r.status==="open"?fvDays(r.dateIn,now):fvDays(r.dateIn,r.dateClosed||now);
+            const log=r.notesLog&&r.notesLog.length?r.notesLog:(r.notes?[{text:r.notes}]:[]);
+            const openItems=log.filter(e=>e&&!e.done).length;
+            return <tr key={r.id} style={{cursor:onOpenTicket?"pointer":"default"}}
+              onClick={()=>onOpenTicket&&onOpenTicket(r)}>
+              <td style={td}>
+                <span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{r.truckId}</span>
+                <span style={{fontSize:10.5,color:"#94a3b8"}}> {t?(t.type==="straight"?t.mk:"Tractor"):""}</span>
+                {repeats.has(r.id)?<FvChip label="⟳ repeat" color={FV.warn}
+                  title="Same reason on this truck within 30 days — worth a look before it's a breakdown"/>:null}
+              </td>
+              <td style={{...td,fontSize:11.5,color:"#6b7785"}}>{r.reason}</td>
+              <td style={{...td,whiteSpace:"normal",maxWidth:280,fontSize:11.5}}>
+                {log.length?log[0].text:<span style={{color:"#cbd5e1"}}>—</span>}
+                {log.length>1?<span style={{color:"#94a3b8"}}> +{log.length-1} more{openItems?` · ${openItems} open`:""}</span>:null}
+              </td>
+              <td style={{...td,fontSize:11,color:"#6b7785"}}>{r.shop||"—"}</td>
+              <td style={{...tdN,fontWeight:800,color:d>7?FV.bad:(d>3?FV.warn:"#334155")}}>{d}</td>
+              <td style={tdN}>{Number(r.cost)?fvMoney(r.cost):<span style={{color:"#cbd5e1"}}>—</span>}</td>
+            </tr>;
+          })}
+        </tbody></table>
+      </div>
+    </div>
+
+    <div style={{display:"grid",gap:14,gridTemplateColumns:"repeat(auto-fit,minmax(330px,1fr))"}}>
+      <div style={card}>
+        <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>⏱ Days out of service</div>
+        <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>Trailing 12 months, worst 10. Open tickets count from the day they went in.</div>
+        {downByTruck.length===0?<div style={{color:"#94a3b8",padding:12}}>No downtime recorded.</div>
+          :downByTruck.map(d=><FvBarRow key={d.truckId} label={d.truckId} value={d.days+" d"}
+            pct={d.days/maxDown*100} color={FV.c1}/>)}
+      </div>
+      <div style={card}>
+        <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🔩 Spend by reason</div>
+        <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>
+          Trailing 12 months. This is as fine-grained as today's ticket allows — a system code per job would split
+          “Mechanical Repair” into brakes, engine and transmission.
+        </div>
+        {byReason.length===0?<div style={{color:"#94a3b8",padding:12}}>No closed tickets with cost.</div>
+          :byReason.map(x=><div key={x.reason} style={{display:"grid",gridTemplateColumns:"140px 1fr 86px",
+            alignItems:"center",gap:9,padding:"2.5px 0"}}>
+            <span style={{fontSize:11,fontWeight:600,textAlign:"right",color:"#334155"}}>{x.reason}</span>
+            <span style={{height:15,background:"#f1f5f9",borderRadius:"0 4px 4px 0",display:"block"}}>
+              <span style={{display:"block",height:15,width:Math.max(0,x.amt/maxReason*100)+"%",minWidth:2,
+                background:FV.c1,borderRadius:"0 4px 4px 0"}}/></span>
+            <span style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#334155"}}>
+              {fvMoney(x.amt)}<span style={{color:"#94a3b8",fontWeight:500}}> ·{x.n}</span></span>
+          </div>)}
+      </div>
+    </div>
+  </div>;
+}
+
 function TSRow({t,tStat,ec,ev,sev,se,ce,gs,onOOS}){
   const [showManual, setShowManual] = useState(false);
   return <tr style={s.tr}><td style={{...s.td,fontWeight:700,fontFamily:"monospace",color:"#1e293b",position:"sticky",left:0,background:"#fff",zIndex:1}}>{t.id}</td><td style={{...s.td,fontSize:11}}>{t.type==="straight"?t.mk:"Tractor"}</td>
