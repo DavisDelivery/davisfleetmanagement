@@ -109,12 +109,14 @@ var FIREBASE_CONFIG = {
 var VENDOR_QUERIES = {
   "peach state freightliner": `((from:peachstatetrucks.com) OR ((from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com) AND subject:"Parts 20407")) has:attachment`,
   "fuelfox atlanta": `(from:quickbooks@notification.intuit.com subject:"FuelFox Atlanta") has:attachment`,
-  "quick fuel": `from:ebilling@4flyers.com has:attachment`
+  "quick fuel": `from:ebilling@4flyers.com has:attachment`,
+  "complete fleet services": `from:complete.fleet@outlook.com has:attachment`
 };
 var DEFAULT_VENDORS = [
   { name: "FuelFox Atlanta", category: "Fuel" },
   { name: "Peach State Freightliner", category: "Parts" },
-  { name: "Quick Fuel", category: "Fuel" }
+  { name: "Quick Fuel", category: "Fuel" },
+  { name: "Complete Fleet Services", category: "Labor" }
 ];
 var TUNING = {
   BUDGET_MS: 22e3,
@@ -842,6 +844,19 @@ function entryFingerprint(e) {
   ].join("|");
 }
 var TRUCK_IN_DESC = /\b(?:truck|unit)\s*#?\s*(\d{3,5})\b/i;
+function normalizeTruckId(raw, fleetIds) {
+  const id = String(raw == null ? "" : raw).trim();
+  if (!id) return id;
+  const known = fleetIds instanceof Set ? fleetIds : new Set(fleetIds || []);
+  if (known.has(id)) return id;
+  const m = /^[A-Za-z]{1,3}[-\s]?(\d{3,5})$/.exec(id);
+  if (m && known.has(m[1])) return m[1];
+  if (m) {
+    const n = m[1].replace(/^0+/, "");
+    for (const k of known) if (String(k).replace(/^0+/, "") === n) return k;
+  }
+  return id;
+}
 var TANK_GALLONS = 250;
 function splitMultiTruckEntry(e) {
   const lines = Array.isArray(e?.lineItems) ? e.lineItems : [];
@@ -1015,7 +1030,7 @@ async function processOne(item, accessToken, anthropicKey, truckIds, vendors, de
     const built = rows.map((r) => ({
       id: Date.now() + Math.random(),
       date: r.date || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-      truckId: r.truckId || "INVENTORY",
+      truckId: normalizeTruckId(r.truckId || "INVENTORY", truckIds),
       vendor: r.vendor || vendor.name,
       category: r.category || vendor.category || "Other",
       total: Number(r.total) || 0,
@@ -1083,6 +1098,14 @@ Return a JSON array. Each element MUST have:
 The total is ALWAYS one truck's own charge. A fuel service log lists every unit
 filled that day \u2014 return one row per unit, never the document total on a single unit.
 
+
+COMPLETE FLEET SERVICES L.L.C. (complete.fleet@outlook.com): the truck is the last cell of the
+"Service Order | Terms | Due Date | Authorizer | Customer PO | Unit #" row and carries a yard
+prefix \u2014 "BX0424", "GP2883". truckId is THE TRAILING 4 DIGITS ONLY ("BX0424" -> "0424").
+One row for the whole invoice \u2014 the several "Complaint:"/"Subtotal" blocks are jobs on the SAME
+truck. total = the "Total" line after the GEORGIA/HALL COUNTY tax lines, not "Pre-Charge
+Subtotal" and not "Balance Due". invoiceNum "CFS-<number>". category "Labor".
+
 ALSO add ONE meta field on the FIRST element only:
 - _confidence: "high" or "low"
 - _confidenceReason: why low
@@ -1107,6 +1130,27 @@ CRITICAL \u2014 a fuel service log lists EVERY unit filled that day, one row per
 (columns: Unit Number, Gallons, Price Per Gallon, Total Charge). Return ONE OBJECT
 PER UNIT, and set total to that unit's own Total Charge \u2014 NEVER the document total,
 and never the whole delivery pinned on the first unit listed. Skip the "Total" row.
+
+
+SPECIAL RULE FOR COMPLETE FLEET SERVICES L.L.C. (Oakwood GA, complete.fleet@outlook.com):
+- A repair-shop invoice, usually 2 pages. Header shows "Invoice: <number>" and "Date: M/D/YYYY".
+- THE TRUCK comes from the row under the header "Service Order | Terms | Due Date | Authorizer | Customer PO | Unit #".
+  That value carries a yard prefix \u2014 e.g. "BX0424", "GP2883" \u2014 and repeats further down as
+  "Unit: <X>", "Fleet #: <X>", and as the last six characters of the VIN.
+  truckId = THE TRAILING 4 DIGITS ONLY: "BX0424" -> "0424", "GP2883" -> "2883". Never return the prefixed form.
+  If the parenthetical after "Unit:" disagrees with the Unit # cell \u2014 one real invoice reads
+  "Unit: GP2883 (GO2883)" \u2014 trust the Unit # cell.
+- Return EXACTLY ONE object for the whole invoice. These invoices bill ONE truck. Several
+  "Complaint:" blocks each ending in their own "Subtotal" are separate jobs on the SAME truck.
+  Never split them into separate rows or separate trucks.
+- total: the "Total" line near the bottom, AFTER the "GEORGIA" and "HALL COUNTY" tax lines.
+  NOT "Pre-Charge Subtotal", NOT any "Subtotal", and NOT "Balance Due" (that is net of payments).
+- invoiceNum: "CFS-<invoice number>" \u2014 e.g. "CFS-10785".
+- vendor: "Complete Fleet Services"
+- category: "Labor"
+- date: the "Date:" at the top, as YYYY-MM-DD.
+- lineItems: one per "Parts ..." row and per Labor line \u2014 desc = the description as printed, amount = the Amount column.
+- notes: one short line summarising the "Complaint:" text.
 
 ALSO add ONE meta field on the FIRST element only:
 - _confidence: "high" or "low"
@@ -1181,6 +1225,7 @@ var config = {
 };
 export {
   TUNING,
+  VENDOR_QUERIES,
   config,
   auto_sync_default as default
 };

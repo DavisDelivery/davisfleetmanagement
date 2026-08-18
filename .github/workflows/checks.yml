@@ -38,6 +38,9 @@ jobs:
       - name: repairCostLedger fixtures
         run: node ledger.mjs
         working-directory: .uitest
+      - name: prefixed unit numbers resolve to real fleet trucks
+        run: node truck-id.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
@@ -58,6 +61,9 @@ jobs:
         working-directory: .uitest
       - name: dashboard carries both halves of the merged screen
         run: node dashboard-merge.mjs
+        working-directory: .uitest
+      - name: upload boxes accept a dragged file
+        run: node dropzone.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
