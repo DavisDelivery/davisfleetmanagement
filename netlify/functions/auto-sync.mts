@@ -471,6 +471,9 @@ export default async (req: Request) => {
     discovery: { coveredDays: number; done: boolean; vendorIdx: number; pageToken: string | null; epochAt: string; freshAfter: string | null } | null;
   };
   const seen = ((await store.get("seen-messages", { type: "json" }) as any) || {}) as Record<string, 1>;
+  // v2.24.1: per-message failure strikes, so one message Gmail will not serve cannot
+  // stall the whole pipeline forever. Same ladder as the attachment quarantine.
+  const msgFailures = ((await store.get("failed-messages", { type: "json" }) as any) || {}) as Record<string, { count: number; error: string }>;
 
   // Mark running (after the lock check, so a busy bounce never stamps the lock)
   await store.setJSON("sync-state", {
@@ -569,9 +572,9 @@ export default async (req: Request) => {
 
     // ── 4. Crawl (resumable) or freshness check.
     if (!disco.done) {
-      await crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt);
+      await crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt, msgFailures, errors);
     } else {
-      await freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt);
+      await freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt, msgFailures, errors);
     }
 
     // ── 5. Process the queue front under the remaining budget.
@@ -796,6 +799,7 @@ export default async (req: Request) => {
     wq.discovery = disco;
     await store.setJSON("work-queue", wq);
     await store.setJSON("seen-messages", seen);
+    await store.setJSON("failed-messages", msgFailures);
     await store.setJSON("dedup-index", {
       gmailRefs: Array.from(dedupGmailRefs),
       invoiceNums: Array.from(dedupInvoiceNums),
@@ -872,6 +876,7 @@ export default async (req: Request) => {
     try {
       await store.setJSON("work-queue", wq);
       await store.setJSON("seen-messages", seen);
+      await store.setJSON("failed-messages", msgFailures);
       await store.setJSON("dedup-index", {
         gmailRefs: Array.from(dedupGmailRefs),
         invoiceNums: Array.from(dedupInvoiceNums),
@@ -987,7 +992,8 @@ async function reconcileFromLedger(db: any): Promise<{ gmailRefs: Set<string>; i
 async function crawlMailbox(
   accessToken: string, vendors: any[], disco: any, seen: Record<string, 1>,
   dedupGmailRefs: Set<string>, isQuarantined: (r: string) => boolean,
-  enqueue: (item: any, front?: boolean) => void, startedAt: number
+  enqueue: (item: any, front?: boolean) => void, startedAt: number,
+  msgFailures: Record<string, { count: number; error: string }>, errors: string[]
 ) {
   const deadlineAt = startedAt + TUNING.DISCOVERY_MS;
   while (!disco.done && Date.now() < deadlineAt) {
@@ -1005,7 +1011,7 @@ async function crawlMailbox(
     let finishedPage = true;
     for (let i = 0; i < unseen.length; i += TUNING.GET_CONC) {
       if (Date.now() >= deadlineAt) { finishedPage = false; break; }
-      const metas = await Promise.all(unseen.slice(i, i + TUNING.GET_CONC).map((id) => gmailGetMessage(accessToken, id)));
+      const metas = await gmailGetMessages(accessToken, unseen.slice(i, i + TUNING.GET_CONC), msgFailures, seen, errors);
       for (const m of metas) {
         enqueueMessagePdfs(m, vendor, dedupGmailRefs, isQuarantined, enqueue, false);
         seen[m.emailId] = 1;
@@ -1037,7 +1043,8 @@ function finishCrawl(disco: any) {
 async function freshCheck(
   accessToken: string, vendors: any[], disco: any, seen: Record<string, 1>,
   dedupGmailRefs: Set<string>, isQuarantined: (r: string) => boolean,
-  enqueue: (item: any, front?: boolean) => void, startedAt: number
+  enqueue: (item: any, front?: boolean) => void, startedAt: number,
+  msgFailures: Record<string, { count: number; error: string }>, errors: string[]
 ) {
   const after = disco.freshAfter || afterDateStr(TUNING.FRESH_SLACK_DAYS);
   const deadlineAt = startedAt + TUNING.DISCOVERY_MS;
@@ -1048,7 +1055,7 @@ async function freshCheck(
       const page = await gmailList(accessToken, buildVendorQuery(vendor.name, after), pageToken, TUNING.LIST_PAGE);
       const unseen = page.ids.filter((id: string) => !seen[id]);
       for (let i = 0; i < unseen.length; i += TUNING.GET_CONC) {
-        const metas = await Promise.all(unseen.slice(i, i + TUNING.GET_CONC).map((id: string) => gmailGetMessage(accessToken, id)));
+        const metas = await gmailGetMessages(accessToken, unseen.slice(i, i + TUNING.GET_CONC), msgFailures, seen, errors);
         for (const m of metas) {
           enqueueMessagePdfs(m, vendor, dedupGmailRefs, isQuarantined, enqueue, true); // front: newest first
           seen[m.emailId] = 1;
@@ -1285,6 +1292,46 @@ async function gmailList(accessToken: string, q: string, pageToken: string | nul
   const data = await resp.json();
   if (!resp.ok) throw new Error("Gmail search failed: " + JSON.stringify(data).substring(0, 200));
   return { ids: (data.messages || []).map((m: any) => m.id), nextPageToken: data.nextPageToken || null };
+}
+
+/**
+ * v2.24.1: fetch a batch of message payloads WITHOUT letting one bad message kill the run.
+ *
+ * Both crawlers used to do Promise.all(ids.map(gmailGetMessage)). Gmail answered one
+ * message with 400 FAILED_PRECONDITION, that rejection took down the whole Promise.all,
+ * the run aborted — and because the fetch never completed, the id was never written to
+ * the seen-memo. So the next run re-listed the same message, hit the same error, and died
+ * the same way. A single message Google will not serve stalled the entire pipeline
+ * permanently, with 12 items sitting queued behind it.
+ *
+ * Now each message stands on its own. A failure is counted, not fatal. A message that
+ * fails MAX_ATTEMPTS times is memoized as seen so it stops blocking everything behind it,
+ * and is reported — the same shape as the attachment strike ladder. Below that threshold
+ * it is simply skipped and retried on a later run, so a transient 429 or 503 costs
+ * nothing.
+ */
+async function gmailGetMessages(
+  accessToken: string, ids: string[],
+  msgFailures: Record<string, { count: number; error: string }>,
+  seen: Record<string, 1>, errors: string[],
+): Promise<any[]> {
+  const settled = await Promise.all(ids.map(async (id) => {
+    try {
+      const m = await gmailGetMessage(accessToken, id);
+      if (msgFailures[id]) delete msgFailures[id];
+      return m;
+    } catch (e: any) {
+      const msg = String(e?.message || e);
+      const count = (msgFailures[id]?.count || 0) + 1;
+      msgFailures[id] = { count, error: msg };
+      if (count >= TUNING.MAX_ATTEMPTS) {
+        seen[id] = 1;   // stop it re-blocking every future run
+        errors.push(`message ${id}: ${msg.substring(0, 160)} — skipped after ${count} attempts`);
+      }
+      return null;
+    }
+  }));
+  return settled.filter(Boolean);
 }
 
 async function gmailGetMessage(accessToken: string, id: string) {

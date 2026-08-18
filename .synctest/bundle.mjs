@@ -365,6 +365,7 @@ var auto_sync_default = async (req) => {
   const stuckCount = () => Object.values(failures).filter((f) => (f?.count || 0) >= TUNING.MAX_ATTEMPTS).length;
   const wq = await store.get("work-queue", { type: "json" }) || { items: [], discovery: null };
   const seen = await store.get("seen-messages", { type: "json" }) || {};
+  const msgFailures = await store.get("failed-messages", { type: "json" }) || {};
   await store.setJSON("sync-state", {
     ...prevState,
     running: true,
@@ -440,9 +441,9 @@ var auto_sync_default = async (req) => {
     };
     for (const it of releasedItems) if (!dedupGmailRefs.has(it.gmailRef)) enqueue(it, true);
     if (!disco.done) {
-      await crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt);
+      await crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt, msgFailures, errors);
     } else {
-      await freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt);
+      await freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt, msgFailures, errors);
     }
     const newCostsAdds = [];
     const newReviewAdds = [];
@@ -617,6 +618,7 @@ var auto_sync_default = async (req) => {
     wq.discovery = disco;
     await store.setJSON("work-queue", wq);
     await store.setJSON("seen-messages", seen);
+    await store.setJSON("failed-messages", msgFailures);
     await store.setJSON("dedup-index", {
       gmailRefs: Array.from(dedupGmailRefs),
       invoiceNums: Array.from(dedupInvoiceNums),
@@ -675,6 +677,7 @@ var auto_sync_default = async (req) => {
     try {
       await store.setJSON("work-queue", wq);
       await store.setJSON("seen-messages", seen);
+      await store.setJSON("failed-messages", msgFailures);
       await store.setJSON("dedup-index", {
         gmailRefs: Array.from(dedupGmailRefs),
         invoiceNums: Array.from(dedupInvoiceNums),
@@ -771,7 +774,7 @@ async function reconcileFromLedger(db) {
   }
   return { gmailRefs, invoiceNums, fingerprints };
 }
-async function crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt) {
+async function crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt, msgFailures, errors) {
   const deadlineAt = startedAt + TUNING.DISCOVERY_MS;
   while (!disco.done && Date.now() < deadlineAt) {
     const vendor = vendors[disco.vendorIdx];
@@ -797,7 +800,7 @@ async function crawlMailbox(accessToken, vendors, disco, seen, dedupGmailRefs, i
         finishedPage = false;
         break;
       }
-      const metas = await Promise.all(unseen.slice(i, i + TUNING.GET_CONC).map((id) => gmailGetMessage(accessToken, id)));
+      const metas = await gmailGetMessages(accessToken, unseen.slice(i, i + TUNING.GET_CONC), msgFailures, seen, errors);
       for (const m of metas) {
         enqueueMessagePdfs(m, vendor, dedupGmailRefs, isQuarantined, enqueue, false);
         seen[m.emailId] = 1;
@@ -817,7 +820,7 @@ function finishCrawl(disco) {
   disco.done = true;
   disco.freshAfter = afterDateStr(TUNING.FRESH_SLACK_DAYS);
 }
-async function freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt) {
+async function freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQuarantined, enqueue, startedAt, msgFailures, errors) {
   const after = disco.freshAfter || afterDateStr(TUNING.FRESH_SLACK_DAYS);
   const deadlineAt = startedAt + TUNING.DISCOVERY_MS;
   let complete = true;
@@ -827,7 +830,7 @@ async function freshCheck(accessToken, vendors, disco, seen, dedupGmailRefs, isQ
       const page = await gmailList(accessToken, buildVendorQuery(vendor.name, after), pageToken, TUNING.LIST_PAGE);
       const unseen = page.ids.filter((id) => !seen[id]);
       for (let i = 0; i < unseen.length; i += TUNING.GET_CONC) {
-        const metas = await Promise.all(unseen.slice(i, i + TUNING.GET_CONC).map((id) => gmailGetMessage(accessToken, id)));
+        const metas = await gmailGetMessages(accessToken, unseen.slice(i, i + TUNING.GET_CONC), msgFailures, seen, errors);
         for (const m of metas) {
           enqueueMessagePdfs(m, vendor, dedupGmailRefs, isQuarantined, enqueue, true);
           seen[m.emailId] = 1;
@@ -1013,6 +1016,25 @@ async function gmailList(accessToken, q, pageToken, max) {
   const data = await resp.json();
   if (!resp.ok) throw new Error("Gmail search failed: " + JSON.stringify(data).substring(0, 200));
   return { ids: (data.messages || []).map((m) => m.id), nextPageToken: data.nextPageToken || null };
+}
+async function gmailGetMessages(accessToken, ids, msgFailures, seen, errors) {
+  const settled = await Promise.all(ids.map(async (id) => {
+    try {
+      const m = await gmailGetMessage(accessToken, id);
+      if (msgFailures[id]) delete msgFailures[id];
+      return m;
+    } catch (e) {
+      const msg = String(e?.message || e);
+      const count = (msgFailures[id]?.count || 0) + 1;
+      msgFailures[id] = { count, error: msg };
+      if (count >= TUNING.MAX_ATTEMPTS) {
+        seen[id] = 1;
+        errors.push(`message ${id}: ${msg.substring(0, 160)} \u2014 skipped after ${count} attempts`);
+      }
+      return null;
+    }
+  }));
+  return settled.filter(Boolean);
 }
 async function gmailGetMessage(accessToken, id) {
   const r = await fetch(

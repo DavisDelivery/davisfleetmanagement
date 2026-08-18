@@ -90,6 +90,11 @@ globalThis.fetch = async (url, init = {}) => {
     await wait(NET.getDelay, signal);
     const m = GMAIL.find((x) => x.id === getM[1]);
     if (!m) return resp({ error: "not found" }, 404);
+    // Production, 2026-08-18: Gmail answered ONE message with this and the whole run died.
+    if (m.refuse) {
+      COUNTS.get[m.id] = (COUNTS.get[m.id] || 0) + 1;
+      return resp({ error: { code: 400, message: "Precondition check failed.", status: "FAILED_PRECONDITION" } }, 400);
+    }
     COUNTS.get[m.id] = (COUNTS.get[m.id] || 0) + 1;
     return resp({ payload: { headers: [{ name: "Date", value: m.date }, { name: "Subject", value: "inv" }, { name: "From", value: "v" }],
       parts: m.atts.map((a) => ({ filename: a.filename, mimeType: a.mime,
@@ -337,6 +342,47 @@ GMAIL.push(mkMsg("fuelfox", 0, 2, { filename: "FuelFox ServiceLog 07-21.pdf", mu
 }
 
 // ══ S6 — compact mode has no line items to split by ══════════════════════
+// ══ S9 — one message Gmail refuses must not kill the run ════════════════
+// Production, the first run after the horizon widened: Gmail answered a single
+// messages.get with 400 FAILED_PRECONDITION. Promise.all turned that one rejection into
+// a dead run, and because the fetch never completed the id was never written to the
+// seen-memo — so every later run re-listed it, hit the same error and died identically,
+// with 12 items stranded behind it. A message Google will not serve was a permanent
+// outage of the entire sync.
+console.log("\n═ S9 a message Gmail refuses does not stall the pipeline ═");
+resetWorld();
+Object.assign(TUNING, FAST);
+blobSet("truck-ids", ["0154"]);
+{
+  const bad = mkMsg("psf", 0, 1, { num: "REFUSED" }); bad.refuse = true;
+  GMAIL.push(bad);
+  GMAIL.push(mkMsg("psf", 1, 1, { num: "GOOD1" }));
+  GMAIL.push(mkMsg("psf", 2, 2, { num: "GOOD2" }));
+
+  const runs = await drain(30, 20);
+  const last = runs[runs.length - 1];
+  t("the run still completes", last.done === true, JSON.stringify(last).slice(0, 150));
+  t("the healthy invoices behind it still import",
+    ["GOOD1", "GOOD2"].every((n) => allShardEntries().some((e) => e.invoiceNum === n)),
+    JSON.stringify(allShardEntries().map((e) => e.invoiceNum)));
+  t("the refusal is reported, not swallowed",
+    (last.errors || []).some((e) => /Precondition check failed/i.test(e)) || blobGet("failed-messages")["psf-m0"],
+    JSON.stringify(last.errors || []).slice(0, 140));
+  t("it is struck, not retried forever in the same run",
+    (blobGet("failed-messages")["psf-m0"]?.count || 0) >= 1, JSON.stringify(blobGet("failed-messages")));
+}
+{
+  // And it must not re-block every future run: after MAX_ATTEMPTS it is memoized as
+  // seen so the pipeline stops tripping over it.
+  const before = COUNTS.get["psf-m0"] || 0;
+  await drain(30, 20);
+  await drain(30, 20);
+  const seenNow = !!blobGet("seen-messages")["psf-m0"];
+  t("after 3 strikes it stops being re-fetched every run", seenNow,
+    `strikes=${blobGet("failed-messages")["psf-m0"]?.count} seen=${seenNow} fetches=${COUNTS.get["psf-m0"]} (was ${before})`);
+  t("and healthy mail keeps flowing", allShardEntries().length >= 2, `${allShardEntries().length} entries`);
+}
+
 // ══ S7 — a timeout quarantine cools off instead of being a life sentence ══
 // Production had two August FuelFox service logs struck out on AI timeouts while the
 // status line read "✓ All caught up". Nothing would ever have retried them: the only
