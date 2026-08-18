@@ -869,6 +869,17 @@ function App(){
   // check is scoped to the current day; other days use the manual Motive Check.)
   const[motiveLiveFlags,setMotiveLiveFlags]=useState({}); // { truckId: {status, motiveName, boardName, ts} }
   const[motiveLiveOn,setMotiveLiveOn]=useState(true);
+  // v2.23.0 — Classic vs New view on Maintenance & Costs. Defaults to classic,
+  // so production looks exactly as it did until someone presses the switch.
+  // Stored per-device rather than in Firestore: it's a personal preference, and
+  // it must survive a reload without waiting on a network round-trip.
+  const[viewMode,setViewModeState]=useState(()=>{
+    try{const v=localStorage.getItem("fl-view-mode");return v==="new"?"new":"classic";}catch(e){return "classic";}
+  });
+  const setViewMode=useCallback(v=>{
+    setViewModeState(v);
+    try{localStorage.setItem("fl-view-mode",v);}catch(e){}
+  },[]);
   const[motiveDismissAt,setMotiveDismissAt]=useState(0); // hide drift banner for flags older than this
 
   // ── Motive mileage (v2.20.0) ──
@@ -5041,7 +5052,30 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         </div>}
 
         {/* ══ MAINTENANCE ══ */}
-        {tab==="maint"&&(()=>{
+        {/* v2.23.0 — Classic ⇄ New. Same data, two ways of reading it. */}
+        {(tab==="maint"||tab==="costs")&&(
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:14,
+            background:"linear-gradient(90deg,#eef5fb,#f8fbfe)",border:"1px solid #cfe0ef",
+            borderRadius:10,padding:"8px 12px"}}>
+            <span style={{fontSize:11,fontWeight:700,color:C.dark,letterSpacing:.3,textTransform:"uppercase"}}>
+              {tab==="maint"?"Maintenance view":"Cost view"}
+            </span>
+            <div style={{display:"flex",background:"#fff",border:"1px solid #cfe0ef",borderRadius:8,padding:2,gap:2}}>
+              {[["classic","Classic"],["new","New"]].map(([k,l])=>(
+                <button key={k} onClick={()=>setViewMode(k)}
+                  style={{padding:"6px 15px",fontSize:11.5,fontWeight:700,border:"none",borderRadius:6,cursor:"pointer",
+                    background:viewMode===k?C.brand:"transparent",color:viewMode===k?"#fff":"#6b7785"}}>{l}</button>
+              ))}
+            </div>
+            <span style={{fontSize:11,color:"#6b7785",marginLeft:"auto",lineHeight:1.4}}>
+              {viewMode==="classic"
+                ?"The page as you know it. Switch to New for cost per mile and problem-truck flags."
+                :"Rebuilt around miles driven. Everything you had is still under Classic."}
+            </span>
+          </div>
+        )}
+
+        {tab==="maint"&&viewMode==="classic"&&(()=>{
           const {toClose:dupToClose}=findDuplicateOpenRepairs();
           const openCount=repairs.filter(r=>r.status==="open").length;
           return <div>
@@ -5544,8 +5578,14 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         </div>;
         })()}
 
+        {/* v2.23.0 — new maintenance view */}
+        {tab==="maint"&&viewMode==="new"&&
+          <MaintNewView trucks={trucks} repairs={repairs}
+            onOpenTicket={r=>setHistoryTruck(r.truckId)}/>}
+
+
         {/* ══ COSTS / INVOICE SCANNER ══ */}
-        {tab==="costs"&&<div>
+        {tab==="costs"&&viewMode==="classic"&&<div>
           {/* v2.16.7: ledger backup + archive — export the full cost ledger for accounting,
               or archive old invoices out of the active log (they're kept in the database). */}
           <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:16,background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,padding:"10px 12px"}}>
@@ -7138,6 +7178,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           })()}
         </div>}
 
+        {/* v2.23.0 — new cost view */}
+        {tab==="costs"&&viewMode==="new"&&
+          <CostsNewView trucks={trucks} costEntries={costEntries} repairs={repairs}
+            truckMiles={truckMiles} milesMeta={milesMeta}
+            onOpenMotive={()=>openMotiveSync()}/>}
+
+
       </div>
 
       {/* ── Repair Form Modal (from truck status board) ── */}
@@ -7443,6 +7490,539 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 }
 
 // ── Sub-components ──
+/* ══════════════════════════════════════════════════════════════════════════
+   NEW VIEW (v2.23.0) — Maintenance & Costs redesign.
+
+   Lives alongside the classic view, never replaces it. `viewMode` defaults to
+   "classic", so nothing changes for anyone until they press the switch.
+
+   Everything below runs on data that already exists in production: costEntries,
+   repairs, trucks, and the per-truck monthly mileage that now comes from Motive.
+   Nothing here invents a field. Where a number ISN'T derivable from today's
+   schema (VMRS system codes, wrench-vs-wait split, PM intervals, truck resale
+   value) it is simply absent rather than estimated — a made-up denominator is
+   worse than a missing chart.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Validated categorical palette — fixed order, never cycled. Checked for
+   colour-blind separation against the chart surface; the app's C.accent is too
+   light to carry a large fill, so the repair bucket uses a darker step. */
+const FV={c1:"#1e5b92",c2:"#c47a12",c3:"#2596be",c4:"#7b5ea7",c5:"#94a3b8",
+          a1:"#7ba5cc",a2:"#4478ad",a3:"#1e5b92",
+          ok:"#27ae60",warn:"#d4841b",bad:"#c0392b"};
+
+/* The 16 ledger categories collapse into 5 reporting buckets. Kept as one map so
+   a new category can never silently vanish from a chart — anything unmapped
+   falls to Other and still shows up in the totals. */
+const FV_BUCKET={Fuel:"Fuel",Oil:"Scheduled PM",Inspection:"Scheduled PM",Tires:"Tires",
+  Parts:"Repair",Labor:"Repair",Repair:"Repair","Body/Paint":"Repair",Electrical:"Repair",Towing:"Repair",
+  Core:"Repair",Credit:"Repair",
+  Registration:"Other",Insurance:"Other",Other:"Other",Inventory:"Other"};
+const FV_BUCKETS=["Fuel","Repair","Scheduled PM","Tires","Other"];
+const FV_BCOLOR={Fuel:FV.c1,Repair:FV.c2,"Scheduled PM":FV.c3,Tires:FV.c4,Other:FV.c5};
+const fvBucket=cat=>FV_BUCKET[cat]||"Other";
+
+function fvMonths(n,from){
+  const out=[];const d=from?new Date(from):new Date();
+  let y=d.getFullYear(),m=d.getMonth()+1;
+  for(let i=0;i<n;i++){out.push(`${y}-${String(m).padStart(2,"0")}`);m--;if(m===0){m=12;y--;}}
+  return out.reverse();
+}
+function fvMedian(a){const s=a.slice().sort((x,y)=>x-y);if(!s.length)return 0;const h=s.length>>1;return s.length%2?s[h]:(s[h-1]+s[h])/2;}
+const fvMoney=n=>"$"+Math.round(n||0).toLocaleString();
+const fvRate=n=>"$"+(n||0).toFixed(2);
+const fvNum=n=>Math.round(n||0).toLocaleString();
+const fvDays=(a,b)=>Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));
+
+/* Per-truck rollup for a month window. Pure — no React, no globals — so the
+   arithmetic can be tested without a browser. */
+function fvRollup({costEntries,repairs,trucks,truckMiles,months}){
+  const inRange=new Set(months);
+  const per={};
+  const seed=id=>{
+    if(!per[id]){
+      const t=trucks.find(x=>x.id===id)||null;
+      per[id]={truckId:id,t,buckets:{},total:0,miles:0,monthsWithMiles:0,
+               repairCount:0,unsched90:0,downDays:0,openNow:0};
+      FV_BUCKETS.forEach(b=>per[id].buckets[b]=0);
+    }
+    return per[id];
+  };
+  trucks.forEach(t=>seed(t.id));
+
+  (costEntries||[]).forEach(c=>{
+    if(!c||c.truckId==="INVENTORY"||c.category==="Inventory")return;   // not truck-attributed
+    if(!c.truckId)return;
+    const mo=String(c.date||"").slice(0,7);
+    if(!inRange.has(mo))return;
+    const r=seed(c.truckId);
+    // Do NOT re-sign credits. The extraction prompt already stores a credit memo
+    // and a core return as a NEGATIVE total ("Set total to a NEGATIVE number.
+    // NEVER return it as positive"), and the classic costAnalytics sums c.total
+    // raw. Flipping the sign here would turn a $482 credit into $482 of extra
+    // spend — the opposite of what a credit means.
+    const amt=Number(c.total)||0;
+    r.buckets[fvBucket(c.category)]+=amt;
+    r.total+=amt;
+  });
+
+  Object.keys(per).forEach(id=>{
+    const m=(truckMiles||{})[id]||{};
+    let mi=0,have=0;
+    months.forEach(k=>{if(m[k]!==undefined){mi+=m[k];have++;}});
+    per[id].miles=mi;per[id].monthsWithMiles=have;
+  });
+
+  const now=Date.now(),cut90=now-90*86400000;
+  const start=new Date(months[0]+"-01T00:00:00").getTime();
+  (repairs||[]).forEach(r=>{
+    if(!r||!r.truckId)return;
+    const p=seed(r.truckId);
+    const din=new Date(r.dateIn).getTime();
+    if(r.status==="open")p.openNow++;
+    if(!(din>=start))return;
+    p.repairCount++;
+    p.downDays+=r.dateClosed?fvDays(r.dateIn,r.dateClosed):fvDays(r.dateIn,new Date().toISOString());
+    // "Unscheduled" is everything that isn't planned upkeep — the closest this
+    // schema gets to a scheduled/non-scheduled split.
+    if(din>=cut90&&r.reason!=="Planned Maintenance"&&r.reason!=="DOT Inspection")p.unsched90++;
+  });
+
+  Object.values(per).forEach(p=>{
+    p.repairSpend=p.buckets["Repair"]+p.buckets["Scheduled PM"]+p.buckets["Tires"];
+    p.rate=p.miles>0?p.repairSpend/p.miles:null;          // null, never Infinity
+    p.allInRate=p.miles>0?p.total/p.miles:null;
+    p.age=p.t&&p.t.year?(new Date().getFullYear()-Number(p.t.year)):null;
+    p.coverage=months.length?p.monthsWithMiles/months.length:0;
+  });
+  return per;
+}
+
+/* Two independent money signals plus a frequency signal. A truck trips any one
+   of them on its own: rate catches the quietly expensive unit, totals catch the
+   one simply eating the budget, and neither subsumes the other. */
+function fvFlags(p,medRate,medTotal){
+  const f=[];
+  if(p.rate!==null&&medRate>0&&p.rate>medRate*1.5)
+    f.push({k:"rate",label:"Money pit",color:FV.bad,
+      why:`${fvRate(p.rate)}/mi in repairs is ${(p.rate/medRate).toFixed(1)}× the fleet median of ${fvRate(medRate)}`});
+  if(medTotal>0&&p.repairSpend>medTotal*1.5)
+    f.push({k:"total",label:"Big spender",color:FV.bad,
+      why:`${fvMoney(p.repairSpend)} of repairs is ${(p.repairSpend/medTotal).toFixed(1)}× the fleet median of ${fvMoney(medTotal)}`});
+  if(p.unsched90>=3)
+    f.push({k:"freq",label:"Frequent flyer",color:FV.warn,
+      why:`${p.unsched90} unscheduled repairs in the last 90 days`});
+  return f;
+}
+function fvCall(f){
+  if(!f.length)return "";
+  const has=k=>f.some(x=>x.k===k);
+  if(has("rate")&&has("total"))return "Audit invoices";
+  if(has("total")&&!has("rate"))return "Volume, not rate";
+  if(has("rate"))return "Expensive per mile";
+  return "Check repeats";
+}
+
+/* ── small presentational pieces ─────────────────────────────────────────── */
+function FvTile({label,value,sub,color,extra}){
+  return <div style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"12px 13px",minWidth:0}}>
+    <div style={{fontSize:9.5,fontWeight:700,color:"#6b7785",textTransform:"uppercase",letterSpacing:.5}}>{label}</div>
+    <div style={{fontSize:23,fontWeight:800,color:color||"#1e293b",marginTop:3,lineHeight:1.05}}>{value}</div>
+    {sub?<div style={{fontSize:10.5,color:"#94a3b8",marginTop:3,lineHeight:1.35}}>{sub}</div>:null}
+    {extra||null}
+  </div>;
+}
+function FvChip({label,color,title}){
+  return <span title={title||""} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",
+    borderRadius:10,fontSize:10,fontWeight:700,whiteSpace:"nowrap",marginRight:4,
+    background:color+"1a",color:color,border:`1px solid ${color}44`}}>
+    <span style={{width:6,height:6,borderRadius:"50%",background:color}}/>{label}</span>;
+}
+function FvBarRow({label,value,pct,color,flagged}){
+  return <div style={{display:"grid",gridTemplateColumns:"56px 1fr 92px",alignItems:"center",gap:9,padding:"2.5px 0"}}>
+    <span style={{fontSize:11,fontWeight:700,textAlign:"right",fontFamily:"ui-monospace,Menlo,monospace",color:"#334155"}}>#{label}</span>
+    <span style={{height:15,background:"#f1f5f9",borderRadius:"0 4px 4px 0",display:"block"}}>
+      <span style={{display:"block",height:15,width:Math.max(0,Math.min(100,pct))+"%",minWidth:2,
+        background:color,borderRadius:"0 4px 4px 0"}}/></span>
+    <span style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#334155"}}>
+      {value}{flagged?<span style={{color:FV.bad}}> ⚑</span>:null}</span>
+  </div>;
+}
+
+/* ── COSTS — new view ────────────────────────────────────────────────────── */
+function CostsNewView({trucks,costEntries,repairs,truckMiles,milesMeta,onOpenMotive}){
+  const[range,setRange]=useState(12);
+  const[metric,setMetric]=useState("rate");     // rate | allin | dollars
+  const[scope,setScope]=useState("worst");      // worst | flagged | all
+  const[type,setType]=useState("all");
+
+  const months=useMemo(()=>fvMonths(range),[range]);
+  const per=useMemo(()=>fvRollup({costEntries,repairs,trucks,truckMiles,months}),
+    [costEntries,repairs,trucks,truckMiles,months]);
+
+  const rows=useMemo(()=>Object.values(per)
+    .filter(p=>p.t&&(type==="all"||p.t.type===type)),[per,type]);
+
+  const withMiles=rows.filter(p=>p.rate!==null);
+  const medRate=fvMedian(withMiles.map(p=>p.rate));
+  const medTotal=fvMedian(rows.map(p=>p.repairSpend));
+  const flagged=rows.map(p=>({p,f:fvFlags(p,medRate,medTotal)})).filter(x=>x.f.length);
+
+  const totMiles=rows.reduce((s,p)=>s+p.miles,0);
+  const totAll=rows.reduce((s,p)=>s+p.total,0);
+  const totFuel=rows.reduce((s,p)=>s+p.buckets["Fuel"],0);
+  const totRepair=rows.reduce((s,p)=>s+p.repairSpend,0);
+  const mrCpm=totMiles>0?totRepair/totMiles:null;
+  const noMiles=rows.filter(p=>p.rate===null).length;
+
+  // Benchmark band for light/medium-duty M&R + tires. Shown only when we have
+  // enough mileage coverage for the number to mean anything.
+  const band=mrCpm===null?null:(mrCpm<0.18?{t:"✓ under the $0.18–0.22 industry band",ok:true}
+    :mrCpm<=0.22?{t:"✓ inside the $0.18–0.22 industry band",ok:true}
+    :{t:"⚠ above the $0.18–0.22 industry band",ok:false});
+
+  const val=p=>metric==="dollars"?p.repairSpend:(metric==="allin"?p.allInRate:p.rate);
+  const med=metric==="dollars"?medTotal:(metric==="allin"?fvMedian(withMiles.map(p=>p.allInRate)):medRate);
+  const hot=med*1.5;
+  const fmtV=v=>metric==="dollars"?fvMoney(v):fvRate(v);
+
+  let list=rows.filter(p=>val(p)!==null).sort((a,b)=>val(b)-val(a));
+  if(scope==="worst")list=list.slice(0,15);
+  else if(scope==="flagged")list=list.filter(p=>val(p)>hot);
+  const mx=Math.max.apply(null,list.map(val).concat([hot*1.15,1]));
+
+  const btn=(on)=>({padding:"5px 11px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",
+    border:`1px solid ${on?C.dark:"#e2e8f0"}`,background:on?C.dark:"#fff",color:on?"#fff":"#6b7785"});
+  const card={background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14};
+  const th={padding:"8px",textAlign:"left",background:"#f8fafc",color:"#6b7785",fontWeight:700,fontSize:9.5,
+    textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap"};
+  const td={padding:"8px",borderBottom:"1px solid #f1f5f9",whiteSpace:"nowrap",fontSize:12};
+  const tdN={...td,textAlign:"right",fontVariantNumeric:"tabular-nums"};
+
+  return <div>
+    {/* filters */}
+    <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",background:"#fff",
+      border:"1px solid #e2e8f0",borderRadius:10,padding:"9px 11px",marginBottom:14}}>
+      <span style={{fontSize:10,fontWeight:700,color:"#6b7785",textTransform:"uppercase",letterSpacing:.4}}>Range</span>
+      <select value={range} onChange={e=>setRange(Number(e.target.value))} style={{padding:"6px 9px",fontSize:12,
+        background:"#f8fafc",border:"1px solid #d1d9e0",borderRadius:6}}>
+        <option value={3}>Last 3 months</option><option value={6}>Last 6 months</option>
+        <option value={12}>Last 12 months</option><option value={24}>Last 24 months</option>
+      </select>
+      <span style={{fontSize:10,fontWeight:700,color:"#6b7785",textTransform:"uppercase",letterSpacing:.4}}>Fleet</span>
+      <select value={type} onChange={e=>setType(e.target.value)} style={{padding:"6px 9px",fontSize:12,
+        background:"#f8fafc",border:"1px solid #d1d9e0",borderRadius:6}}>
+        <option value="all">All trucks</option><option value="straight">Box trucks</option><option value="tractor">Tractors</option>
+      </select>
+      <span style={{marginLeft:"auto",fontSize:10.5,color:"#94a3b8"}}>
+        {milesMeta&&milesMeta.updatedAt
+          ?<span>Motive mileage synced {new Date(milesMeta.updatedAt).toLocaleDateString()} · {fvNum(totMiles)} mi in range</span>
+          :<span style={{color:C.accent,fontWeight:700,cursor:"pointer"}} onClick={onOpenMotive}>
+             ⚠ No mileage pulled yet — click to sync from Motive</span>}
+      </span>
+    </div>
+
+    {/* tiles */}
+    <div style={{display:"grid",gap:9,gridTemplateColumns:"repeat(auto-fit,minmax(158px,1fr))",marginBottom:14}}>
+      <FvTile label="Total cost / mile" value={totMiles>0?fvRate(totAll/totMiles):"—"}
+        sub={totMiles>0?"everything, fuel included":"needs mileage"}/>
+      <FvTile label="Fuel / mile" value={totMiles>0?fvRate(totFuel/totMiles):"—"} sub="fuel only"/>
+      <FvTile label="Repairs + tires / mile" value={mrCpm===null?"—":fvRate(mrCpm)}
+        sub={band?null:"needs mileage"}
+        extra={band?<div style={{marginTop:4,fontSize:10,fontWeight:600,padding:"2px 6px",borderRadius:4,
+          display:"inline-block",background:band.ok?"#eaf7ef":"#fdecea",color:band.ok?"#1d7a45":"#a3312a"}}>{band.t}</div>:null}/>
+      <FvTile label="Total spend" value={fvMoney(totAll)} sub={`${rows.length} trucks · ${range} mo`}/>
+      <FvTile label="Miles driven" value={totMiles>0?fvNum(totMiles):"—"}
+        sub={noMiles>0?`${noMiles} truck${noMiles>1?"s":""} without mileage`:"from Motive"}
+        color={noMiles>0?C.accent:null}/>
+      <FvTile label="Trucks flagged" value={flagged.length}
+        sub={`median ${medRate?fvRate(medRate):"—"}/mi · ${fvMoney(medTotal)}`}
+        color={flagged.length?FV.bad:FV.ok}/>
+    </div>
+
+    {/* ranking */}
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🚩 Worst trucks — by rate and by total</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px",lineHeight:1.45}}>
+        Ranked against the fleet <b>median</b>, not the average — one bad truck drags an average up until every
+        healthy truck looks below par. Rate and total catch different trucks, which is why both are flags.
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+        <button style={btn(scope==="worst")} onClick={()=>setScope("worst")}>Worst 15</button>
+        <button style={btn(scope==="flagged")} onClick={()=>setScope("flagged")}>Over the line</button>
+        <button style={btn(scope==="all")} onClick={()=>setScope("all")}>All trucks</button>
+        <span style={{width:1,height:20,background:"#e2e8f0",margin:"0 4px"}}/>
+        <button style={btn(metric==="rate")} onClick={()=>setMetric("rate")}>Repair $/mi</button>
+        <button style={btn(metric==="allin")} onClick={()=>setMetric("allin")}>All-in $/mi</button>
+        <button style={btn(metric==="dollars")} onClick={()=>setMetric("dollars")}>Total repair $</button>
+      </div>
+      {list.length===0
+        ?<div style={{padding:20,textAlign:"center",color:"#94a3b8"}}>
+           {metric==="dollars"?"No cost data in this range.":"No mileage yet — pull it from Motive to rank by cost per mile."}</div>
+        :<div style={{position:"relative"}}>
+          <div style={{position:"absolute",left:65,right:92,top:0,bottom:0,pointerEvents:"none"}}>
+            <div style={{position:"absolute",left:(med/mx*100)+"%",top:0,bottom:0,borderLeft:"1px solid #6b7785"}}/>
+            <div style={{position:"absolute",left:(hot/mx*100)+"%",top:0,bottom:0,borderLeft:`1px dashed ${FV.bad}`}}/>
+          </div>
+          {list.map(p=><FvBarRow key={p.truckId} label={p.truckId} value={fmtV(val(p))}
+            pct={val(p)/mx*100} color={val(p)>hot?FV.bad:FV.c1} flagged={val(p)>hot}/>)}
+        </div>}
+      <div style={{display:"flex",gap:18,flexWrap:"wrap",marginTop:11,paddingLeft:65,fontSize:10.5,color:"#6b7785"}}>
+        <span>│ fleet median <b>{fmtV(med)}</b></span>
+        <span style={{color:FV.bad}}>┆ 1.5× median <b>{fmtV(hot)}</b> — flag line</span>
+        <span style={{color:"#94a3b8"}}>{metric==="dollars"
+          ?"Total repair, PM and tire spend — the budget question, not the rate question."
+          :metric==="allin"?"Everything, fuel included."
+          :"Repairs, PM and tires only — fuel measures how hard a truck works, not how sick it is."}</span>
+      </div>
+    </div>
+
+    {/* flags */}
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>⚠️ Trucks that need a decision</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>
+        Each signal has its own published threshold. A truck only has to trip one to appear here.
+      </div>
+      <div style={{overflowX:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <th style={th}>Truck</th><th style={th}>Yr</th><th style={{...th,textAlign:"right"}}>Miles</th>
+          <th style={{...th,textAlign:"right"}}>Repair $</th><th style={{...th,textAlign:"right"}}>vs med $</th>
+          <th style={{...th,textAlign:"right"}}>$/mi</th><th style={{...th,textAlign:"right"}}>vs med rate</th>
+          <th style={{...th,textAlign:"right"}}>Unsched 90d</th><th style={{...th,textAlign:"right"}}>Days down</th>
+          <th style={th}>Flags</th><th style={th}>Call</th>
+        </tr></thead><tbody>
+        {flagged.length===0
+          ?<tr><td colSpan={11} style={{...td,textAlign:"center",color:FV.ok,padding:22}}>Nothing tripped a threshold in this range. 👍</td></tr>
+          :flagged.sort((a,b)=>
+             ((b.p.repairSpend/(medTotal||1))+((b.p.rate||0)/(medRate||1)))
+            -((a.p.repairSpend/(medTotal||1))+((a.p.rate||0)/(medRate||1))))
+           .map(({p,f})=><tr key={p.truckId} style={{background:"#fdf6f5"}}>
+            <td style={td}><span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{p.truckId}</span>
+              <span style={{fontSize:10.5,color:"#94a3b8"}}> {p.t?p.t.mk:""}</span></td>
+            <td style={{...td,color:"#6b7785"}}>{p.t&&p.t.year?p.t.year:"—"}</td>
+            <td style={tdN}>{p.miles>0?fvNum(p.miles):<span style={{color:"#94a3b8"}}>no data</span>}</td>
+            <td style={{...tdN,fontWeight:800}}>{fvMoney(p.repairSpend)}</td>
+            <td style={{...tdN,fontWeight:800,color:medTotal&&p.repairSpend>medTotal*1.5?FV.bad:"#334155"}}>
+              {medTotal?(p.repairSpend/medTotal).toFixed(2)+"×":"—"}</td>
+            <td style={{...tdN,fontWeight:800}}>{p.rate===null?"—":fvRate(p.rate)}</td>
+            <td style={{...tdN,fontWeight:800,color:p.rate!==null&&medRate&&p.rate>medRate*1.5?FV.bad:"#334155"}}>
+              {p.rate===null||!medRate?"—":(p.rate/medRate).toFixed(2)+"×"}</td>
+            <td style={{...tdN,fontWeight:700,color:p.unsched90>=3?FV.warn:"#334155"}}>{p.unsched90}</td>
+            <td style={tdN}>{p.downDays}</td>
+            <td style={td}>{f.map(x=><FvChip key={x.k} label={x.label} color={x.color} title={x.why}/>)}</td>
+            <td style={{...td,fontSize:11.5,color:"#6b7785"}}>{fvCall(f)}</td>
+          </tr>)}
+        </tbody></table>
+      </div>
+      <div style={{fontSize:10.5,color:"#94a3b8",marginTop:8,lineHeight:1.5}}>
+        <b>Money pit</b> — repair cost per mile above 1.5× the fleet median.
+        <b> Big spender</b> — total repair spend above 1.5× the median; catches the high-mileage truck whose rate looks fine but whose cheque doesn't.
+        <b> Frequent flyer</b> — 3 or more unscheduled repairs in 90 days.
+      </div>
+    </div>
+
+    {/* full table */}
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>📒 Every truck</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>The table behind the charts. Sorted by repair cost per mile.</div>
+      <div style={{overflowX:"auto",maxHeight:440,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <th style={{...th,position:"sticky",top:0}}>Truck</th><th style={{...th,position:"sticky",top:0}}>Type</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Miles</th>
+          {FV_BUCKETS.map(b=><th key={b} style={{...th,position:"sticky",top:0,textAlign:"right"}}>{b}</th>)}
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Total</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>$/mi</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Repairs</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Days down</th>
+        </tr></thead><tbody>
+        {rows.slice().sort((a,b)=>(b.rate||-1)-(a.rate||-1)).map(p=>{
+          const f=fvFlags(p,medRate,medTotal);
+          return <tr key={p.truckId} style={f.length?{background:"#fdf6f5"}:null}>
+            <td style={td}><span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{p.truckId}</span>
+              {f.length?<span style={{color:FV.bad}}> ⚑</span>:null}</td>
+            <td style={{...td,fontSize:11,color:"#6b7785"}}>{p.t?(p.t.type==="straight"?"Box":"Tractor"):"—"} · {p.t?p.t.mk:""}</td>
+            <td style={tdN}>{p.miles>0?fvNum(p.miles):<span style={{color:"#94a3b8"}}>—</span>}</td>
+            {FV_BUCKETS.map(b=><td key={b} style={tdN}>{fvMoney(p.buckets[b])}</td>)}
+            <td style={{...tdN,fontWeight:700}}>{fvMoney(p.total)}</td>
+            <td style={{...tdN,fontWeight:800,color:f.length?FV.bad:"#334155"}}>{p.rate===null?"—":fvRate(p.rate)}</td>
+            <td style={tdN}>{p.repairCount}</td>
+            <td style={tdN}>{p.downDays}</td>
+          </tr>;
+        })}
+        </tbody></table>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ── MAINTENANCE — new view ──────────────────────────────────────────────────
+   Everything here comes from the existing repair record. What a professional
+   shop system would also show — VMRS system codes, wrench-vs-wait time, PM
+   intervals, complaint/cause/correction — needs fields this schema doesn't
+   have, so those sections are absent rather than faked. `reason` is the only
+   categorisation available, and it's used as such: a coarse grouping, labelled
+   honestly, not dressed up as a system code. */
+function MaintNewView({trucks,repairs,onOpenTicket}){
+  const[status,setStatus]=useState("open");
+  const[sort,setSort]=useState("days");
+
+  const now=new Date().toISOString();
+  const open=useMemo(()=>(repairs||[]).filter(r=>r.status==="open"),[repairs]);
+  const months12=useMemo(()=>fvMonths(12),[]);
+  const start12=new Date(months12[0]+"-01T00:00:00").getTime();
+  const closed12=useMemo(()=>(repairs||[]).filter(r=>r.status!=="open"&&r.dateClosed
+    &&new Date(r.dateIn).getTime()>=start12),[repairs,start12]);
+
+  // Repeat repair: the same truck back in for the same reason inside 30 days.
+  // `reason` is coarse, so this is a prompt to look, not a verdict — which is
+  // also how the industry treats comeback detection.
+  const repeats=useMemo(()=>{
+    const byTruck={};
+    (repairs||[]).forEach(r=>{(byTruck[r.truckId]=byTruck[r.truckId]||[]).push(r);});
+    const flag=new Set();
+    Object.values(byTruck).forEach(list=>{
+      const s=list.slice().sort((a,b)=>new Date(a.dateIn)-new Date(b.dateIn));
+      for(let i=1;i<s.length;i++)for(let j=i-1;j>=0;j--){
+        if(s[j].reason!==s[i].reason)continue;
+        const gap=fvDays(s[j].dateIn,s[i].dateIn);
+        if(gap<=30)flag.add(s[i].id);
+        break;
+      }
+    });
+    return flag;
+  },[repairs]);
+
+  const byReason=useMemo(()=>{
+    const m={};closed12.forEach(r=>{m[r.reason||"Other"]=(m[r.reason||"Other"]||0)+(Number(r.cost)||0);});
+    return Object.keys(m).map(k=>({reason:k,amt:m[k],n:closed12.filter(r=>(r.reason||"Other")===k).length}))
+      .sort((a,b)=>b.amt-a.amt);
+  },[closed12]);
+
+  const downByTruck=useMemo(()=>{
+    const m={};
+    closed12.forEach(r=>{m[r.truckId]=(m[r.truckId]||0)+fvDays(r.dateIn,r.dateClosed);});
+    open.forEach(r=>{m[r.truckId]=(m[r.truckId]||0)+fvDays(r.dateIn,now);});
+    return Object.keys(m).map(k=>({truckId:k,days:m[k]})).sort((a,b)=>b.days-a.days).slice(0,10);
+  },[closed12,open,now]);
+
+  const shown=useMemo(()=>{
+    const base=status==="open"?open:(repairs||[]).filter(r=>r.status!=="open").slice(0,200);
+    const s=base.slice();
+    if(sort==="days")s.sort((a,b)=>new Date(a.dateIn)-new Date(b.dateIn));
+    else if(sort==="cost")s.sort((a,b)=>(Number(b.cost)||0)-(Number(a.cost)||0));
+    else s.sort((a,b)=>String(a.truckId).localeCompare(String(b.truckId)));
+    return s;
+  },[status,open,repairs,sort]);
+
+  const avgDown=closed12.length?closed12.reduce((s,r)=>s+fvDays(r.dateIn,r.dateClosed),0)/closed12.length:0;
+  const planned=closed12.filter(r=>r.reason==="Planned Maintenance"||r.reason==="DOT Inspection").length;
+  const openRepeat=open.filter(r=>repeats.has(r.id)).length;
+
+  const btn=on=>({padding:"5px 11px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",
+    border:`1px solid ${on?C.dark:"#e2e8f0"}`,background:on?C.dark:"#fff",color:on?"#fff":"#6b7785"});
+  const card={background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14};
+  const th={padding:"8px",textAlign:"left",background:"#f8fafc",color:"#6b7785",fontWeight:700,fontSize:9.5,
+    textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap"};
+  const td={padding:"8px",borderBottom:"1px solid #f1f5f9",whiteSpace:"nowrap",fontSize:12};
+  const tdN={...td,textAlign:"right",fontVariantNumeric:"tabular-nums"};
+  const maxReason=byReason.length?byReason[0].amt:1;
+  const maxDown=downByTruck.length?downByTruck[0].days:1;
+
+  return <div>
+    <div style={{display:"grid",gap:9,gridTemplateColumns:"repeat(auto-fit,minmax(158px,1fr))",marginBottom:14}}>
+      <FvTile label="Trucks down now" value={new Set(open.map(r=>r.truckId)).size}
+        sub={`${open.length} open ticket${open.length===1?"":"s"}`} color={open.length?FV.bad:FV.ok}/>
+      <FvTile label="Longest open" value={open.length?Math.max.apply(null,open.map(r=>fvDays(r.dateIn,now)))+" d":"—"}
+        sub="days since it went in"/>
+      <FvTile label="Avg days down" value={avgDown.toFixed(1)} sub={`${closed12.length} closed, 12 mo`}/>
+      <FvTile label="Planned work" value={closed12.length?Math.round(100*planned/closed12.length)+"%":"—"}
+        sub="target 70–80% of all repairs" color={closed12.length&&planned/closed12.length<0.5?FV.warn:null}/>
+      <FvTile label="Repeat visits" value={openRepeat} sub="same reason inside 30 days"
+        color={openRepeat?FV.warn:FV.ok}/>
+      <FvTile label="Repair spend" value={fvMoney(closed12.reduce((s,r)=>s+(Number(r.cost)||0),0))}
+        sub="closed tickets, 12 mo"/>
+    </div>
+
+    <div style={card}>
+      <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🔧 Shop board</div>
+      <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>
+        Sortable, so the ticket that's been sitting longest is one click away instead of buried in a card.
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+        <button style={btn(status==="open")} onClick={()=>setStatus("open")}>Open ({open.length})</button>
+        <button style={btn(status==="closed")} onClick={()=>setStatus("closed")}>Recently closed</button>
+        <span style={{width:1,height:20,background:"#e2e8f0",margin:"0 4px"}}/>
+        <button style={btn(sort==="days")} onClick={()=>setSort("days")}>Longest first</button>
+        <button style={btn(sort==="cost")} onClick={()=>setSort("cost")}>Most expensive</button>
+        <button style={btn(sort==="truck")} onClick={()=>setSort("truck")}>By truck</button>
+      </div>
+      <div style={{overflowX:"auto",maxHeight:460,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <th style={{...th,position:"sticky",top:0}}>Truck</th>
+          <th style={{...th,position:"sticky",top:0}}>Reason</th>
+          <th style={{...th,position:"sticky",top:0}}>What's wrong</th>
+          <th style={{...th,position:"sticky",top:0}}>Shop</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Days down</th>
+          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Cost</th>
+        </tr></thead><tbody>
+        {shown.length===0
+          ?<tr><td colSpan={6} style={{...td,textAlign:"center",color:"#94a3b8",padding:22}}>Nothing here.</td></tr>
+          :shown.map(r=>{
+            const t=trucks.find(x=>x.id===r.truckId);
+            const d=r.status==="open"?fvDays(r.dateIn,now):fvDays(r.dateIn,r.dateClosed||now);
+            const log=r.notesLog&&r.notesLog.length?r.notesLog:(r.notes?[{text:r.notes}]:[]);
+            const openItems=log.filter(e=>e&&!e.done).length;
+            return <tr key={r.id} style={{cursor:onOpenTicket?"pointer":"default"}}
+              onClick={()=>onOpenTicket&&onOpenTicket(r)}>
+              <td style={td}>
+                <span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{r.truckId}</span>
+                <span style={{fontSize:10.5,color:"#94a3b8"}}> {t?(t.type==="straight"?t.mk:"Tractor"):""}</span>
+                {repeats.has(r.id)?<FvChip label="⟳ repeat" color={FV.warn}
+                  title="Same reason on this truck within 30 days — worth a look before it's a breakdown"/>:null}
+              </td>
+              <td style={{...td,fontSize:11.5,color:"#6b7785"}}>{r.reason}</td>
+              <td style={{...td,whiteSpace:"normal",maxWidth:280,fontSize:11.5}}>
+                {log.length?log[0].text:<span style={{color:"#cbd5e1"}}>—</span>}
+                {log.length>1?<span style={{color:"#94a3b8"}}> +{log.length-1} more{openItems?` · ${openItems} open`:""}</span>:null}
+              </td>
+              <td style={{...td,fontSize:11,color:"#6b7785"}}>{r.shop||"—"}</td>
+              <td style={{...tdN,fontWeight:800,color:d>7?FV.bad:(d>3?FV.warn:"#334155")}}>{d}</td>
+              <td style={tdN}>{Number(r.cost)?fvMoney(r.cost):<span style={{color:"#cbd5e1"}}>—</span>}</td>
+            </tr>;
+          })}
+        </tbody></table>
+      </div>
+    </div>
+
+    <div style={{display:"grid",gap:14,gridTemplateColumns:"repeat(auto-fit,minmax(330px,1fr))"}}>
+      <div style={card}>
+        <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>⏱ Days out of service</div>
+        <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>Trailing 12 months, worst 10. Open tickets count from the day they went in.</div>
+        {downByTruck.length===0?<div style={{color:"#94a3b8",padding:12}}>No downtime recorded.</div>
+          :downByTruck.map(d=><FvBarRow key={d.truckId} label={d.truckId} value={d.days+" d"}
+            pct={d.days/maxDown*100} color={FV.c1}/>)}
+      </div>
+      <div style={card}>
+        <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🔩 Spend by reason</div>
+        <div style={{fontSize:11,color:"#6b7785",margin:"3px 0 11px"}}>
+          Trailing 12 months. This is as fine-grained as today's ticket allows — a system code per job would split
+          “Mechanical Repair” into brakes, engine and transmission.
+        </div>
+        {byReason.length===0?<div style={{color:"#94a3b8",padding:12}}>No closed tickets with cost.</div>
+          :byReason.map(x=><div key={x.reason} style={{display:"grid",gridTemplateColumns:"140px 1fr 86px",
+            alignItems:"center",gap:9,padding:"2.5px 0"}}>
+            <span style={{fontSize:11,fontWeight:600,textAlign:"right",color:"#334155"}}>{x.reason}</span>
+            <span style={{height:15,background:"#f1f5f9",borderRadius:"0 4px 4px 0",display:"block"}}>
+              <span style={{display:"block",height:15,width:Math.max(0,x.amt/maxReason*100)+"%",minWidth:2,
+                background:FV.c1,borderRadius:"0 4px 4px 0"}}/></span>
+            <span style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#334155"}}>
+              {fvMoney(x.amt)}<span style={{color:"#94a3b8",fontWeight:500}}> ·{x.n}</span></span>
+          </div>)}
+      </div>
+    </div>
+  </div>;
+}
+
 function TSRow({t,tStat,ec,ev,sev,se,ce,gs,onOOS}){
   const [showManual, setShowManual] = useState(false);
   return <tr style={s.tr}><td style={{...s.td,fontWeight:700,fontFamily:"monospace",color:"#1e293b",position:"sticky",left:0,background:"#fff",zIndex:1}}>{t.id}</td><td style={{...s.td,fontSize:11}}>{t.type==="straight"?t.mk:"Tractor"}</td>
