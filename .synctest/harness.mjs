@@ -490,5 +490,68 @@ GMAIL.push(mkMsg("fuelfox", 0, 1, { num: "SL-NODETAIL", truck: "0424", total: 68
   t("with a reason that names the problem", /gallons on one truck/.test(rq[0]?.confidenceReason || ""), rq[0]?.confidenceReason);
 }
 
+// ══ S10 — the same collapsed log, but the parse recorded no gallons ═══════
+// S6 above only passes because the compact parse happened to return a gallons
+// figure. Usually it does not: a compact pass returns a total and little else. The
+// gallons gate is then `Number(undefined) > 250`, which is false, and nothing looked
+// at the dollar amount at all — so a whole $6,801 delivery imported straight onto
+// 0424, the lowest unit number in this fleet and therefore the one printed first on
+// most service logs. Reported twice from production as "0424 has not had 500k spent
+// on it". splitMultiTruck cannot help here: with no line items there is nothing to
+// split by, and no later pass ever questions the row again.
+console.log("\n═ S10 a collapsed log with no gallons figure is still stopped ═");
+resetWorld();
+Object.assign(TUNING, FAST);
+blobSet("truck-ids", ["0424", "0451"]);
+GMAIL.push(mkMsg("fuelfox", 0, 1, { num: "SL-NOGALLONS", truck: "0424", total: 6801.56 }));
+{
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const r = await orig(url, init);
+    if (!String(url).includes("api.anthropic.com")) return r;
+    const d = await r.json();
+    const rows = JSON.parse(d.content[0].text);
+    // Exactly what a compact pass yields: a total, and nothing to check it against.
+    if (rows[0].invoiceNum === "SL-NOGALLONS") {
+      rows[0].lineItems = []; delete rows[0].gallons; rows[0].category = "Fuel";
+    }
+    return resp({ content: [{ text: JSON.stringify(rows) }] });
+  };
+  await drain(30, 20);
+  globalThis.fetch = orig;
+  t("a whole $6,801 delivery never reaches the ledger", allShardEntries().length === 0,
+    JSON.stringify(allShardEntries().map((e) => `${e.truckId}:${e.total}`)));
+  const rq = readList("fl-review-queue");
+  t("it is queued for review instead", rq.length === 1, `review=${rq.length}`);
+  t("with a reason that names the amount, not gallons it never had",
+    /of fuel on one truck/.test(rq[0]?.confidenceReason || ""), rq[0]?.confidenceReason);
+}
+
+// An ordinary fill must still import untouched — a backstop that queues real fuel
+// would just move the problem into the 425-item review queue.
+console.log("\n═ S11 an ordinary fill still imports ═");
+resetWorld();
+Object.assign(TUNING, FAST);
+blobSet("truck-ids", ["0424", "0451"]);
+GMAIL.push(mkMsg("fuelfox", 0, 1, { num: "SL-NORMAL", truck: "0424", total: 353.09 }));
+{
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const r = await orig(url, init);
+    if (!String(url).includes("api.anthropic.com")) return r;
+    const d = await r.json();
+    const rows = JSON.parse(d.content[0].text);
+    if (rows[0].invoiceNum === "SL-NORMAL") {
+      rows[0].lineItems = []; delete rows[0].gallons; rows[0].category = "Fuel";
+    }
+    return resp({ content: [{ text: JSON.stringify(rows) }] });
+  };
+  await drain(30, 20);
+  globalThis.fetch = orig;
+  t("a $353 fill lands in the ledger", allShardEntries().some((e) => e.invoiceNum === "SL-NORMAL"),
+    JSON.stringify(allShardEntries().map((e) => `${e.truckId}:${e.total}`)));
+  t("and is not queued for review", readList("fl-review-queue").length === 0);
+}
+
 console.log(`\n${pass + fail} checks: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

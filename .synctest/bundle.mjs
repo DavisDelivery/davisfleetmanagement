@@ -906,6 +906,8 @@ function normalizeTruckId(raw, fleetIds) {
   return id;
 }
 var TANK_GALLONS = 250;
+var MAX_PLAUSIBLE_PPG = 6;
+var FUEL_ROW_MAX = Math.round(TANK_GALLONS * MAX_PLAUSIBLE_PPG * 2);
 function splitMultiTruckEntry(e) {
   const lines = Array.isArray(e?.lineItems) ? e.lineItems : [];
   const per = /* @__PURE__ */ new Map();
@@ -1317,6 +1319,9 @@ function evaluateConfidence(entries, vendor, truckIds, vendors) {
     }
     if (e.truckId !== "INVENTORY" && Number(e.gallons) > TANK_GALLONS) {
       return { level: "low", reason: `${e.gallons} gallons on one truck \u2014 likely a whole service log booked to truck ${e.truckId}` };
+    }
+    if (e.truckId !== "INVENTORY" && String(e.category || "").toLowerCase() === "fuel" && Number(e.total) > FUEL_ROW_MAX) {
+      return { level: "low", reason: `$${Number(e.total).toFixed(2)} of fuel on one truck in one transaction \u2014 more than two full tanks; likely a whole service log booked to truck ${e.truckId}` };
     }
   }
   return { level: "high", reason: "All fields valid" };

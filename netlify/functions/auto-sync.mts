@@ -1173,6 +1173,11 @@ function normalizeTruckId(raw: any, fleetIds: string[] | Set<string>): string {
 // Generous ceiling on one fill: the largest tank here is ~150 gal, and the collapsed
 // service logs carried 700–1,500. Anything between is ambiguous, so it passes.
 const TANK_GALLONS = 250;
+// Mirror of FUEL_ROW_MAX in App.jsx — change one, change both. Two full tanks at the
+// worst diesel price this fleet has paid ($6.00/gal), so an ordinary same-day double
+// fill on one invoice still passes and only a document total trips it.
+const MAX_PLAUSIBLE_PPG = 6.00;
+const FUEL_ROW_MAX = Math.round(TANK_GALLONS * MAX_PLAUSIBLE_PPG * 2);   // $3,000
 
 /**
  * One row whose line items name several trucks is a DOCUMENT total, not a truck's
@@ -1702,6 +1707,18 @@ function evaluateConfidence(entries: any[], vendor: any, truckIds: string[], ven
     // rather than silently landing another four-figure charge on one truck.
     if (e.truckId !== "INVENTORY" && Number(e.gallons) > TANK_GALLONS) {
       return { level: "low", reason: `${e.gallons} gallons on one truck — likely a whole service log booked to truck ${e.truckId}` };
+    }
+    // v2.24.6: the gallons gate above only fires when the parse RECORDED gallons, and
+    // the rows that most need catching are exactly the ones that did not — a
+    // compact-mode parse of a big service-log PDF returns a total and little else, so
+    // `Number(undefined) > 250` is false and the row sails through. That is the hole a
+    // whole $6,801 delivery fits through, and how one unit accumulated six figures it
+    // never burned. Judge the money when the gallons are missing: a 250-gallon tank
+    // cannot take on more than ~$1,500 of diesel even at the worst price this fleet has
+    // paid, so the ceiling here is double that and a same-day double fill is still fine.
+    if (e.truckId !== "INVENTORY" && String(e.category || "").toLowerCase() === "fuel"
+        && Number(e.total) > FUEL_ROW_MAX) {
+      return { level: "low", reason: `$${Number(e.total).toFixed(2)} of fuel on one truck in one transaction — more than two full tanks; likely a whole service log booked to truck ${e.truckId}` };
     }
   }
   return { level: "high", reason: "All fields valid" };
