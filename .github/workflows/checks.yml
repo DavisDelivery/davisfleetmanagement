@@ -77,6 +77,9 @@ jobs:
       - name: weekly board rows are a uniform height
         run: node board-row-height.mjs
         working-directory: .uitest
+      - name: quick-add a missing roster truck clears its queue items
+        run: node review-queue-quickadd.mjs
+        working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
   sync:
