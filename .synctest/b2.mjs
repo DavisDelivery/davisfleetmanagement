@@ -186,6 +186,8 @@ var FS_HARD_BYTES = 104e4;
 var MEMO_VERSION = 2;
 var QUARANTINE_RULES_VERSION = 3;
 var utf8Len = (s) => Buffer.byteLength(s, "utf8");
+var __idSeq = 0;
+var newId = () => `e${Date.now().toString(36)}-${(__idSeq++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 var shardName = (base, i) => i === 0 ? base : `${base}_${i + 1}`;
 function shardIndexOf(base, id) {
   if (id === base) return 0;
@@ -505,7 +507,7 @@ var auto_sync_default = async (req) => {
         pendingRefs.set(r.gmailRef, "cost");
       } else {
         newReviewAdds.push({
-          id: Date.now() + Math.random(),
+          id: newId(),
           gmailRef: r.gmailRef,
           vendor: r.vendor,
           filename: r.filename,
@@ -918,11 +920,11 @@ function splitMultiTruckEntry(e) {
   const gallons = Number(e.gallons) || 0;
   const baseNum = e.invoiceNum ? String(e.invoiceNum) : "";
   const stamp = `Split from a ${per.size}-truck service log (document total $${stated.toFixed(2)}).`;
-  const out = [...per.entries()].map(([truckId, amt], i) => ({
+  const out = [...per.entries()].map(([truckId, amt]) => ({
     ...e,
     // Distinct id and invoiceNum per truck: siblings sharing either would be culled
     // by the shard-level dedup on the way in.
-    id: Date.now() + Math.random() + i,
+    id: newId(),
     truckId,
     total: Math.round(amt * 100) / 100,
     gallons: gallons && lineSum > 0 ? Math.round(gallons * amt / lineSum * 10) / 10 : null,
@@ -933,7 +935,7 @@ function splitMultiTruckEntry(e) {
   const rest = Math.round((stated - lineSum) * 100) / 100;
   if (rest > 0.5) out.push({
     ...e,
-    id: Date.now() + Math.random() + per.size,
+    id: newId(),
     truckId: "INVENTORY",
     total: rest,
     gallons: null,
@@ -1129,7 +1131,7 @@ async function processOne(item, accessToken, anthropicKey, truckIds, vendors, de
     }
     const rows = Array.isArray(parsed) ? parsed : [parsed];
     const built = rows.map((r) => ({
-      id: Date.now() + Math.random(),
+      id: newId(),
       date: r.date || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
       truckId: normalizeTruckId(r.truckId || "INVENTORY", truckIds),
       vendor: r.vendor || vendor.name,

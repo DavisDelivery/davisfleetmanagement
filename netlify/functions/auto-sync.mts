@@ -212,6 +212,15 @@ const QUARANTINE_RULES_VERSION = 3;
 
 const utf8Len = (s: string) => Buffer.byteLength(s, "utf8");
 
+// v2.24.5: mirror of newId() in App.jsx — change one, change both. `Date.now() +
+// Math.random()` is NOT unique: at a 2026-era epoch (~1.79e12) a double has only
+// ~4096 distinct fractional slots left below the integer part, so a batch of rows
+// built in one synchronous pass — which is exactly what parsing one multi-row
+// invoice and splitting one service log both do — collides constantly. The browser
+// dedups the ledger BY id on load, so a collision there deletes a real invoice.
+let __idSeq = 0;
+const newId = () => `e${Date.now().toString(36)}-${(__idSeq++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
 // Sharded list: index 0 keeps the original key (so existing data and every client
 // that reads only the base key still work), overflow goes to `<base>_2`, `_3`, …
 const shardName = (base: string, i: number) => (i === 0 ? base : `${base}_${i + 1}`);
@@ -656,7 +665,7 @@ export default async (req: Request) => {
         pendingRefs.set(r.gmailRef, "cost");
       } else {
         newReviewAdds.push({
-          id: Date.now() + Math.random(),
+          id: newId(),
           gmailRef: r.gmailRef,
           vendor: r.vendor,
           filename: r.filename,
@@ -1190,11 +1199,11 @@ function splitMultiTruckEntry(e: any): any[] {
   const gallons = Number(e.gallons) || 0;
   const baseNum = e.invoiceNum ? String(e.invoiceNum) : "";
   const stamp = `Split from a ${per.size}-truck service log (document total $${stated.toFixed(2)}).`;
-  const out = [...per.entries()].map(([truckId, amt], i) => ({
+  const out = [...per.entries()].map(([truckId, amt]) => ({
     ...e,
     // Distinct id and invoiceNum per truck: siblings sharing either would be culled
     // by the shard-level dedup on the way in.
-    id: Date.now() + Math.random() + i,
+    id: newId(),
     truckId,
     total: Math.round(amt * 100) / 100,
     gallons: gallons && lineSum > 0 ? Math.round((gallons * amt / lineSum) * 10) / 10 : null,
@@ -1205,7 +1214,7 @@ function splitMultiTruckEntry(e: any): any[] {
   const rest = Math.round((stated - lineSum) * 100) / 100;
   if (rest > 0.5) out.push({
     ...e,
-    id: Date.now() + Math.random() + per.size,
+    id: newId(),
     truckId: "INVENTORY",
     total: rest,
     gallons: null,
@@ -1455,7 +1464,7 @@ async function processOne(
     // Normalize: parsed is an array of entries
     const rows = Array.isArray(parsed) ? parsed : [parsed];
     const built = rows.map((r: any) => ({
-      id: Date.now() + Math.random(),
+      id: newId(),
       date: r.date || new Date().toISOString().split("T")[0],
       truckId: normalizeTruckId(r.truckId || "INVENTORY", truckIds),
       vendor: r.vendor || vendor.name,

@@ -47,6 +47,9 @@ jobs:
       - name: completion timestamps keep their time
         run: node repair-time.mjs
         working-directory: .uitest
+      - name: invoice ids are unique, so the ledger never drops a row
+        run: node entry-ids.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.

@@ -1,6 +1,6 @@
 {
   "name": "davis-fleet-management",
-  "version": "2.24.4",
+  "version": "2.24.5",
   "private": true,
   "scripts": {
     "check": "esbuild App.jsx --loader:.jsx=jsx --outfile=/dev/null"

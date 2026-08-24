@@ -1,4 +1,4 @@
-const APP_VERSION = "2.24.4";
+const APP_VERSION = "2.24.5";
 const DAVIS_LOGO = "data:image/jpeg;base64,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";
 
 const ST = [
@@ -217,9 +217,40 @@ const shardName=(base,i)=>i===0?base:`${base}_${i+1}`;
 // Strict index parse: Number() would coerce " 2"/"+2"/"2\n" onto a real slot, so two
 // different documents could claim the same shard and one would overwrite the other.
 const shardIndexOf=(base,id)=>{if(id===base)return 0;if(!id.startsWith(base+"_"))return null;const s=id.slice(base.length+1);if(!/^[1-9][0-9]*$/.test(s))return null;const n=Number(s);return n>=2?n-1:null;};
+// v2.24.5: ids have to be genuinely unique — several places dedup ON them, and a
+// collision does not merge two views of one row, it DELETES a real one. The old
+// `Date.now()+Math.random()` reads as unique but is not: at a 2026-era epoch
+// (~1.79e12) a double has only ~4096 distinct fractional slots left below the
+// integer part, so Math.random() is quantised to ~1/4096. A batch of 100 rows
+// built in the same millisecond collides ~72% of the time — and batch import and
+// batch approve do exactly that, hundreds of rows in one synchronous pass.
+// Sequence first (unique within a session however fast the loop runs), then time
+// and randomness for cross-session and cross-device uniqueness.
+let __idSeq=0;
+function newId(){return `e${Date.now().toString(36)}-${(__idSeq++).toString(36)}-${Math.random().toString(36).slice(2,8)}`;}
 // Shards are rewritten one document at a time, so a reader can catch a torn layout
 // where an item briefly appears in both its old and new shard. Merge by id.
-function dedupById(items){const seen=new Set();const out=[];for(const it of items){const k=it&&it.id!=null?String(it.id):null;if(k!==null){if(seen.has(k))continue;seen.add(k);}out.push(it);}return out;}
+//
+// Two rows sharing an id are only the SAME row if they carry the same content: a
+// torn-shard copy is byte-identical, because it is the same JSON written to two
+// documents. Rows that share an id but differ are two different invoices that
+// collided under the old generator — dropping one is how money went missing, so
+// they are kept and the later one is re-keyed. Existing data already carries those
+// collisions, so healing here is what makes the ledger whole again, not just the
+// new-id generator above.
+function dedupById(items){
+  const seen=new Map();const out=[];
+  for(const it of items){
+    const k=it&&it.id!=null?String(it.id):null;
+    if(k===null){out.push(it);continue;}
+    const prev=seen.get(k);
+    if(prev===undefined){seen.set(k,it);out.push(it);continue;}
+    if(JSON.stringify(prev)===JSON.stringify(it))continue;   // torn-shard copy of one row
+    const fresh={...it,id:newId()};                          // real row that collided — keep it
+    seen.set(String(fresh.id),fresh);out.push(fresh);
+  }
+  return out;
+}
 // v2.19.1: decide which rows of a month shard a browser write must preserve.
 // The server appends to these shards while a tab is open, so overwriting one from a
 // page-load snapshot deletes whatever was imported in between. A server insert and a
@@ -348,9 +379,9 @@ function splitMultiTruckEntry(e){
   const gallons=Number(e.gallons)||0;
   const baseNum=e.invoiceNum?String(e.invoiceNum):"";
   const stamp=`Split from a ${per.size}-truck service log (document total $${stated.toFixed(2)}).`;
-  const out=[...per.entries()].map(([truckId,amt],i)=>({
+  const out=[...per.entries()].map(([truckId,amt])=>({
     ...e,
-    id:Date.now()+Math.random()+i,
+    id:newId(),
     truckId,
     total:Math.round(amt*100)/100,
     gallons:gallons&&lineSum>0?Math.round((gallons*amt/lineSum)*10)/10:null,
@@ -361,7 +392,7 @@ function splitMultiTruckEntry(e){
   const rest=Math.round((stated-lineSum)*100)/100;
   if(rest>0.5)out.push({
     ...e,
-    id:Date.now()+Math.random()+per.size,
+    id:newId(),
     truckId:"INVENTORY",
     total:rest,
     gallons:null,
@@ -563,11 +594,22 @@ function App(){
       const docs=await Promise.all(keys.map(k=>(cached&&cached[k]!==undefined)?Promise.resolve({key:k,value:cached[k]}):window.storage.get(k).catch(()=>null)));
       const legacyIdx=keys.indexOf("fl-costs");
       const legacyArr=legacyIdx>=0?pj(docs[legacyIdx],[]):[];
-      const byId=new Map();const noId=[];
-      // process legacy first, shards after → a shard copy wins on any id collision
-      const ordered=keys.map((k,i)=>({k,r:docs[i]})).sort((a,b)=>(a.k==="fl-costs"?-1:b.k==="fl-costs"?1:0));
-      for(const{r}of ordered){const arr=pj(r,[]);if(Array.isArray(arr))for(const e of arr){if(e&&e.id!=null)byId.set(e.id,e);else noId.push(e);}}
-      const costs=[...byId.values(),...noId];
+      // v2.24.5: this used to be a plain `byId.set(e.id,e)` over every document, which
+      // silently DROPPED any two rows that shared an id — and under the old id generator
+      // a large batch produced those constantly, so real invoices vanished from the
+      // ledger on load and stayed gone the next time this tab saved. dedupById still
+      // collapses a torn-shard copy (byte-identical) but now keeps rows that merely
+      // collided, re-keying the later one.
+      const shardRows=[],legacyRows=[];
+      for(const{k,r}of keys.map((k,i)=>({k,r:docs[i]}))){
+        const arr=pj(r,[]);
+        if(Array.isArray(arr))(k==="fl-costs"?legacyRows:shardRows).push(...arr);
+      }
+      const healed=dedupById(shardRows);
+      // A shard copy still wins over the legacy monolith for the same row.
+      const shardIds=new Set(healed.filter(e=>e&&e.id!=null).map(e=>String(e.id)));
+      const legacyKeep=dedupById(legacyRows).filter(e=>!(e&&e.id!=null&&shardIds.has(String(e.id))));
+      const costs=[...legacyKeep,...healed];
       setCostEntries(costs);
       const groups={};for(const e of costs){const k=costShardKey(e);(groups[k]||(groups[k]=[])).push(e);}
       const ref={};for(const k of Object.keys(groups))ref[k]=JSON.stringify(groups[k]);
@@ -2121,7 +2163,7 @@ Format your response as clear sections with headers using ** for bold. Use speci
         }
         const origDataUrl=`data:application/pdf;base64,${b64Clean}`;
         newItems.push({
-          id:Date.now()+Math.random(),
+          id:newId(),
           file:`${att.filename} (${pageCount}pg)`,
           dataUrl:origDataUrl,
           pdfText,
@@ -2131,7 +2173,7 @@ Format your response as clear sections with headers using ** for bold. Use speci
         });
       }else if(att.mimeType&&att.mimeType.startsWith("image/")){
         const dataUrl=`data:${att.mimeType};base64,${b64Final}`;
-        newItems.push({id:Date.now()+Math.random(),file:att.filename,dataUrl,status:"ready",parsed:null,type:"image",origFileName:att.filename,origMimeType:att.mimeType,origDataUrl:dataUrl,gmailRef:gmailTag});
+        newItems.push({id:newId(),file:att.filename,dataUrl,status:"ready",parsed:null,type:"image",origFileName:att.filename,origMimeType:att.mimeType,origDataUrl:dataUrl,gmailRef:gmailTag});
       }
       if(newItems.length>0){
         setScanQueue(prev=>[...prev,...newItems]);
@@ -2176,7 +2218,7 @@ Format your response as clear sections with headers using ** for bold. Use speci
                     newRetired.add(row.truckId);
                   }
                   newEntries.push({
-                    id:Date.now()+Math.random(),
+                    id:newId(),
                     truckId:isInv?"INVENTORY":row.truckId,
                     vendor:normalizeVendor(row.vendor),
                     date:row.date||todayYMD(),
@@ -2240,7 +2282,7 @@ Format your response as clear sections with headers using ** for bold. Use speci
           pdfText=pages.join("\n\n");
         }catch(e){console.log("PDF text extraction failed:",e.message);}
         queue.push({
-          id:Date.now()+Math.random(),
+          id:newId(),
           file:`${file.name} (${pageCount}pg)`,
           dataUrl:pdfBytes,
           pdfText,
@@ -2249,7 +2291,7 @@ Format your response as clear sections with headers using ** for bold. Use speci
         });
       }else if(file.type.startsWith("image/")){
         const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file);});
-        queue.push({id:Date.now()+Math.random(),file:file.name,dataUrl,status:"ready",parsed:null,type:"image",origFileName:file.name,origMimeType:file.type,origDataUrl:dataUrl});
+        queue.push({id:newId(),file:file.name,dataUrl,status:"ready",parsed:null,type:"image",origFileName:file.name,origMimeType:file.type,origDataUrl:dataUrl});
       }
     }
     setScanQueue(prev=>[...prev,...queue]);
@@ -2842,7 +2884,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             const inv=invoices[j];
             const label=inv.truckId&&inv.truckId!=="INVENTORY"?`truck ${inv.truckId}`:`row ${j+1}`;
             updated.push({
-              id:Date.now()+Math.random()+j,
+              id:newId(),
               file:`${updated[i].origFileName||updated[i].file} (${label})`,
               dataUrl:null,
               status:"parsed",
@@ -3001,7 +3043,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       const entryDate=q.parsed.date||todayYMD();
 
       newEntries.push({
-        id:Date.now()+Math.random(),
+        id:newId(),
         truckId,
         vendor:q.parsed.vendor||"Unknown",
         date:entryDate,
@@ -3031,7 +3073,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         if(entryTotal>0){
           // New outstanding core
           newCoreRecords.push({
-            id:Date.now()+Math.random(),
+            id:newId(),
             date:entryDate,
             truckId,
             invoiceNum:invNum,
@@ -3070,7 +3112,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           }else{
             // No match — still record the return as a standalone entry so it's auditable
             newCoreRecords.push({
-              id:Date.now()+Math.random(),
+              id:newId(),
               date:entryDate,
               truckId,
               invoiceNum:invNum,
@@ -3141,7 +3183,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
   };
 
   const addManualCost=(entry)=>{
-    const next=[{...entry,id:Date.now()+Math.random(),addedAt:new Date().toISOString()},...costEntries];
+    const next=[{...entry,id:newId(),addedAt:new Date().toISOString()},...costEntries];
     saveCosts(next);
   };
 
@@ -3232,7 +3274,14 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
         byTruckMonth[tmKey]+=amt;
       }
     });
-    const topTrucks=Object.entries(byTruck).sort((a,b)=>b[1].total-a[1].total).slice(0,10);
+    // v2.24.5: "Top 10 Trucks by Spend" was ranking every key in byTruck, so the
+    // INVENTORY bucket — the app's own parking spot for cost that is deliberately NOT
+    // attributed to a truck — came out as the #1 "truck", pushing a real unit off the
+    // list and offering a truck-history drill-down for a unit that does not exist.
+    // Entries with no truckId landed there too, as a bar labelled "#undefined". Rank
+    // real trucks only; fvRollup already draws the same line for the New view.
+    const isTruckKey=k=>k&&k!=="INVENTORY"&&k!=="UNKNOWN"&&k!=="undefined"&&k!=="null";
+    const topTrucks=Object.entries(byTruck).filter(([k])=>isTruckKey(k)).sort((a,b)=>b[1].total-a[1].total).slice(0,10);
     const topVendors=Object.entries(byVendor).sort((a,b)=>b[1].total-a[1].total).slice(0,10);
     const sortedMonths=Object.keys(byMonth).sort();
     // Trailing 12 months
