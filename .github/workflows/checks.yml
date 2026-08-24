@@ -80,6 +80,9 @@ jobs:
       - name: quick-add a missing roster truck clears its queue items
         run: node review-queue-quickadd.mjs
         working-directory: .uitest
+      - name: reassigning a missing truck to an existing one fixes typos, not just gaps
+        run: node review-queue-reassign.mjs
+        working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
   sync:

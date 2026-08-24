@@ -183,13 +183,43 @@ await new Promise(r => setTimeout(r, 600));
 const result = await page.evaluate(() => (document.body.innerText || ""));
 
 pass("no page errors", errs.length === 0, errs.slice(0, 3).join(" | "));
-pass("truck 2651 now shows up as a real truck (Fleet tab join key exists)", /#2651/.test(result));
+pass("success toast confirms truck #2651 was added", /Added truck #2651/.test(result));
 pass("item A is gone from the queue", !/log-A\.pdf/.test(result));
 pass("item A2 is gone from the queue", !/log-A2\.pdf/.test(result));
 pass("item B (gallon-blocked) is STILL in the queue", /log-B\.pdf/.test(result));
 pass("item C (different missing truck) is STILL in the queue", /log-C\.pdf/.test(result));
 pass("item D (unrelated reason) is STILL in the queue", /log-D\.pdf/.test(result));
 pass("review queue count dropped from 5 to 3", /Review Queue \(3\)/.test(result), (result.match(/Review Queue \(\d+\)/) || [""])[0]);
+
+// ── item B's reason must refresh to the REAL remaining problem, not stay stale ──
+// (2651 is now a real truck, so B's card should no longer say so, or offer a
+// roster-fix button for a truck its rows don't even reference any more)
+const bCard = await page.evaluate(() => {
+  const d = [...document.querySelectorAll("div")].find(x => (x.textContent || "").includes("log-B.pdf") && (x.textContent || "").length < 400);
+  return d ? d.textContent : "";
+});
+pass("item B's reason no longer blames the (now-real) truck 2651", !/Truck 2651 not in fleet roster/.test(bCard), bCard.slice(0, 200));
+pass("item B's reason now names the actual remaining problem (400 gal on 0424)", /400 gallons on one truck.*truck 0424/.test(bCard), bCard.slice(0, 200));
+pass("item B no longer offers a roster-fix button (its blocker isn't a roster issue)", !/➕ Add #|🔀 It's really/.test(bCard));
+
+// ── truck 2651 must actually be a real fleet member now, not just a toast claim ──
+// The default Fleet view is the list/table, which glues truck numbers directly onto
+// the make name with no separator ("2651Freightliner") and no "#" prefix — \b would
+// never fire at that boundary since both characters are \w. Match on digit-adjacency
+// instead, and read past the toast (still on screen here) by excluding its wrapper.
+await page.evaluate(() => {
+  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Fleet");
+  if (b) b.click();
+});
+await new Promise(r => setTimeout(r, 500));
+const fleetBody = await page.evaluate(() => {
+  const root = document.getElementById("root").cloneNode(true);
+  const toastWrap = [...root.querySelectorAll("div")].find(d => d.style.zIndex === "9999");
+  if (toastWrap) toastWrap.remove();
+  return root.textContent || "";
+});
+pass("landed on the Fleet tab (Box Trucks table rendered)", /Box Trucks/.test(fleetBody));
+pass("truck 2651 really is on the Fleet roster now, not just named in a toast", /(?<!\d)2651(?!\d)/.test(fleetBody));
 
 await browser.close();
 server.close();
