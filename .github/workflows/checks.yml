@@ -53,6 +53,9 @@ jobs:
       - name: a whole delivery never stays booked to one truck
         run: node fuel-plausibility.mjs
         working-directory: .uitest
+      - name: stored invoices are served as PDFs, not octet-stream
+        run: node invoice-file-meta.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.

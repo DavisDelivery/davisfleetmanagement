@@ -1121,7 +1121,12 @@ async function processOne(item, accessToken, anthropicKey, truckIds, vendors, de
     const safeName = (filename || "invoice.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileKey = `${Date.now()}-${safeName}`;
     await fileStore.set(fileKey, pdfBuffer, {
-      metadata: { contentType: "application/pdf", filename }
+      // Both spellings on purpose. invoice-file.mts reads mimeType/originalName (what
+      // the browser upload writes); this importer historically wrote contentType/
+      // filename, so every server-imported invoice served as application/octet-stream
+      // and iOS refused to preview it. The reader now accepts either, but writing both
+      // keeps the two paths honest if only one of them is ever read again.
+      metadata: { mimeType: "application/pdf", originalName: filename, contentType: "application/pdf", filename }
     });
     const fileUrl = `/api/invoice-file?key=${encodeURIComponent(fileKey)}`;
     result.fileUrl = fileUrl;
