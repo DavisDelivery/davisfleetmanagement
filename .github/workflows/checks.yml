@@ -47,6 +47,12 @@ jobs:
       - name: completion timestamps keep their time
         run: node repair-time.mjs
         working-directory: .uitest
+      - name: invoice ids are unique, so the ledger never drops a row
+        run: node entry-ids.mjs
+        working-directory: .uitest
+      - name: a whole delivery never stays booked to one truck
+        run: node fuel-plausibility.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
@@ -73,6 +79,15 @@ jobs:
         working-directory: .uitest
       - name: classic stays the default and New renders
         run: node view-toggle.mjs
+        working-directory: .uitest
+      - name: weekly board rows are a uniform height
+        run: node board-row-height.mjs
+        working-directory: .uitest
+      - name: quick-add a missing roster truck clears its queue items
+        run: node review-queue-quickadd.mjs
+        working-directory: .uitest
+      - name: reassigning a missing truck to an existing one fixes typos, not just gaps
+        run: node review-queue-reassign.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.

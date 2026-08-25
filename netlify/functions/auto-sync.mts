@@ -212,6 +212,15 @@ const QUARANTINE_RULES_VERSION = 3;
 
 const utf8Len = (s: string) => Buffer.byteLength(s, "utf8");
 
+// v2.24.5: mirror of newId() in App.jsx — change one, change both. `Date.now() +
+// Math.random()` is NOT unique: at a 2026-era epoch (~1.79e12) a double has only
+// ~4096 distinct fractional slots left below the integer part, so a batch of rows
+// built in one synchronous pass — which is exactly what parsing one multi-row
+// invoice and splitting one service log both do — collides constantly. The browser
+// dedups the ledger BY id on load, so a collision there deletes a real invoice.
+let __idSeq = 0;
+const newId = () => `e${Date.now().toString(36)}-${(__idSeq++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
 // Sharded list: index 0 keeps the original key (so existing data and every client
 // that reads only the base key still work), overflow goes to `<base>_2`, `_3`, …
 const shardName = (base: string, i: number) => (i === 0 ? base : `${base}_${i + 1}`);
@@ -656,7 +665,7 @@ export default async (req: Request) => {
         pendingRefs.set(r.gmailRef, "cost");
       } else {
         newReviewAdds.push({
-          id: Date.now() + Math.random(),
+          id: newId(),
           gmailRef: r.gmailRef,
           vendor: r.vendor,
           filename: r.filename,
@@ -1164,6 +1173,11 @@ function normalizeTruckId(raw: any, fleetIds: string[] | Set<string>): string {
 // Generous ceiling on one fill: the largest tank here is ~150 gal, and the collapsed
 // service logs carried 700–1,500. Anything between is ambiguous, so it passes.
 const TANK_GALLONS = 250;
+// Mirror of FUEL_ROW_MAX in App.jsx — change one, change both. Two full tanks at the
+// worst diesel price this fleet has paid ($6.00/gal), so an ordinary same-day double
+// fill on one invoice still passes and only a document total trips it.
+const MAX_PLAUSIBLE_PPG = 6.00;
+const FUEL_ROW_MAX = Math.round(TANK_GALLONS * MAX_PLAUSIBLE_PPG * 2);   // $3,000
 
 /**
  * One row whose line items name several trucks is a DOCUMENT total, not a truck's
@@ -1190,11 +1204,11 @@ function splitMultiTruckEntry(e: any): any[] {
   const gallons = Number(e.gallons) || 0;
   const baseNum = e.invoiceNum ? String(e.invoiceNum) : "";
   const stamp = `Split from a ${per.size}-truck service log (document total $${stated.toFixed(2)}).`;
-  const out = [...per.entries()].map(([truckId, amt], i) => ({
+  const out = [...per.entries()].map(([truckId, amt]) => ({
     ...e,
     // Distinct id and invoiceNum per truck: siblings sharing either would be culled
     // by the shard-level dedup on the way in.
-    id: Date.now() + Math.random() + i,
+    id: newId(),
     truckId,
     total: Math.round(amt * 100) / 100,
     gallons: gallons && lineSum > 0 ? Math.round((gallons * amt / lineSum) * 10) / 10 : null,
@@ -1205,7 +1219,7 @@ function splitMultiTruckEntry(e: any): any[] {
   const rest = Math.round((stated - lineSum) * 100) / 100;
   if (rest > 0.5) out.push({
     ...e,
-    id: Date.now() + Math.random() + per.size,
+    id: newId(),
     truckId: "INVENTORY",
     total: rest,
     gallons: null,
@@ -1455,7 +1469,7 @@ async function processOne(
     // Normalize: parsed is an array of entries
     const rows = Array.isArray(parsed) ? parsed : [parsed];
     const built = rows.map((r: any) => ({
-      id: Date.now() + Math.random(),
+      id: newId(),
       date: r.date || new Date().toISOString().split("T")[0],
       truckId: normalizeTruckId(r.truckId || "INVENTORY", truckIds),
       vendor: r.vendor || vendor.name,
@@ -1693,6 +1707,18 @@ function evaluateConfidence(entries: any[], vendor: any, truckIds: string[], ven
     // rather than silently landing another four-figure charge on one truck.
     if (e.truckId !== "INVENTORY" && Number(e.gallons) > TANK_GALLONS) {
       return { level: "low", reason: `${e.gallons} gallons on one truck — likely a whole service log booked to truck ${e.truckId}` };
+    }
+    // v2.24.6: the gallons gate above only fires when the parse RECORDED gallons, and
+    // the rows that most need catching are exactly the ones that did not — a
+    // compact-mode parse of a big service-log PDF returns a total and little else, so
+    // `Number(undefined) > 250` is false and the row sails through. That is the hole a
+    // whole $6,801 delivery fits through, and how one unit accumulated six figures it
+    // never burned. Judge the money when the gallons are missing: a 250-gallon tank
+    // cannot take on more than ~$1,500 of diesel even at the worst price this fleet has
+    // paid, so the ceiling here is double that and a same-day double fill is still fine.
+    if (e.truckId !== "INVENTORY" && String(e.category || "").toLowerCase() === "fuel"
+        && Number(e.total) > FUEL_ROW_MAX) {
+      return { level: "low", reason: `$${Number(e.total).toFixed(2)} of fuel on one truck in one transaction — more than two full tanks; likely a whole service log booked to truck ${e.truckId}` };
     }
   }
   return { level: "high", reason: "All fields valid" };
