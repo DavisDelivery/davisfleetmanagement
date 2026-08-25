@@ -28,9 +28,9 @@ const { code } = await esbuild.transform(readFileSync(path.join(REPO, "App.jsx")
 const mod = await import("data:text/javascript;base64," + Buffer.from(
   "const React={createElement(){},Fragment:null};const h=()=>{};const f=null;\n" +
   "const useState=()=>[],useEffect=()=>{},useCallback=(x)=>x,useMemo=()=>{},useRef=()=>({current:null});\n" +
-  code + "\nexport { newId, dedupById, splitMultiTruck };"
+  code + "\nexport { newId, dedupById, healCollidedIds, costAdditionsToKeep, splitMultiTruck };"
 ).toString("base64"));
-const { newId, dedupById, splitMultiTruck } = mod;
+const { newId, dedupById, healCollidedIds, costAdditionsToKeep, splitMultiTruck } = mod;
 
 let pass = 0, fail = 0;
 const t = (n, c, d = "") => { if (c) { pass++; console.log(`  ✔ ${n}`); } else { fail++; console.log(`  ✘ ${n}${d ? ` — ${d}` : ""}`); } };
@@ -102,16 +102,60 @@ console.log("\n═ dedupById heals data already written with colliding ids ═")
   const healed = dedupById([a, b]);
   t("two different rows sharing an id are both kept", healed.length === 2,
     `kept ${healed.length}`);
-  t("...and no longer share an id", new Set(healed.map((r) => String(r.id))).size === 2);
   t("...with the money intact",
     Math.abs(healed.reduce((s, r) => s + r.total, 0) - (353.09 + 97.20)) < 0.005);
   t("...and the surviving rows keep their own truck and amount",
     healed.some((r) => r.truckId === "0424" && r.total === 353.09) &&
     healed.some((r) => r.truckId === "0608" && r.total === 97.20));
+  // v2.24.7 — the read path must NOT re-key. Re-keying on read made the ids in
+  // memory diverge from the ids on disk, and saveCosts then re-added the disk copy
+  // of every re-keyed row as though the server had just imported it.
+  t("...and their ids are left exactly as they are on disk",
+    healed.every((r, i) => String(r.id) === String([a, b][i].id)),
+    healed.map((r) => String(r.id)).join(" "));
 
   t("rows with no id are never merged away",
     dedupById([{ total: 1 }, { total: 2 }]).length === 2);
   t("empty input does not throw", dedupById([]).length === 0);
+}
+
+console.log("\n\u2550 reading a collided ledger must not inflate it on the next save \u2550");
+{
+  // Exactly what is on disk after the old generator collided two real invoices.
+  const onDisk = [
+    { id: 1787610139413.5, truckId: "0424", total: 353.09, date: "2026-05-21" },
+    { id: 1787610139413.5, truckId: "0608", total: 97.20, date: "2026-05-21" },
+  ];
+  const inMemory = dedupById(onDisk);                       // what loadCostsFromShards holds
+  const additions = costAdditionsToKeep(onDisk, inMemory, inMemory);  // what saveCosts re-adds
+  const merged = [...inMemory, ...additions];
+  t("nothing on disk looks like a row that arrived while the tab was open",
+    additions.length === 0, `${additions.length} re-added`);
+  t("a save does not grow the ledger", merged.length === onDisk.length,
+    `${onDisk.length} -> ${merged.length}`);
+  t("a save does not invent money",
+    Math.abs(merged.reduce((s, r) => s + r.total, 0) - 450.29) < 0.005,
+    `$${merged.reduce((s, r) => s + r.total, 0).toFixed(2)}`);
+}
+
+console.log("\n\u2550 healCollidedIds re-keys, for callers that save what they return \u2550");
+{
+  const rows = [
+    { id: 7, truckId: "0424", total: 100 },
+    { id: 7, truckId: "0608", total: 200 },
+    { id: 7, truckId: "0805", total: 300 },
+    { id: 9, truckId: "1506", total: 400 },
+  ];
+  const { entries, healed } = healCollidedIds(rows);
+  t("every row survives", entries.length === 4);
+  t("two of the three id-7 rows are re-keyed", healed === 2, `healed=${healed}`);
+  t("every id is now distinct", new Set(entries.map((r) => String(r.id))).size === 4);
+  t("the first row of a colliding group keeps its id", String(entries[0].id) === "7");
+  t("money is untouched", entries.reduce((s, r) => s + r.total, 0) === 1000);
+  t("content is otherwise untouched",
+    entries.map((r) => r.truckId).join(",") === "0424,0608,0805,1506");
+  t("running it again is a no-op", healCollidedIds(entries).healed === 0);
+  t("rows with no id are left alone", healCollidedIds([{ total: 1 }, { total: 2 }]).healed === 0);
 }
 
 console.log(`\n${fail ? `FAILED: ${fail} check(s)` : `PASSED: ${pass} checks`}\n`);
