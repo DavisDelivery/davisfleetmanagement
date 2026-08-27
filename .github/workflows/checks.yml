@@ -71,6 +71,9 @@ jobs:
       - name: shop portal boots
         run: node portal-syntax.mjs
         working-directory: .uitest
+      - name: a stalled database gives a retry, not an endless spinner
+        run: node load-timeout.mjs
+        working-directory: .uitest
       - name: fleet app boots and storage.list is correct
         run: node app-boot.mjs
         working-directory: .uitest
