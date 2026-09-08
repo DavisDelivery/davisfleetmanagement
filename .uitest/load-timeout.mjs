@@ -19,6 +19,7 @@
  */
 import { launch } from "./browser.mjs";
 import { ensureVendor } from "./vendor.mjs";
+import { buildApp, serveAsset } from "./appbuild.mjs";
 import { readFileSync } from "fs";
 import http from "http";
 import path from "path";
@@ -39,8 +40,7 @@ const makeHtml = (mode) => {
   let html = readFileSync(path.join(REPO, "index.html"), "utf8")
     .replace(/<script src="https:\/\/www\.gstatic\.com\/firebasejs[^>]*><\/script>/g, "")
     .replace(/https:\/\/unpkg\.com\/react@18\/umd\/react\.production\.min\.js/g, "/vendor/react.js")
-    .replace(/https:\/\/unpkg\.com\/react-dom@18\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js")
-    .replace(/https:\/\/unpkg\.com\/@babel\/standalone@7\.24\.0\/babel\.min\.js/g, "/vendor/babel.js");
+    .replace(/https:\/\/unpkg\.com\/react-dom@18\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js");
   const STUB = `<script>
 window.__KV = ${JSON.stringify(KV)};
 window.__MODE = ${JSON.stringify(mode)};
@@ -89,11 +89,11 @@ localStorage.setItem("fl-device-user", "Harness");
 };
 
 await ensureVendor();
+const built = await buildApp();
 const appSrc = readFileSync(path.join(REPO, "App.jsx"), "utf8");
 let MODE = "ok";
 const server = http.createServer((req, res) => {
-  if (req.url.startsWith("/App.jsx")) { res.writeHead(200, { "Content-Type": "application/javascript" }); return res.end(appSrc); }
-  if (req.url.startsWith("/vendor/")) { res.writeHead(200, { "Content-Type": "application/javascript" }); return res.end(readFileSync(path.join(here, "vendor", path.basename(req.url)))); }
+  if (serveAsset(req, res, built)) return;
   res.writeHead(200, { "Content-Type": "text/html" }); res.end(makeHtml(MODE));
 }).listen(PORT);
 

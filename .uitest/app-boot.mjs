@@ -16,6 +16,7 @@
  */
 import { launch } from "./browser.mjs";
 import { ensureVendor } from "./vendor.mjs";
+import { buildApp, serveAsset } from "./appbuild.mjs";
 import { readFileSync } from "fs";
 import http from "http";
 import path from "path";
@@ -48,8 +49,7 @@ html = html.replace(/<script src="https:\/\/www\.gstatic\.com\/firebasejs[^>]*><
 // app. The script tags keep their type/data-presets — only the origin changes.
 html = html
   .replace(/https:\/\/unpkg\.com\/react@18\/umd\/react\.production\.min\.js/g, "/vendor/react.js")
-  .replace(/https:\/\/unpkg\.com\/react-dom@18\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js")
-  .replace(/https:\/\/unpkg\.com\/@babel\/standalone@7\.24\.0\/babel\.min\.js/g, "/vendor/babel.js");
+  .replace(/https:\/\/unpkg\.com\/react-dom@18\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js");
 
 const STUB = `<script>
 window.__KV = ${JSON.stringify(KV)};
@@ -86,18 +86,11 @@ window.__t0 = performance.now();
 html = html.replace("</head>", STUB + "</head>");
 
 await ensureVendor();
+const built = await buildApp();
 
 const appSrc = readFileSync(path.join(REPO, "App.jsx"), "utf8");
 const server = http.createServer((req, res) => {
-  if (req.url.startsWith("/App.jsx")) {
-    res.writeHead(200, { "Content-Type": "application/javascript" });
-    return res.end(appSrc);
-  }
-  if (req.url.startsWith("/vendor/")) {
-    const f = path.join(here, "vendor", path.basename(req.url));
-    res.writeHead(200, { "Content-Type": "application/javascript" });
-    return res.end(readFileSync(f));
-  }
+  if (serveAsset(req, res, built)) return;
   res.writeHead(200, { "Content-Type": "text/html" });
   res.end(html);
 }).listen(PORT);

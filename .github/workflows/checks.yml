@@ -8,9 +8,9 @@ on:
   pull_request:
 
 jobs:
-  # The gate that matters most: App.jsx is served to the browser untranspiled and
-  # unbundled, so a syntax error there is a white screen for every driver and mechanic
-  # at once. Netlify runs this same command as its build step.
+  # The gate that matters most: a syntax error is a white screen for every driver and
+  # mechanic at once. Netlify runs the same build, so if this passes the deploy will
+  # produce the same bundles the yard gets.
   syntax:
     runs-on: ubuntu-latest
     steps:
@@ -19,8 +19,10 @@ jobs:
         with:
           node-version: "22"
       - run: npm install --no-audit --no-fund
-      - name: App.jsx parses
+      - name: App.jsx and boot.jsx parse
         run: npm run check
+      - name: the production build succeeds
+        run: npm run build
 
   # Money logic. These run the real functions out of App.jsx — no browser needed.
   ledger:
@@ -70,6 +72,9 @@ jobs:
         working-directory: .uitest
       - name: shop portal boots
         run: node portal-syntax.mjs
+        working-directory: .uitest
+      - name: cold start ships no compiler and stays under budget
+        run: node coldstart.mjs
         working-directory: .uitest
       - name: a stalled database gives a retry, not an endless spinner
         run: node load-timeout.mjs
