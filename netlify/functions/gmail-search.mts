@@ -1,4 +1,5 @@
 import type { Config } from "@netlify/functions";
+import { buildVendorQuery } from "../lib/vendor-queries.mjs";
 
 export default async (req: Request) => {
   if (req.method !== "POST") {
@@ -39,34 +40,14 @@ export default async (req: Request) => {
     }
     const accessToken = tokenData.access_token;
 
-    // Build search query per vendor — broader matching
-    // v2.10.13: dateFilter now supports both after: and before: for custom ranges
-    const afterPart = afterDate ? ` after:${afterDate}` : "";
-    const beforePart = beforeDate ? ` before:${beforeDate}` : "";
-    const dateFilter = afterPart + beforePart;
-    let searchQuery;
-    if (vendor === "peach state" || vendor === "peach state freightliner") {
-      // v2.9.5: tightened — loose text matches ("peach state", "peachstate") and
-      // unfiltered Ryan forwards caught unrelated emails (Uline billing, NuVizz
-      // reports, etc.). Real Peach State invoices come from:
-      //   (a) ar@peachstatetrucks.com or peachstatetrucks.com domain
-      //   (b) forwarded by Ryan AND the subject contains "Parts 20407"
-      //       (Peach State's account-reference phrase for Davis Delivery)
-      // A forwarded email has "Fwd:" in subject AND is from Ryan's address.
-      searchQuery = `((from:peachstatetrucks.com) OR ((from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com) AND subject:"Parts 20407")) has:attachment${dateFilter}`;
-    } else if (vendor === "fuelfox atlanta" || vendor === "fuelfox") {
-      // FuelFox invoices come from QuickBooks on their behalf, NOT fuelfox.com
-      // Subject line always contains "FuelFox Atlanta" for invoice emails.
-      searchQuery = `(from:quickbooks@notification.intuit.com subject:"FuelFox Atlanta") has:attachment${dateFilter}`;
-    } else if (vendor === "quick fuel" || vendor === "quickfuel") {
-      // Quick Fuel invoices come ONLY from ebilling@4flyers.com. No text matches — they
-      // pull in unrelated emails (NuVizz reports, Uline invoices, etc.) that happen to
-      // mention terms like "CFS-" or "flyers" somewhere in the body.
-      searchQuery = `from:ebilling@4flyers.com has:attachment${dateFilter}`;
-    } else {
-      // Generic vendor — just search for the name anywhere + attachment
-      searchQuery = `"${vendor}" has:attachment${dateFilter}`;
-    }
+    // v2.26.0: the per-vendor queries used to be duplicated here, and this copy was the
+    // one that fell behind. Complete Fleet Services was crawled correctly on the schedule
+    // but, searched by hand, fell through to the generic `"<vendor>" has:attachment` —
+    // which finds any message that merely mentions the shop and misses every invoice
+    // whose only mention of it is inside the PDF. Both paths now read the same map.
+    // (Gmail date syntax, YYYY/MM/DD. beforeDate — v2.10.13 — is optional, for a custom
+    // range rather than plain days-back.)
+    const searchQuery = buildVendorQuery(vendor, afterDate, beforeDate);
 
     // Search messages — cap at 100 so a full year of weekly/biweekly invoices fit
     const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(searchQuery)}&maxResults=100`;

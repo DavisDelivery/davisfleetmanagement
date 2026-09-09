@@ -97,6 +97,44 @@ async function pdfParse(buffer, opts) {
   return { text: body, numpages: pages };
 }
 
+// ../netlify/lib/vendor-queries.mts
+var VENDOR_QUERIES = {
+  // v2.9.5: tightened — loose text matches ("peach state", "peachstate") and unfiltered
+  // Ryan forwards caught unrelated email (Uline billing, NuVizz reports). Real invoices
+  // come from peachstatetrucks.com, or forwarded by Ryan with Peach State's own
+  // account-reference phrase for Davis Delivery in the subject.
+  "peach state freightliner": `((from:peachstatetrucks.com) OR ((from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com) AND subject:"Parts 20407")) has:attachment`,
+  // FuelFox bills through QuickBooks, not from fuelfox.com. The subject always carries
+  // "FuelFox Atlanta" on an invoice email.
+  "fuelfox atlanta": `(from:quickbooks@notification.intuit.com subject:"FuelFox Atlanta") has:attachment`,
+  // Quick Fuel invoices come only from ebilling@4flyers.com. No text match — those pull
+  // in unrelated mail that happens to mention "CFS-" or "flyers" somewhere in the body.
+  "quick fuel": `from:ebilling@4flyers.com has:attachment`,
+  // The Oakwood GA repair shop. Every invoice is sent by the owner from this address;
+  // the shop's name appears nowhere in the subject, so the sender is the only handle.
+  "complete fleet services": `from:complete.fleet@outlook.com has:attachment`
+};
+var VENDOR_ALIASES = {
+  "peach state": "peach state freightliner",
+  "peachstate": "peach state freightliner",
+  "fuelfox": "fuelfox atlanta",
+  "quickfuel": "quick fuel",
+  "complete fleet": "complete fleet services",
+  "completefleet": "complete fleet services",
+  "complete fleet services l.l.c.": "complete fleet services",
+  "complete fleet services llc": "complete fleet services"
+};
+function vendorQuery(vendorName) {
+  const key = String(vendorName == null ? "" : vendorName).toLowerCase().trim();
+  if (VENDOR_QUERIES[key]) return VENDOR_QUERIES[key];
+  const alias = VENDOR_ALIASES[key];
+  return alias && VENDOR_QUERIES[alias] ? VENDOR_QUERIES[alias] : null;
+}
+function buildVendorQuery(vendorName, afterDate, beforeDate) {
+  const dateFilter = (afterDate ? ` after:${afterDate}` : "") + (beforeDate ? ` before:${beforeDate}` : "");
+  return (vendorQuery(vendorName) || `"${vendorName}" has:attachment`) + dateFilter;
+}
+
 // ../netlify/functions/auto-sync.mts
 var FIREBASE_CONFIG = {
   apiKey: "AIzaSyCaaHZ0GuBoxl696-PzlgBQLPEad1xyiqw",
@@ -105,12 +143,6 @@ var FIREBASE_CONFIG = {
   storageBucket: "davisfleetmanagement.firebasestorage.app",
   messagingSenderId: "397276214754",
   appId: "1:397276214754:web:aa7bd4723c301fb876b5bb"
-};
-var VENDOR_QUERIES = {
-  "peach state freightliner": `((from:peachstatetrucks.com) OR ((from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com) AND subject:"Parts 20407")) has:attachment`,
-  "fuelfox atlanta": `(from:quickbooks@notification.intuit.com subject:"FuelFox Atlanta") has:attachment`,
-  "quick fuel": `from:ebilling@4flyers.com has:attachment`,
-  "complete fleet services": `from:complete.fleet@outlook.com has:attachment`
 };
 var DEFAULT_VENDORS = [
   { name: "FuelFox Atlanta", category: "Fuel" },
@@ -886,12 +918,46 @@ function stableGmailRef(messageId, filename) {
 function entryFingerprint(e) {
   return [
     String(e?.vendor || "").trim().toLowerCase(),
-    String(e?.date || "").slice(0, 10),
+    (toYMD(e?.date) || String(e?.date || "")).slice(0, 10),
     String(e?.truckId || ""),
-    (Number(e?.total) || 0).toFixed(2)
+    parseMoney(e?.total).toFixed(2)
   ].join("|");
 }
 var TRUCK_IN_DESC = /\b(?:truck|unit)\s*#?\s*(\d{3,5})\b/i;
+function parseMoney(v) {
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return 0;
+  const negative = /^\(.*\)$/.test(s) || /^-/.test(s);
+  const n = Number(s.replace(/[^0-9.]/g, ""));
+  if (!isFinite(n)) return 0;
+  return negative ? -n : n;
+}
+function toYMD(v) {
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return "";
+  const pad = (x) => String(Number(x)).padStart(2, "0");
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:\D|$)/.exec(s);
+  if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:\D|$)/.exec(s);
+  if (m) return `${m[3]}-${pad(m[1])}-${pad(m[2])}`;
+  m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2})$/.exec(s);
+  if (m) return `20${m[3]}-${pad(m[1])}-${pad(m[2])}`;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return "";
+}
+function maxPrintedAmount(text) {
+  let max = 0;
+  const re = /\$\s?([0-9][0-9,]*\.[0-9]{2})(?![0-9])/g;
+  let m;
+  while (m = re.exec(text)) {
+    const n = Number(m[1].replace(/,/g, ""));
+    if (isFinite(n) && n > max) max = n;
+  }
+  return max;
+}
+var AI_TEXT_CHARS = 3e4;
 function normalizeTruckId(raw, fleetIds) {
   const id = String(raw == null ? "" : raw).trim();
   if (!id) return id;
@@ -1008,12 +1074,6 @@ async function refreshAccessToken(refreshToken, clientId, clientSecret) {
   }
   return data.access_token;
 }
-function buildVendorQuery(vendorName, afterDate) {
-  const key = vendorName.toLowerCase().trim();
-  const dateFilter = afterDate ? ` after:${afterDate}` : "";
-  if (VENDOR_QUERIES[key]) return VENDOR_QUERIES[key] + dateFilter;
-  return `"${vendorName}" has:attachment` + dateFilter;
-}
 async function gmailList(accessToken, q, pageToken, max) {
   const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=${max}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;
   const resp = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
@@ -1121,24 +1181,30 @@ async function processOne(item, accessToken, anthropicKey, truckIds, vendors, de
     const safeName = (filename || "invoice.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileKey = `${Date.now()}-${safeName}`;
     await fileStore.set(fileKey, pdfBuffer, {
-      metadata: { contentType: "application/pdf", filename }
+      // Both spellings on purpose. invoice-file.mts reads mimeType/originalName (what
+      // the browser upload writes); this importer historically wrote contentType/
+      // filename, so every server-imported invoice served as application/octet-stream
+      // and iOS refused to preview it. The reader now accepts either, but writing both
+      // keeps the two paths honest if only one of them is ever read again.
+      metadata: { mimeType: "application/pdf", originalName: filename, contentType: "application/pdf", filename }
     });
     const fileUrl = `/api/invoice-file?key=${encodeURIComponent(fileKey)}`;
     result.fileUrl = fileUrl;
     mark("ai");
     checkpoint();
-    const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor, signal, compact);
+    const aiText = pdfText.substring(0, AI_TEXT_CHARS);
+    const parsed = await callAnthropicScan(anthropicKey, aiText, truckIds, vendor, signal, compact);
     if (!parsed || Array.isArray(parsed) && parsed.length === 0) {
       throw new Error("Parser returned no rows");
     }
     const rows = Array.isArray(parsed) ? parsed : [parsed];
     const built = rows.map((r) => ({
       id: newId(),
-      date: r.date || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+      date: toYMD(r.date) || r.date || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
       truckId: normalizeTruckId(r.truckId || "INVENTORY", truckIds),
       vendor: r.vendor || vendor.name,
       category: r.category || vendor.category || "Other",
-      total: Number(r.total) || 0,
+      total: parseMoney(r.total),
       gallons: r.gallons || null,
       pricePerGallon: r.pricePerGallon || null,
       invoiceNum: r.invoiceNum || null,
@@ -1156,7 +1222,7 @@ async function processOne(item, accessToken, anthropicKey, truckIds, vendors, de
       entries[0]._confidence = rows[0]._confidence;
       entries[0]._confidenceReason = rows[0]._confidenceReason;
     }
-    const verdict = evaluateConfidence(entries, vendor, truckIds, vendors);
+    const verdict = evaluateConfidence(entries, vendor, truckIds, vendors, aiText);
     result.entries = entries;
     result.confidence = pageCap ? "low" : verdict.level;
     result.confidenceReason = pageCap ? `Only the first ${TUNING.PDF_MAX_PAGES} pages were read (large PDF) \u2014 verify the total against the original.` : verdict.reason;
@@ -1217,7 +1283,7 @@ ALSO add ONE meta field on the FIRST element only:
 - _confidenceReason: why low
 
 INVOICE TEXT:
-${pdfText.substring(0, 3e4)}
+${pdfText}
 
 Return ONLY the JSON array, no preamble.` : `You are extracting line items from an invoice for ${vendor.name} (category: ${vendor.category || "Other"}).
 Return a JSON array. Each element MUST have:
@@ -1266,7 +1332,7 @@ ALSO add ONE meta field on the FIRST element only:
 - _confidenceReason: why low (e.g. "ambiguous truck assignment", "totals don't sum", "vendor unclear")
 
 INVOICE TEXT:
-${pdfText.substring(0, 3e4)}
+${pdfText}
 
 Return ONLY the JSON array, no preamble.`;
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -1296,7 +1362,7 @@ Return ONLY the JSON array, no preamble.`;
   if (!match) throw new Error("No JSON array found in response");
   return JSON.parse(match[0]);
 }
-function evaluateConfidence(entries, vendor, truckIds, vendors) {
+function evaluateConfidence(entries, vendor, truckIds, vendors, invoiceText = "") {
   const aiVerdict = entries[0]?._confidence;
   const aiReason = entries[0]?._confidenceReason || "";
   entries.forEach((e) => {
@@ -1322,6 +1388,13 @@ function evaluateConfidence(entries, vendor, truckIds, vendors) {
     }
     if (e.truckId !== "INVENTORY" && String(e.category || "").toLowerCase() === "fuel" && Number(e.total) > FUEL_ROW_MAX) {
       return { level: "low", reason: `$${Number(e.total).toFixed(2)} of fuel on one truck in one transaction \u2014 more than two full tanks; likely a whole service log booked to truck ${e.truckId}` };
+    }
+  }
+  if (entries.length === 1 && invoiceText) {
+    const printed = maxPrintedAmount(invoiceText);
+    const got = Number(entries[0].total) || 0;
+    if (printed > 0 && printed - got > 1) {
+      return { level: "low", reason: `Imported $${got.toFixed(2)} but the invoice prints $${printed.toFixed(2)} \u2014 likely a subtotal rather than the total` };
     }
   }
   return { level: "high", reason: "All fields valid" };

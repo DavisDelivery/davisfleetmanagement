@@ -44,8 +44,7 @@ export default async (req: Request) => {
       const result = await store.getWithMetadata(key, { type: "arrayBuffer" });
       if (!result) return new Response("Not found", { status: 404 });
 
-      const mimeType = (result.metadata as any)?.mimeType || "application/octet-stream";
-      const originalName = (result.metadata as any)?.originalName || "file";
+      const { mimeType, originalName } = resolveFileMeta(result.metadata, result.data);
 
       return new Response(result.data, {
         status: 200,
@@ -62,6 +61,33 @@ export default async (req: Request) => {
 
   return new Response("Method not allowed", { status: 405 });
 };
+
+/**
+ * Two writers put invoices in this store and they did not agree on the metadata key
+ * names. The browser upload (the POST above) writes `mimeType` / `originalName`; the
+ * server importer in auto-sync.mts writes `contentType` / `filename`. This reader only
+ * knew the first pair, so everything auto-sync imported — which is nearly every invoice,
+ * including all the FuelFox service logs — came back as `application/octet-stream`
+ * named "file". iOS will not preview an octet-stream: it shows a grey ? page and an
+ * "Open in..." button, which is what the office actually saw when they hit View.
+ *
+ * Accept BOTH spellings rather than just fixing the writer, because the blobs already
+ * stored carry the old keys and re-uploading them is not on the table. Fall back to
+ * sniffing the PDF magic number, so a blob written with no metadata at all still
+ * renders instead of downloading.
+ */
+export function resolveFileMeta(metadata: any, data?: ArrayBuffer): { mimeType: string; originalName: string } {
+  const m = metadata || {};
+  const name = m.originalName || m.filename || "file";
+  let type = m.mimeType || m.contentType || "";
+  if (!type && data) {
+    // "%PDF" — the only sniff worth doing here; everything in this store is a PDF or an image.
+    const head = new Uint8Array(data.slice(0, 4));
+    if (head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46) type = "application/pdf";
+  }
+  if (!type && /\.pdf$/i.test(name)) type = "application/pdf";
+  return { mimeType: type || "application/octet-stream", originalName: name };
+}
 
 function json(data: any, status = 200): Response {
   return new Response(JSON.stringify(data), {

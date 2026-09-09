@@ -42,7 +42,10 @@ const mkMsg = (vk, i, daysAgo, o = {}) => ({
     pdfText: o.image ? null : `INV|${o.num || `${vk.toUpperCase()}-${i}`}|${o.truck || "0154"}|${o.total || 100}|${dstr(daysAgo)}|${o.conf || "high"}|${o.pad || 0}`
       // A fuel service log: one PDF, every unit filled that day. `multi` is the
       // per-unit table the document prints.
-      + (o.multi ? `|MULTI=${o.multi.map(([t, a]) => `${t}:${a}`).join(",")}` : "") }],
+      + (o.multi ? `|MULTI=${o.multi.map(([t, a]) => `${t}:${a}`).join(",")}` : "")
+      // Anything after the first line is document body. The parser stub only reads the
+      // pipe line; the handler's own checks read the whole thing, which is the point.
+      + (o.body ? `\n${o.body}` : "") }],
 });
 
 const abortErr = (s) => { const e = new Error("aborted"); e.name = s?.reason?.name || "AbortError"; return e; };
@@ -52,7 +55,7 @@ const wait = (ms, signal) => new Promise((res, rej) => {
   signal?.addEventListener("abort", () => { clearTimeout(t); rej(abortErr(signal)); }, { once: true });
 });
 const resp = (data, status = 200) => ({ ok: status < 300, status, json: async () => data });
-const vkOf = (q) => q.includes("peachstatetrucks") ? "psf" : q.includes("FuelFox") ? "fuelfox" : q.includes("4flyers") ? "quickfuel" : null;
+const vkOf = (q) => q.includes("peachstatetrucks") ? "psf" : q.includes("FuelFox") ? "fuelfox" : q.includes("4flyers") ? "quickfuel" : q.includes("complete.fleet") ? "cfs" : null;
 
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url); const signal = init.signal;
@@ -551,6 +554,54 @@ GMAIL.push(mkMsg("fuelfox", 0, 1, { num: "SL-NORMAL", truck: "0424", total: 353.
   t("a $353 fill lands in the ledger", allShardEntries().some((e) => e.invoiceNum === "SL-NORMAL"),
     JSON.stringify(allShardEntries().map((e) => `${e.truckId}:${e.total}`)));
   t("and is not queued for review", readList("fl-review-queue").length === 0);
+}
+
+// ══ S12 — a repair invoice's own arithmetic ══════════════════════════════
+// Complete Fleet Services bills several jobs on one truck, each closing with its own
+// "Subtotal", above one "Total". A parse that grabs a subtotal is short by four figures
+// and looks perfect — real invoice number, real truck, real date, plausible amount. No
+// field check can tell. The document's largest printed figure can.
+console.log("\n═ S12 a subtotal grabbed instead of the total is held, not filed ═");
+resetWorld();
+Object.assign(TUNING, FAST);
+blobSet("truck-ids", ["0424", "6560"]);
+const CFS_BODY = [
+  "Complaint: Auto shift", "Labor 12.00000$140.00$1,680.00",
+  "PartsCLUTCH-ULTRA SHIFT - CLU-0011.00000$2,344.40$2,344.40",
+  "Subtotal", "$4,738.52", "Subtotal", "$468.80",
+  "Unit: 6560 (6560)   1FUJGBDV4GLHT6560VIN:", "2016 Freightliner Cascadia Chassis:175,464 Miles",
+  "Pre-Charge Subtotal", "$5,507.32", "GEORGIA", "$141.89", "HALL COUNTY", "$106.42",
+  "Total", "$5,755.63", "Payments & Credits", "$0.00", "Balance Due", "$5,755.63",
+].join("\n");
+GMAIL.push(mkMsg("cfs", 0, 1, { num: "CFS-11016", truck: "6560", total: 4738.52, body: CFS_BODY }));
+GMAIL.push(mkMsg("cfs", 1, 1, { id: "cfs-right", num: "CFS-11017", truck: "6560", total: 5755.63, body: CFS_BODY }));
+{
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const r = await orig(url, init);
+    if (!String(url).includes("api.anthropic.com")) return r;
+    const d = await r.json();
+    const rows = JSON.parse(d.content[0].text);
+    // A repair, not fuel — one row for the whole invoice, on one truck.
+    if (String(rows[0].invoiceNum).startsWith("CFS-")) { rows[0].category = "Repair"; delete rows[0].gallons; }
+    return resp({ content: [{ text: JSON.stringify(rows) }] });
+  };
+  await drain(30, 20);
+  globalThis.fetch = orig;
+
+  const filed = allShardEntries();
+  const queued = readList("fl-review-queue");
+  t("the subtotal grab never reaches the ledger",
+    !filed.some((e) => e.invoiceNum === "CFS-11016"), JSON.stringify(filed.map((e) => `${e.invoiceNum}:${e.total}`)));
+  const held = queued.find((q) => (q.parsed || []).some((r) => r.invoiceNum === "CFS-11016"));
+  t("it is held for a human instead", !!held);
+  t("and the reason compares the two figures", !!held && /5755\.63/.test(held.confidenceReason || ""),
+    (held && held.confidenceReason) || "(none)");
+  t("the correct total files, on truck 6560, in the right month",
+    filed.some((e) => e.invoiceNum === "CFS-11017" && e.total === 5755.63 && e.truckId === "6560"),
+    JSON.stringify(filed.map((e) => `${e.invoiceNum}:${e.truckId}:${e.total}`)));
+  t("175,464 miles was never mistaken for money",
+    !queued.some((q) => /175464|175,464/.test(q.confidenceReason || "")));
 }
 
 console.log(`\n${pass + fail} checks: ${pass} passed, ${fail} failed`);
