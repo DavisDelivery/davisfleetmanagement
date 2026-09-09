@@ -3,6 +3,7 @@ import { getStore } from "@netlify/blobs";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, documentId } from "firebase/firestore";
 import pdfParse from "pdf-parse";
+import { buildVendorQuery } from "../lib/vendor-queries.mjs";
 
 /**
  * /api/auto-sync — server-side Gmail invoice sync.
@@ -130,14 +131,11 @@ const FIREBASE_CONFIG = {
   appId: "1:397276214754:web:aa7bd4723c301fb876b5bb",
 };
 
-// Exported so the sync harness can assert against the REAL vendor list rather than a
+// The vendor queries live in netlify/lib/vendor-queries.mts so /api/gmail-search — the
+// "📧 <vendor>" buttons — searches the mailbox exactly the way this crawler does.
+// Re-exported so the sync harness can assert against the REAL vendor list rather than a
 // hardcoded count that breaks every time a vendor is added.
-export const VENDOR_QUERIES: Record<string, string> = {
-  "peach state freightliner": `((from:peachstatetrucks.com) OR ((from:ryan@davisdelivery.com OR from:ryan@davisdeliveryservice.com) AND subject:"Parts 20407")) has:attachment`,
-  "fuelfox atlanta": `(from:quickbooks@notification.intuit.com subject:"FuelFox Atlanta") has:attachment`,
-  "quick fuel": `from:ebilling@4flyers.com has:attachment`,
-  "complete fleet services": `from:complete.fleet@outlook.com has:attachment`,
-};
+export { VENDOR_QUERIES } from "../lib/vendor-queries.mjs";
 
 const DEFAULT_VENDORS = [
   { name: "FuelFox Atlanta", category: "Fuel" },
@@ -1141,16 +1139,80 @@ function stableGmailRef(messageId: string, filename: string): string {
 // What the ledger actually sums on. Deliberately excludes invoiceNum: for documents
 // that print no invoice number the parser invents one, and it invents a different
 // one every pass — that field is the reason the duplicates got through.
+// v2.26.0: read the date and the money through the same two functions the entry builder
+// uses, so a side holding "9/4/2026" or "$5,755.63" cannot quietly stop matching the side
+// holding the normalized form — that would import the document twice. A value already
+// normalized is unchanged, so no fingerprint in existing data moves.
 function entryFingerprint(e: any): string {
   return [
     String(e?.vendor || "").trim().toLowerCase(),
-    String(e?.date || "").slice(0, 10),
+    (toYMD(e?.date) || String(e?.date || "")).slice(0, 10),
     String(e?.truckId || ""),
-    (Number(e?.total) || 0).toFixed(2),
+    parseMoney(e?.total).toFixed(2),
   ].join("|");
 }
 
 const TRUCK_IN_DESC = /\b(?:truck|unit)\s*#?\s*(\d{3,5})\b/i;
+
+// v2.26.0: mirrors of parseMoney() and toYMD() in App.jsx.
+//
+// Complete Fleet Services prints its money as "$5,755.63" and its date as "9/4/2026".
+// Both were taken at face value. `Number("5,755.63")` is NaN, so `Number(r.total) || 0`
+// silently made a $5,755 repair a $0 one; and costShardKey() only understands YYYY-MM,
+// so "9/4/2026" would have parked the invoice in the "unknown" shard where no month view
+// ever looks. Neither is the parser being wrong — it is us reading what it returned
+// wrong — so both are fixed here, deterministically, rather than by asking the model
+// again. A value already in the right shape passes through untouched.
+function parseMoney(v: any): number {
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return 0;
+  const negative = /^\(.*\)$/.test(s) || /^-/.test(s);   // (1,234.00) and -1,234.00 both mean a credit
+  const n = Number(s.replace(/[^0-9.]/g, ""));
+  if (!isFinite(n)) return 0;
+  return negative ? -n : n;
+}
+
+// Returns "" — not a guess — for anything unreadable, so the caller keeps whatever the
+// parser said and evaluateConfidence's date gate still sends it to a human.
+function toYMD(v: any): string {
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return "";
+  const pad = (x: string) => String(Number(x)).padStart(2, "0");
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:\D|$)/.exec(s);
+  if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:\D|$)/.exec(s);          // 9/4/2026 — US M/D/Y
+  if (m) return `${m[3]}-${pad(m[1])}-${pad(m[2])}`;
+  m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2})$/.exec(s);                 // 9/4/26
+  if (m) return `20${m[3]}-${pad(m[1])}-${pad(m[2])}`;
+  const d = new Date(s);                                                  // "Sep 4, 2026"
+  if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return "";
+}
+
+// The largest amount the invoice itself prints. A repair invoice carries several
+// "Subtotal" lines — invoice 11016 from Complete Fleet Services shows $4,738.52 and
+// $468.80 above a $5,755.63 Total — and a parse that grabs one of them is short by
+// $1,017 while looking perfectly well formed: real invoice number, real truck, real
+// date, plausible amount. No field check can tell. But no line, subtotal or tax can
+// exceed the total, so a single-row parse that comes in under the biggest printed
+// figure has missed something. Requires the "$" and the cents, so "175,464 Miles"
+// is not mistaken for money.
+function maxPrintedAmount(text: string): number {
+  let max = 0;
+  const re = /\$\s?([0-9][0-9,]*\.[0-9]{2})(?![0-9])/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const n = Number(m[1].replace(/,/g, ""));
+    if (isFinite(n) && n > max) max = n;
+  }
+  return max;
+}
+
+// The parser sees this much of the document and no more, so the arithmetic gate in
+// evaluateConfidence has to judge the SAME text — a total printed past the cut is not
+// one the parse could have found.
+const AI_TEXT_CHARS = 30000;
 
 // v2.22.0: mirror of normalizeTruckId() in App.jsx. Some vendors print the unit with a
 // yard prefix — Complete Fleet Services bills "BX0424"/"GP2883" in the Customer PO /
@@ -1291,13 +1353,6 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
     throw new Error("Token refresh failed: " + JSON.stringify(data).substring(0, 200));
   }
   return data.access_token as string;
-}
-
-function buildVendorQuery(vendorName: string, afterDate: string): string {
-  const key = vendorName.toLowerCase().trim();
-  const dateFilter = afterDate ? ` after:${afterDate}` : "";
-  if (VENDOR_QUERIES[key]) return VENDOR_QUERIES[key] + dateFilter;
-  return `"${vendorName}" has:attachment` + dateFilter;
 }
 
 async function gmailList(accessToken: string, q: string, pageToken: string | null, max: number): Promise<{ ids: string[]; nextPageToken: string | null }> {
@@ -1466,7 +1521,8 @@ async function processOne(
     checkpoint();
 
     // Call Anthropic with strict prompt
-    const parsed = await callAnthropicScan(anthropicKey, pdfText, truckIds, vendor, signal, compact);
+    const aiText = pdfText.substring(0, AI_TEXT_CHARS);
+    const parsed = await callAnthropicScan(anthropicKey, aiText, truckIds, vendor, signal, compact);
     if (!parsed || (Array.isArray(parsed) && parsed.length === 0)) {
       throw new Error("Parser returned no rows");
     }
@@ -1475,11 +1531,11 @@ async function processOne(
     const rows = Array.isArray(parsed) ? parsed : [parsed];
     const built = rows.map((r: any) => ({
       id: newId(),
-      date: r.date || new Date().toISOString().split("T")[0],
+      date: toYMD(r.date) || r.date || new Date().toISOString().split("T")[0],
       truckId: normalizeTruckId(r.truckId || "INVENTORY", truckIds),
       vendor: r.vendor || vendor.name,
       category: r.category || vendor.category || "Other",
-      total: Number(r.total) || 0,
+      total: parseMoney(r.total),
       gallons: r.gallons || null,
       pricePerGallon: r.pricePerGallon || null,
       invoiceNum: r.invoiceNum || null,
@@ -1508,7 +1564,7 @@ async function processOne(
     }
 
     // Evaluate confidence on the BATCH (group)
-    const verdict = evaluateConfidence(entries, vendor, truckIds, vendors);
+    const verdict = evaluateConfidence(entries, vendor, truckIds, vendors, aiText);
     result.entries = entries;
     // A page-capped read may have missed pages, so its total can be short. That must
     // never post straight to the ledger as though it were complete — send it to the
@@ -1598,7 +1654,7 @@ ALSO add ONE meta field on the FIRST element only:
 - _confidenceReason: why low
 
 INVOICE TEXT:
-${pdfText.substring(0, 30000)}
+${pdfText}
 
 Return ONLY the JSON array, no preamble.` : `You are extracting line items from an invoice for ${vendor.name} (category: ${vendor.category || "Other"}).
 Return a JSON array. Each element MUST have:
@@ -1647,7 +1703,7 @@ ALSO add ONE meta field on the FIRST element only:
 - _confidenceReason: why low (e.g. "ambiguous truck assignment", "totals don't sum", "vendor unclear")
 
 INVOICE TEXT:
-${pdfText.substring(0, 30000)}
+${pdfText}
 
 Return ONLY the JSON array, no preamble.`;
 
@@ -1680,7 +1736,7 @@ Return ONLY the JSON array, no preamble.`;
   return JSON.parse(match[0]);
 }
 
-function evaluateConfidence(entries: any[], vendor: any, truckIds: string[], vendors: any[]) {
+function evaluateConfidence(entries: any[], vendor: any, truckIds: string[], vendors: any[], invoiceText = "") {
   // Trust the AI's own confidence flag if present
   const aiVerdict = entries[0]?._confidence;
   const aiReason = entries[0]?._confidenceReason || "";
@@ -1724,6 +1780,16 @@ function evaluateConfidence(entries: any[], vendor: any, truckIds: string[], ven
     if (e.truckId !== "INVENTORY" && String(e.category || "").toLowerCase() === "fuel"
         && Number(e.total) > FUEL_ROW_MAX) {
       return { level: "low", reason: `$${Number(e.total).toFixed(2)} of fuel on one truck in one transaction — more than two full tanks; likely a whole service log booked to truck ${e.truckId}` };
+    }
+  }
+  // v2.26.0: an independent read of the money. Only for a document that parsed to ONE
+  // row — the shape where grabbing a subtotal is the failure. A fuel service log is many
+  // rows against one document total and would trip this on tax alone.
+  if (entries.length === 1 && invoiceText) {
+    const printed = maxPrintedAmount(invoiceText);
+    const got = Number(entries[0].total) || 0;
+    if (printed > 0 && printed - got > 1) {
+      return { level: "low", reason: `Imported $${got.toFixed(2)} but the invoice prints $${printed.toFixed(2)} — likely a subtotal rather than the total` };
     }
   }
   return { level: "high", reason: "All fields valid" };

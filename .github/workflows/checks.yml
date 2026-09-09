@@ -58,6 +58,9 @@ jobs:
       - name: stored invoices are served as PDFs, not octet-stream
         run: node invoice-file-meta.mjs
         working-directory: .uitest
+      - name: a repair shop's own formatting imports as money, not zero
+        run: node complete-fleet.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
