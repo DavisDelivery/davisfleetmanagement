@@ -14,13 +14,20 @@
   #loading .spin { width: 36px; height: 36px; border: 3px solid #dde3ea; border-top: 3px solid #1e5b92; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
 <body>
 <div id="root"><div id="loading"><div class="spin"></div>Loading Fleet Management...</div></div>
+<!-- These four were in <head> with no defer, so the browser could not paint the
+     spinner below until all 515 KB of them had downloaded AND executed — on the phone
+     that is the blank screen before anything appears. Moved after #root so the first
+     paint happens immediately; execution order is unchanged, and the inline config
+     script below still runs after firebase is defined.
+     React is pinned: "react@18" is a redirect on unpkg (measured, one extra
+     round trip each), and an unpinned major can change under the app without warning. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCaaHZ0GuBoxl696-PzlgBQLPEad1xyiqw",

@@ -51,8 +51,8 @@ const KV = {
 let html = readFileSync(path.join(REPO, "index.html"), "utf8");
 html = html.replace(/<script src="https:\/\/www\.gstatic\.com\/firebasejs[^>]*><\/script>/g, "");
 html = html
-  .replace(/https:\/\/unpkg\.com\/react@18\/umd\/react\.production\.min\.js/g, "/vendor/react.js")
-  .replace(/https:\/\/unpkg\.com\/react-dom@18\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js");
+  .replace(/https:\/\/unpkg\.com\/react@[^/]+\/umd\/react\.production\.min\.js/g, "/vendor/react.js")
+  .replace(/https:\/\/unpkg\.com\/react-dom@[^/]+\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js");
 
 const STUB = `<script>
 window.__KV = ${JSON.stringify(KV)};
