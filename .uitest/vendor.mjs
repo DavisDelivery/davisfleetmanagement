@@ -15,8 +15,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const VENDOR = path.join(here, "vendor");
 
 const FILES = {
-  "react.js": "https://unpkg.com/react@18/umd/react.production.min.js",
-  "react-dom.js": "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
+  "react.js": "https://unpkg.com/react@18.3.1/umd/react.production.min.js",
+  "react-dom.js": "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js",
   "babel.js": "https://unpkg.com/@babel/standalone@7.24.0/babel.min.js",
 };
 

@@ -35,8 +35,12 @@ export async function buildApp() {
 export function patchHtml(stubScript) {
   const html = readFileSync(path.join(REPO, "index.html"), "utf8")
     .replace(/<script src="https:\/\/www\.gstatic\.com\/firebasejs[^>]*><\/script>/g, "")
-    .replace(/https:\/\/unpkg\.com\/react@18\/umd\/react\.production\.min\.js/g, "/vendor/react.js")
-    .replace(/https:\/\/unpkg\.com\/react-dom@18\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js");
+    // Version-agnostic on purpose: these used to name react@18 exactly, so pinning the
+    // app to react@18.3.1 silently stopped the rewrite, the page reached for unpkg with
+    // no network, and every browser test failed with "React is not defined" — a test
+    // break with no bug behind it.
+    .replace(/https:\/\/unpkg\.com\/react@[^/]+\/umd\/react\.production\.min\.js/g, "/vendor/react.js")
+    .replace(/https:\/\/unpkg\.com\/react-dom@[^/]+\/umd\/react-dom\.production\.min\.js/g, "/vendor/react-dom.js");
   return html.replace("</head>", stubScript + "</head>");
 }
 
