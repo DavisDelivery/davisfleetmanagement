@@ -43,8 +43,15 @@ const KV = {
   "fl-trucks": JSON.stringify(Array.from({length:58},(_,i)=>({id:String(1000+i),mk:"FRTLN",type:"straight",tr:"A",ax:"Single"}))),
   "fl-drivers": JSON.stringify(Array.from({length:40},(_,i)=>({name:`D${i}, R`,role:"Davis Straight Driver",category:"Davis"}))),
   "fl-repairs":"[]","fl-retired":"[]","fl-cores":"[]","fl-retired-drivers":"[]",
-  "fl-motive-map":"{}","fl-miles":"{}","fl-review-queue":"[]","fl-vendors":"[]",
+  "fl-motive-map":"{}","fl-miles":"{}","fl-vendors":"[]",
 };
+// The live queue is 511 items across nine shards, 6.17 MB. Scaled down here, but kept
+// multi-shard so a second full transfer is unmistakable.
+const qItem=(n)=>({id:"r"+n,confidence:"low",status:"pending",
+  parsed:[{truckId:"0424",vendor:"FuelFox Atlanta",total:100,date:"2026-08-01",
+    lineItems:new Array(40).fill({desc:"Diesel - Truck 0424 padding padding",amount:12.34})}]});
+for (let sh=0;sh<9;sh++){ const key = sh===0?"fl-review-queue":`fl-review-queue_${sh+1}`;
+  KV[key]=JSON.stringify(Array.from({length:57},(_,i)=>qItem(sh*57+i))); }
 for (let i=0;i<MONTHS;i++){ const y=2024+Math.floor(i/12), m=(i%12)+1; KV[`fl-costs-${y}-${String(m).padStart(2,"0")}`]="[]"; }
 // Each week carries a recognisable marker so we can prove the values were really read.
 for (let w=0;w<WEEKS;w++){ KV[`fl-asgn-2026-W${w}`]=JSON.stringify({[`marker${w}`]:{d:"x"}}); KV[`fl-stat-2026-W${w}`]="{}"; }
@@ -56,7 +63,7 @@ const delay=()=>LAT?new Promise(r=>setTimeout(r,LAT)):Promise.resolve();
 const rec=(k,key,extra)=>{window.__OPS.push(Object.assign({kind:k,key,t:Date.now()-window.__T0},extra||{}));};
 window.__KV=${JSON.stringify(KV)};
 const mk=(id)=>({
-  async get(){ rec("get",id); await delay(); const v=window.__KV[id];
+  async get(){ const v0=window.__KV[id]; rec("get",id,{bytes:v0?v0.length:0}); await delay(); const v=window.__KV[id];
     if(v===undefined) throw new Error("not found"); return {exists:true,data:()=>({v})}; },
   async set(o){ rec("set",id); window.__KV[id]=o.v; return true; },
   async delete(){ rec("delete",id); },
@@ -65,8 +72,20 @@ const mk=(id)=>({
 function mq(lo,hi){ return { where(f,op,v){ return op===">="?mq(v,hi):op==="<"?mq(lo,v):mq(lo,hi); },
   async get(){ await delay();
     const ids=Object.keys(window.__KV).filter(i=>(lo===null||i>=lo)&&(hi===null||i<hi));
+    // Count here, not in storage.list(): index.html defines its own window.storage in
+    // <body>, which overrides the stub's, so only the DB layer sees every call.
+    // Every range transfer goes through here exactly once, whether it came from
+    // storage.list() or from a listener's initial snapshot. Counting anywhere else
+    // double-counts: index.html overrides the stub's window.storage, and the listener
+    // drives this same get internally.
+    rec("query", lo===null?"(all)":lo, {n:ids.length, bytes:ids.reduce((a,i)=>a+((window.__KV[i]||"").length),0)});
     return { forEach(cb){ ids.forEach(i=>cb({id:i,data:()=>({v:window.__KV[i]})})); } }; } }; }
-window.__DB={collection(){const q=mq(null,null);return {doc:mk,where:q.where,get:q.get};}};
+window.__DB={collection(){const q=mq(null,null);
+  const wrap=(qq)=>({ where:(f,op,v)=>wrap(qq.where(f,op,v)), get:qq.get,
+    onSnapshot(cb){ rec("listener-attached","range");   // bytes counted by the get below
+      qq.get().then(sn=>cb(sn)); return ()=>{}; } });
+  const base=wrap(q);
+  return {doc:mk,where:base.where,get:base.get,onSnapshot:base.onSnapshot};}};
 window.__DB.settings=function(o){window.__SETTINGS=o;};
 window.firebase={initializeApp(){},firestore(){return window.__DB;}};
 window.firebase.firestore.FieldPath={documentId:()=>"__name__"};
@@ -76,10 +95,11 @@ window.storage={
   async delete(k){return {key:k,deleted:true};},
   async list(p){const s=await window.__DB.collection("kv").get();const keys=[],values={};
     s.forEach(d=>{if(!p||d.id.startsWith(p)){keys.push(d.id);values[d.id]=d.data().v;}});
-    rec("list",p||"(all)",{n:keys.length}); return {keys,values};}
+    return {keys,values};}
 };
 window.__text=function(){const r=document.getElementById("root");if(!r)return "";
   const c=r.cloneNode(true);c.querySelectorAll("style").forEach(e=>e.remove());return c.textContent||"";};
+window.addEventListener("unhandledrejection",e=>{window.__LOADERR=String(e.reason&&e.reason.message||e.reason).slice(0,120);});
 localStorage.setItem("fl-device-user","Harness");
 </script>`;
 
@@ -100,7 +120,9 @@ const open = async (lat) => {
   await page.waitForFunction(()=>/Weekly Board/.test(window.__text()),{timeout:90000}).catch(()=>{});
   return { page, errs };
 };
-const settle = async (page,ms)=>{ await new Promise(r=>setTimeout(r,ms)); return page.evaluate(()=>window.__OPS); };
+const settle = async (page,ms)=>{ await new Promise(r=>setTimeout(r,ms));
+  const err = await page.evaluate(()=>window.__LOADERR||null); if(err) console.log('      >>> load effect error:', err);
+  return page.evaluate(()=>window.__OPS); };
 
 console.log("\n═ opening the app on a two-year install ═");
 {
@@ -127,6 +149,17 @@ console.log("\n═ opening the app on a two-year install ═");
     asgnRedundant.length===0, `${asgnRedundant.length} redundant gets, e.g. ${asgnRedundant.slice(0,3).join(", ")}`);
   pass("review-queue shards are not re-read after their range query",
     redundant.filter(k=>k.startsWith("fl-review-queue")).length===0);
+
+  // The live listener already watches the whole fl-review-queue range, so reading it
+  // separately downloaded all of it a SECOND time — 6.17 MB twice, every open, on the
+  // one stream every other read shares. Exactly one transfer, or this is back.
+  const qTransfers = ops.filter(o =>
+    (o.kind==="query" && String(o.key).startsWith("fl-review-queue")) ||
+    (o.kind==="get" && String(o.key).startsWith("fl-review-queue"))
+  );
+  const qMB = (qTransfers.reduce((a,o)=>a+(o.bytes||0),0)/1048576).toFixed(2);
+  pass(`the review queue crosses the wire exactly once (${qTransfers.length} transfer, ${qMB} MB)`,
+    qTransfers.length===1, qTransfers.map(o=>`${o.kind}:${o.key}`).join(" + "));
 
   // Cheap is worthless if it is also wrong: the data must actually have been read.
   const weeksLoaded = await page.evaluate(()=>{

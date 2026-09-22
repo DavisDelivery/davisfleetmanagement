@@ -609,6 +609,8 @@ const READ_TIMEOUT_MS=12000;
 // treated as "the connection is probably dead". Short app-switches keep their stream —
 // a reset costs a handshake and rejects whatever reads are in flight.
 const RESUME_RESET_AFTER_MS=30000;
+// How long the review-queue listener gets before a one-time read is tried instead.
+const REVIEW_FALLBACK_MS=6000;
 const NOT_FOUND_RE=/not found/i;
 function withTimeout(promise,ms,label){
   let timer;
@@ -807,6 +809,9 @@ function App(){
   const costsReadyRef=useRef(false);
   // Same rule for the review queue now that it also arrives after first render.
   const reviewReadyRef=useRef(false);
+  // Raw shard strings as last delivered, so the listener can tell a real change from a
+  // repeat without re-serialising megabytes of parsed objects.
+  const reviewRawRef=useRef(null);
   const[loadAttempt,setLoadAttempt]=useState(0);  // bumping this re-runs the initial load
 
   // Safe JSON parse from a storage record — one corrupt blob can never crash the
@@ -874,9 +879,7 @@ function App(){
   useEffect(()=>{let cancelled=false;(async()=>{
     setLoadError(null);
     // Every read carries its own budget and resolves either way, so a slow document
-    // costs only itself. The review queue is fetched alongside but judged separately:
-    // loadReviewQueue catches its own read failure and returns [], so it reports
-    // success even when the database is unreachable.
+    // costs only itself.
     const KEYS=["fl-trucks","fl-drivers","fl-repairs","fl-retired","fl-cores",
                 "fl-retired-drivers","fl-motive-map","fl-miles"];
     // v2.28.0: the review queue is NOT on this path any more. It is by far the largest
@@ -933,10 +936,11 @@ function App(){
     // Behind the app: the review queue first (the Costs tab needs it and it is what the
     // office acts on), then the ledger. Both gate their own writes on having actually
     // been read — an empty list that never loaded must never be saved over a real one.
-    try{
-      const rq=await withTimeout(loadReviewQueue(),LOAD_TIMEOUT_MS,"fl-review-queue");
-      if(!cancelled){setReviewQueue(Array.isArray(rq)?rq:[]);reviewReadyRef.current=true;}
-    }catch(e){ /* stays empty and unwritable until a retry */ }
+    // v2.28.0: the review queue is NOT read here. A live listener on the same
+    // documentId() range attaches below and delivers the whole queue itself, so reading
+    // it here downloaded all of it a SECOND time — measured on the real database at
+    // 6.17 MB per copy, 511 items across nine shards. The listener is the single
+    // source; it sets reviewReadyRef when it first delivers.
     try{
       await withTimeout(loadCostsFromShards(true),LOAD_TIMEOUT_MS,"cost ledger");
       if(!cancelled){costsReadyRef.current=true;setCostsState("ready");}
@@ -1250,12 +1254,16 @@ function App(){
   // size guard, and once the server started honoring the parser's own low-confidence
   // flag it grew past Firestore's 1 MB property ceiling — every sync then failed on
   // that one write.
-  const loadReviewQueue=useCallback(async()=>{
+  // v2.28.0: this is a FALLBACK, not the normal path. The live listener below watches
+  // the same documentId() range and delivers the whole queue itself, so calling this
+  // routinely meant every open pulled 6.17 MB twice. But the listener can fail — it is
+  // wrapped in a try/catch, it needs window.db, and a wedged stream may never deliver —
+  // and removing this read outright made the queue a single point of failure, which the
+  // review-queue tests caught immediately. So: the listener leads, and this runs only if
+  // nothing has arrived by REVIEW_FALLBACK_MS.
+  const readReviewQueueOnce=useCallback(async()=>{
     const lst=await window.storage.list("fl-review-queue").catch(()=>({keys:[]}));
     const keys=shardKeysOf("fl-review-queue",((lst&&lst.keys)||[]));
-    // Same fix as loadCostsFromShards and the attendance sweep: the range query already
-    // returned each shard's value, so re-reading them is a round trip per shard for
-    // data we are holding. The review queue is one of the larger reads on the path.
     const have=(lst&&lst.values)||null;
     const docs=await Promise.all(keys.map(k=>(have&&have[k]!==undefined)
       ?Promise.resolve({key:k,value:have[k]})
@@ -2243,9 +2251,10 @@ Format your response as clear sections with headers using ** for bold. Use speci
   // TAIL shard, so once the queue spilled past one document a doc-level listener on the
   // base key would never fire again and new items would only appear on a page reload.
   useEffect(()=>{
-    if(!loaded||!window.db)return;
-    let unsub=()=>{};
+    if(!loaded)return;
+    let unsub=()=>{},attachFailed=!window.db;
     try{
+      if(!window.db)throw new Error("no db");
       const FP=firebase.firestore.FieldPath.documentId();
       unsub=window.db.collection("kv")
         .where(FP,">=","fl-review-queue").where(FP,"<","fl-review-queuf")
@@ -2258,12 +2267,37 @@ Format your response as clear sections with headers using ** for bold. Use speci
             for(const r of rows){try{const a=JSON.parse(r.v);if(Array.isArray(a))items.push(...a);}catch(e){}}
             items=dedupById(items);
             reviewShardCountRef.current=Math.max(1,rows.length);
-            // Diff guard: only update if changed (avoid render loops)
-            setReviewQueue(prev=>JSON.stringify(prev)===JSON.stringify(items)?prev:items);
+            // v2.28.0: the diff guard used to be
+            //   JSON.stringify(prev)===JSON.stringify(items)
+            // which re-serialised BOTH multi-megabyte arrays, on the main thread, on
+            // every snapshot — about 12 MB of string allocation each time, for a
+            // queue measured at 6.17 MB. On a phone that is how a web app gets killed
+            // by the OS for memory, which reads to the user as "it won't load".
+            // The shards arrive as strings, so compare THOSE: same answer, no
+            // re-serialisation and no allocation.
+            const raw=rows.map(r=>r.v||"");
+            const prevRaw=reviewRawRef.current;
+            const same=prevRaw&&prevRaw.length===raw.length&&raw.every((v,i)=>v===prevRaw[i]);
+            reviewRawRef.current=raw;
+            reviewReadyRef.current=true;
+            if(!same)setReviewQueue(items);
           }catch(e){}
         });
-    }catch(e){}
-    return()=>{try{unsub();}catch(e){}};
+    }catch(e){ attachFailed=true; }
+    // The listener leads; this is the safety net. Two ways it is needed, and they
+    // deserve different urgency: if attaching THREW we know instantly and should not
+    // make the office wait, and if it attached but never delivers (a wedged stream)
+    // only a timer can tell.
+    const readOnce=async()=>{
+      if(reviewReadyRef.current)return;
+      try{
+        const items=await readReviewQueueOnce();
+        if(!reviewReadyRef.current){setReviewQueue(items);reviewReadyRef.current=true;}
+      }catch(e){}
+    };
+    if(attachFailed)readOnce();
+    const fallback=setTimeout(readOnce,REVIEW_FALLBACK_MS);
+    return()=>{clearTimeout(fallback);try{unsub();}catch(e){}};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[loaded]);
 
