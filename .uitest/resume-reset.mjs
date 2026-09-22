@@ -36,7 +36,8 @@ const STUB = `<script>
 window.__KV=${JSON.stringify(KV)};
 window.__NET=[];                       // every disableNetwork/enableNetwork call, in order
 const mk=(id)=>({
-  async get(){ const v=window.__KV[id]; if(v===undefined) throw new Error("not found");
+  async get(){ if(window.__OFFLINE) throw new Error("Failed to get document because the client is offline.");
+    const v=window.__KV[id]; if(v===undefined) throw new Error("not found");
     return {exists:true,data:()=>({v})}; },
   async set(o){ window.__KV[id]=o.v; return true; },
   async delete(){ delete window.__KV[id]; },
@@ -47,8 +48,12 @@ function mq(lo,hi){ return { where(f,op,v){ return op===">="?mq(v,hi):op==="<"?m
     return { forEach(cb){ ids.forEach(i=>cb({id:i,data:()=>({v:window.__KV[i]})})); } }; } }; }
 window.__DB={collection(){const q=mq(null,null);return {doc:mk,where:q.where,get:q.get};}};
 window.__DB.settings=function(o){window.__SETTINGS=o;};
-window.__DB.disableNetwork=async function(){window.__NET.push("disable");};
-window.__DB.enableNetwork=async function(){window.__NET.push("enable");};
+// Model what disableNetwork() actually DOES, not just that it was called: it rejects
+// every in-flight read with the offline error. A no-op stub here is how a data-loss
+// regression on the reset path stayed invisible to CI.
+window.__OFFLINE=false;
+window.__DB.disableNetwork=async function(){window.__NET.push("disable");window.__OFFLINE=true;};
+window.__DB.enableNetwork=async function(){window.__NET.push("enable");window.__OFFLINE=false;};
 window.firebase={initializeApp(){},firestore(){return window.__DB;}};
 window.firebase.firestore.FieldPath={documentId:()=>"__name__"};
 window.storage={
@@ -113,6 +118,7 @@ console.log("\n═ a long background is treated as a dead connection ═");
   pass("the transport is torn down and rebuilt", JSON.stringify(n)===JSON.stringify(["disable","enable"]), JSON.stringify(n));
   pass("in that order — a rebuild is useless without the teardown",
     n[0]==="disable" && n[1]==="enable");
+  pass("exactly one cycle, not two overlapping ones", n.length===2, `${n.length} calls`);
 }
 
 console.log("\n═ a bfcache restore always counts as a resume ═");

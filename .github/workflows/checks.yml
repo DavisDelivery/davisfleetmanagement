@@ -91,6 +91,9 @@ jobs:
       - name: coming back from the background does not leave a dead connection
         run: node resume-reset.mjs
         working-directory: .uitest
+      - name: a week that failed to load is never written back over the real one
+        run: node week-write-guard.mjs
+        working-directory: .uitest
       - name: fleet app boots and storage.list is correct
         run: node app-boot.mjs
         working-directory: .uitest

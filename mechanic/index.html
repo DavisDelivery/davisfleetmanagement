@@ -314,6 +314,30 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+// v2.28.0: the shop portal shares the app's transport and therefore its failure mode —
+// once the WebChannel handshake is answered the client marks itself Online, cancels its
+// own 10s watchdog, and a read on a connected-but-silent stream never settles. Mirrors
+// index.html: the same transport setting, and a reset when the portal comes back from a
+// long background, since iOS kills a suspended tab's connections and fires no event the
+// SDK listens for. Guarded — a throw here would leave the mechanics with a blank page.
+try { if (typeof db.settings === "function") db.settings({ useFetchStreams: false, merge: true }); }
+catch (e) { console.warn("Firestore settings() rejected; continuing on defaults:", e && e.message); }
+(function () {
+  var hiddenAt = null, busy = false;
+  async function resume(force) {
+    var away = hiddenAt === null ? 0 : Date.now() - hiddenAt;
+    hiddenAt = null;
+    if (busy || (!force && away < 30000)) return;
+    if (typeof db.disableNetwork !== "function") return;
+    busy = true;
+    try { await db.disableNetwork(); await db.enableNetwork(); } catch (e) {} finally { busy = false; }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    resume(false);
+  });
+  window.addEventListener("pageshow", function (e) { if (e && e.persisted) resume(true); });
+})();
 
 // ── STORAGE HELPERS (mirrors App.jsx window.storage) ─────────────────
 async function fsGet(key) {

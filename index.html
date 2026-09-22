@@ -9,8 +9,13 @@
 <meta name="theme-color" content="#1e5b92">
 <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231e5b92'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-weight='bold'>F</text></svg>">
 <!-- The Firestore TLS handshake used to start only after 515 KB of CDN script had
-     downloaded and run. These let it overlap. -->
-<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+     downloaded and run. These let it overlap. Firestore's own requests are credentialed
+     (supportsCrossDomainXhr with withCredentials, which the fetch shim maps to
+     credentials:include), and an anonymous preconnect is not guaranteed to be reused by
+     a credentialed request — hence use-credentials here and a bare hint for gstatic,
+     whose script loads are no-cors. Unmeasured: a hint that fails to match is wasted,
+     not harmful. -->
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin="use-credentials">
 <link rel="preconnect" href="https://www.gstatic.com">
 <style>
   body { margin: 0; font-family: 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif; background: #f5f7fa; }
@@ -43,44 +48,49 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-// v2.28.0 — cold-start hardening, and the most likely cause of the hang.
+// v2.28.0 — transport hardening. Read the caveats: this is the least-evidenced change
+// in this file, and an independent review corrected several claims that stood here.
 //
-// Every read in this app is a one-shot listener on a single shared WebChannel, so
-// when that channel stalls, everything stalls together — which is why the failure
-// screen listed all eight documents timing out at exactly 12.0s, on full-bars LTE and
-// on office fibre alike.
+// SETTLED, and reproduced against the real bundle with the backend shaped in puppeteer:
+//   handshake held open       -> all reads reject at 10.0s, "client is offline"
+//   handshake aborted         -> all reads reject at  0.03s, same message
+//   handshake OK, then silent -> all reads hang; the app's ceiling calls it a timeout
+// Only the third matches the screen the owner photographed. Once the handshake POST is
+// answered the client marks itself Online and CANCELS its 10s "Backend didn't respond"
+// timer, after which a get() settles only on a snapshot or on a transition to Offline —
+// and a connected-but-silent stream never transitions. Measured: a get() on such a
+// stream was still unsettled after 300 seconds. All reads share one Listen stream, so
+// they fail together, on one clock. That much is not in doubt.
 //
-// What is VERIFIED in the exact bundle this page loads (firebase-firestore-compat.js
-// 10.12.0 = @firebase/firestore 4.6.2):
-//   oc=!0  ...  Object.assign({useFetchStreams:oc}, settings)     <- defaults to TRUE
-//   this.useFetchStreams && (o.xmlHttpFactory = new fn({}))       <- swaps in fetch
-//   fn: (this.D||T).fetch(new Request(...)) ... e.body.getReader() <- streamed body
-// and Firestore never passes useFetchStreams into the WebChannel options, so the
-// factory selector takes the fetch branch. WebKit buffers a streamed fetch response
-// body rather than delivering it chunk by chunk, so the long-lived backward channel
-// can hand the SDK nothing.
+// NOT SETTLED: what silences the stream on the phone. This setting is a guess at it.
 //
-// What is NOT claimed: that this alone produces the 12.0s signature. It does not. The
-// SDK has its own escape hatch — enqueueAfterDelay("online_state_timeout", 1e4) —
-// which fires at 10s and rejects every pending get() with "Failed to get document
-// because the client is offline." Had that landed, the screen would have shown that
-// message, not "timed out". So a buffered stream on its own does not fit.
+// What IS verified about the setting, in the bytes this page loads (4.6.2):
+//   oc=!0 ... Object.assign({useFetchStreams:oc}, settings)   -> the default is TRUE
+//   this.useFetchStreams && (o.xmlHttpFactory = new fn({}))   -> installs a fetch shim
+//   fn: fetch(new Request(...)) ... e.body.getReader()        -> streamed response body
+// and Chromium reports every Listen request as resourceType "fetch". Turning it off
+// leaves both factory slots unset, so closure falls through to native XMLHttpRequest.
 //
-// What does fit: that 10s timer is armed when the WATCH STREAM starts, which is
-// t0 + Δ, after the Firestore client finishes bootstrapping on its serial queue. Our
-// own ceiling is armed at t0. On a cold iPhone parsing 341 KB of SDK plus 411 KB of
-// app before the first render, Δ > 2s is entirely plausible — and then the SDK's
-// verdict lands AFTER our ceiling and every read reads as a flat timeout. That makes
-// a wedged fetch stream the likely wedge, with our own impatience hiding the evidence.
+// Corrections to what was written here before, all of them verified against the tagged
+// @firebase/firestore sources rather than inferred from changelog titles:
+//   - useFetchStreams has defaulted to TRUE in register.ts at EVERY version from 4.3.1
+//     through 4.9.2. It was never "disabled and re-enabled"; that history was wrong.
+//     What #7729 and #8197 flipped is webchannel_connection.ts, and BOTH sides of that
+//     flip are fetch() — "xmlhttprequest" there means closure's XhrIo abstraction over
+//     FetchXmlHttp, not native XHR. 4.6.2 is already the rolled-back state.
+//   - So this line does not restore a configuration Firebase ever shipped. It selects a
+//     third one (native XHR). That may still be worth having, since it is the only
+//     setting that leaves the fetch/ReadableStream path entirely — but it is a guess,
+//     not a return to a known-good default.
+//   - "WebKit buffers streamed fetch bodies" was asserted here with no source and is
+//     removed. It also argues against itself: experimentalAutoDetectLongPolling is on
+//     by default and its whole job is to spot a buffering path and drop to long
+//     polling. A transport that buffered would degrade, not hang.
+// merge:true keeps auto-detect and every other default in place.
 //
-// Firebase have disabled this setting before, for this symptom:
-//   4.3.2  "Rolling back the use of useFetchStreams, which has lead to hanging and
-//           incomplete queries."
-//   #8197  "Go back using xmlhttprequest for bidi-streams, as fetch streams seem to
-//           be having connection issue."
-// It is on again by 4.6.2. Turning it off puts WebChannel back on XHR, which WebKit
-// delivers incrementally. merge:true keeps every other default — including
-// experimentalAutoDetectLongPolling, so a genuinely buffering proxy is still detected.
+// The changes that actually make the app survive this are in App.jsx, not here: reset
+// the connection on timeout and on resume, and never let a failed read masquerade as
+// empty data. If this line turns out to do nothing, those still hold.
 try { if (typeof db.settings === "function") db.settings({ useFetchStreams: false, merge: true }); }
 catch (e) { console.warn("Firestore settings() rejected; continuing on defaults:", e && e.message); }
 window.db = db; // expose for real-time onSnapshot listeners in App.jsx

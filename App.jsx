@@ -597,15 +597,14 @@ const LOAD_TIMEOUT_MS=20000;
 // arrived and put the whole app on the error screen. That is the failure being
 // reported from a phone with full bars: nothing was wrong with the signal, one
 // document was just big.
-// v2.28.0: 15s, not 12s, and the reason matters. The SDK arms its OWN verdict —
-// online_state_timeout, 10s — when the watch stream starts, which is after the client
-// bootstraps on its serial queue. Ours was armed at mount. At 12s we were routinely
-// cutting the SDK off before it could say "Failed to get document because the client is
-// offline", so every failure read as a flat anonymous timeout and told us nothing about
-// why. Sitting just above 10s + bootstrap lets the SDK's real error surface on the
-// screen instead. The cost is three seconds in the worst case, on a path that now does
-// 20 reads instead of 123.
-const READ_TIMEOUT_MS=15000;
+// v2.28.0: back to 12s. This was briefly raised to 15s on the theory that the SDK's own
+// 10s verdict was being armed late and cut off — that theory was wrong. The timer is not
+// armed late, it is CANCELLED outright when the handshake marks the client Online
+// (measured: the gap between mount and watch-stream start is 10-25ms, not the seconds
+// the argument needed). So in the failure that actually happens no SDK error is coming
+// at any ceiling, and in the failures where one IS coming it arrives at ~10.0s, which
+// 12s already clears. The extra three seconds bought nothing except a longer wait.
+const READ_TIMEOUT_MS=12000;
 // v2.28.0: how long the app must have been in the background before a resume is
 // treated as "the connection is probably dead". Short app-switches keep their stream —
 // a reset costs a handshake and rejects whatever reads are in flight.
@@ -644,11 +643,20 @@ const recOf=r=>(r&&r.ok)?r.rec:null;
 // why pressing "Try again" produced the identical screen 12 seconds later.
 // disableNetwork() tears the stream down and rejects what is pending; enableNetwork()
 // builds a fresh one. Both exist on the compat Firestore object at 10.12.0.
+let __resetInFlight=null;
 async function resetFirestoreConnection(){
   const db=window.db;
   if(!db||typeof db.disableNetwork!=="function")return false;
-  try{await db.disableNetwork();await db.enableNetwork();return true;}
-  catch(e){return false;}
+  // Single-flight. The timeout path fires one of these and the Try again button awaits
+  // another; two overlapping disable/enable cycles each send their own terminate and
+  // race the retry's new listeners. Callers share the cycle already running.
+  if(__resetInFlight)return __resetInFlight;
+  __resetInFlight=(async()=>{
+    try{await db.disableNetwork();await db.enableNetwork();return true;}
+    catch(e){return false;}
+    finally{__resetInFlight=null;}
+  })();
+  return __resetInFlight;
 }
 function readFailed(r){return !!r&&r.ok===false&&!r.notFound;}
 function describeReads(results){
@@ -797,6 +805,8 @@ function App(){
   // window would write the empty state over real months, so cost writes wait for it.
   const[costsState,setCostsState]=useState("loading"); // "loading" | "ready" | "failed"
   const costsReadyRef=useRef(false);
+  // Same rule for the review queue now that it also arrives after first render.
+  const reviewReadyRef=useRef(false);
   const[loadAttempt,setLoadAttempt]=useState(0);  // bumping this re-runs the initial load
 
   // Safe JSON parse from a storage record — one corrupt blob can never crash the
@@ -869,11 +879,14 @@ function App(){
     // success even when the database is unreachable.
     const KEYS=["fl-trucks","fl-drivers","fl-repairs","fl-retired","fl-cores",
                 "fl-retired-drivers","fl-motive-map","fl-miles"];
-    const[docs,rqR]=await Promise.all([
-      Promise.all(KEYS.map(k=>readDoc(k))),
-      withTimeout(loadReviewQueue(),READ_TIMEOUT_MS,"fl-review-queue")
-        .then(v=>({ok:true,rec:v})).catch(e=>({ok:false,err:String((e&&e.message)||e)})),
-    ]);
+    // v2.28.0: the review queue is NOT on this path any more. It is by far the largest
+    // thing the app reads — nine shards, seven of them within 25% of Firestore's 1 MB
+    // document limit — and every byte of it was being awaited before the first pixel,
+    // on the same single Listen stream as the 127 KB roster. That is head-of-line
+    // blocking against the only data needed to open the app, and it is the same mistake
+    // v2.27.0 fixed for the cost ledger, in this file, for this reason. It loads behind
+    // the app now, with the ledger.
+    const docs=await Promise.all(KEYS.map(k=>readDoc(k)));
     if(cancelled)return;
     const[tR,dR,rR,rtR,coresR,rdR,mmR,milesR]=docs;
 
@@ -885,7 +898,7 @@ function App(){
       // A timeout here means the stream is wedged, not that the data is missing. Tear it
       // down now so the retry (and any background listener) gets a fresh connection
       // instead of queueing behind the dead one.
-      if(tR.timedOut||dR.timedOut)resetFirestoreConnection();
+      if(tR.timedOut||dR.timedOut)await resetFirestoreConnection();
       setLoadError({kind:(tR.timedOut||dR.timedOut)?"timeout":"unreachable",detail:describeReads(docs)});
       return;
     }
@@ -897,8 +910,6 @@ function App(){
     setRepairs(pj(recOf(rR),[]));
     setRetiredTrucks(pj(recOf(rtR),[]));
     setCores(pj(recOf(coresR),[])); // v2.10.0
-    const rq=(rqR&&rqR.ok)?rqR.rec:[];
-    setReviewQueue(Array.isArray(rq)?rq:[]); // v2.10.48 — loadReviewQueue returns items, not a record
     setRetiredDrivers(sortDrivers(pj(recOf(rdR),[])));
     const m=pj(recOf(mmR),null);if(m)setMotiveMap({vehicles:m.vehicles||{},drivers:m.drivers||{}});
     const mi=pj(recOf(milesR),null);
@@ -919,6 +930,13 @@ function App(){
     // Fleet, Weekly Board and Drivers tabs need none of it. Load it behind the app and
     // let that tab say it is still coming.
     if(!cancelled)setLoaded(true);
+    // Behind the app: the review queue first (the Costs tab needs it and it is what the
+    // office acts on), then the ledger. Both gate their own writes on having actually
+    // been read — an empty list that never loaded must never be saved over a real one.
+    try{
+      const rq=await withTimeout(loadReviewQueue(),LOAD_TIMEOUT_MS,"fl-review-queue");
+      if(!cancelled){setReviewQueue(Array.isArray(rq)?rq:[]);reviewReadyRef.current=true;}
+    }catch(e){ /* stays empty and unwritable until a retry */ }
     try{
       await withTimeout(loadCostsFromShards(true),LOAD_TIMEOUT_MS,"cost ledger");
       if(!cancelled){costsReadyRef.current=true;setCostsState("ready");}
@@ -966,15 +984,36 @@ function App(){
 
   // Load the current week's assignments + truck status when the week changes. The
   // `cancelled` guard drops a stale response if the user clicks through weeks fast.
+  // v2.28.0: this effect used to swallow a failed read into an empty week — the reads
+  // were `.catch(()=>null)` and pj() turns null into {}. That was survivable while a
+  // failed read simply HUNG, because a healing stream would still resolve it. It stopped
+  // being survivable the moment this version added a connection reset: disableNetwork()
+  // rejects every in-flight read, these reads are in flight at mount alongside the
+  // roster's, `wk` has not changed so the effect never re-runs, and the board then
+  // renders blank over a week that is perfectly intact on disk. The first cell edit
+  // writes that blank back — sv() does set({v}), a whole-document replace, not a merge.
+  //
+  // That is the same mistake v2.27.0 fixed for the truck roster ("a read that FAILED may
+  // not seed a default"), left unapplied here, and the reset is what made it reachable.
+  // So: tell a failed read apart from an empty week, refuse to SAVE a week we never
+  // managed to read, and re-run on a retry so "Try again" recovers the week too.
+  const[weekLoaded,setWeekLoaded]=useState(false);
+  const weekLoadedRef=useRef(false);
+  const markWeek=(ok)=>{weekLoadedRef.current=ok;setWeekLoaded(ok);};
   useEffect(()=>{let cancelled=false;(async()=>{
-    const[aR,sR]=await Promise.all([
-      window.storage.get(`fl-asgn-${wk}`).catch(()=>null),
-      window.storage.get(`fl-stat-${wk}`).catch(()=>null),
-    ]);
+    markWeek(false);
+    const[aR,sR]=await Promise.all([readDoc(`fl-asgn-${wk}`),readDoc(`fl-stat-${wk}`)]);
     if(cancelled)return;
-    setAsgn(pj(aR,{}));
-    setTStat(pj(sR,{}));
-  })();return()=>{cancelled=true;};},[wk]);
+    if(readFailed(aR)||readFailed(sR)){
+      // We do not know what this week holds. Show it empty so the app still works, but
+      // every write to it is blocked until a read succeeds.
+      setAsgn({});setTStat({});markWeek(false);
+      return;
+    }
+    setAsgn(pj(recOf(aR),{}));
+    setTStat(pj(recOf(sR),{}));
+    markWeek(true);
+  })();return()=>{cancelled=true;};},[wk,loadAttempt]);
 
   // Load ALL attendance data from storage (supports DVIR history import)
   // v2.28.0: this was the single heaviest thing the app did after opening, and all of
@@ -1018,8 +1057,11 @@ function App(){
   // One-time DVIR history import — loads 68 weeks from dvir_history.json into storage
   useEffect(()=>{if(!loaded)return;(async()=>{
     try{
-      const flag=await window.storage.get('fl-dvir-imported').catch(()=>null);
-      if(flag)return;
+      // v2.28.0: a FAILED flag read used to look identical to "never imported", and the
+      // import then rewrites 68 weeks of fl-asgn/fl-stat as {...ex,...w.a} with ex={}
+      // when those reads fail too. Only an genuinely absent flag may start an import.
+      const flagR=await readDoc('fl-dvir-imported');
+      if(readFailed(flagR)||recOf(flagR))return;
       const resp=await fetch('/dvir_history.json');
       if(!resp.ok)return;
       const data=await resp.json();
@@ -1089,8 +1131,16 @@ function App(){
   const saveRetiredTrucks=rt=>{setRetiredTrucks(rt);sv("fl-retired",rt);};
   const saveRetiredDrivers=rd=>{const v=sortDrivers(rd);setRetiredDrivers(v);sv("fl-retired-drivers",v);};
   const saveDrivers=d=>{const v=sortDrivers(d);setDrivers(v);sv("fl-drivers",v);};
-  const saveAsgn=useCallback(a=>{setAsgn(a);sv(`fl-asgn-${wk}`,a);},[wk,sv]);
-  const saveTStat=useCallback(s=>{setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv]);
+  // Both refuse to write a week whose stored contents were never read — see the week
+  // effect above. Writing here is a whole-document replace, so "we failed to read it"
+  // and "it is empty" must never be treated alike.
+  const weekWriteBlocked=useCallback(()=>{
+    if(weekLoadedRef.current)return false;
+    toast("This week hasn't finished loading — reload before editing, so you don't write over it.");
+    return true;
+  },[toast]);
+  const saveAsgn=useCallback(a=>{if(weekWriteBlocked())return;setAsgn(a);sv(`fl-asgn-${wk}`,a);},[wk,sv,weekWriteBlocked]);
+  const saveTStat=useCallback(s=>{if(weekWriteBlocked())return;setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv,weekWriteBlocked]);
   const saveRepairs=useCallback(r=>{setRepairs(r);sv("fl-repairs",r);},[sv]);
   // v2.16.7: write costs to per-month shards (fl-costs-<YYYY-MM>) instead of one
   // unbounded fl-costs doc. Only shards whose contents actually changed are
@@ -1215,6 +1265,13 @@ function App(){
     return dedupById(items);
   },[]);
   const saveReviewQueue=useCallback(q=>{
+    // Refuse to write a queue we never read: it arrives after first render now, and an
+    // empty in-memory list is indistinguishable from "the office cleared it" once it
+    // reaches disk. Same hazard the ledger has, same guard.
+    if(!reviewReadyRef.current){
+      toast("Still loading the review queue — try that again in a moment.");
+      return;
+    }
     setReviewQueue(q);
     svSharded("fl-review-queue",q,reviewShardCountRef.current).then(n=>{reviewShardCountRef.current=n;});
   },[svSharded]);
