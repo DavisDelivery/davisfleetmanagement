@@ -606,6 +606,10 @@ const LOAD_TIMEOUT_MS=20000;
 // screen instead. The cost is three seconds in the worst case, on a path that now does
 // 20 reads instead of 123.
 const READ_TIMEOUT_MS=15000;
+// v2.28.0: how long the app must have been in the background before a resume is
+// treated as "the connection is probably dead". Short app-switches keep their stream —
+// a reset costs a handshake and rejects whatever reads are in flight.
+const RESUME_RESET_AFTER_MS=30000;
 const NOT_FOUND_RE=/not found/i;
 function withTimeout(promise,ms,label){
   let timer;
@@ -922,6 +926,39 @@ function App(){
       if(!cancelled)setCostsState("failed");
     }
   })();return()=>{cancelled=true;};},[loadAttempt]);
+
+  // v2.28.0: iOS kills a suspended home-screen app's connections, and NOTHING tells the
+  // SDK. Firestore restarts its network only on the browser's online/offline events,
+  // which iOS does not fire on resume, and its own visibilitychange hook merely resets
+  // backoff. So the client comes back believing it is still Online while its watch
+  // stream is dead — and a get() on a connected-but-silent stream has no SDK-side
+  // deadline at all (measured against the real 10.12.0 bundle: still unsettled after
+  // 300 seconds). That is the shape of every "it won't load" report from the yard: this
+  // app lives on a home screen and gets suspended constantly.
+  //
+  // Reset the transport when we come back from a long absence, which is exactly when
+  // the connection has been taken away. disableNetwork() rejects the stuck reads and
+  // enableNetwork() forces a fresh handshake and backchannel. Queued writes survive —
+  // they stay in the mutation queue and go out when the network comes back.
+  useEffect(()=>{
+    let hiddenAt=null,busy=false;
+    const resume=async(force)=>{
+      const away=hiddenAt===null?0:Date.now()-hiddenAt;
+      hiddenAt=null;
+      if(busy||(!force&&away<RESUME_RESET_AFTER_MS))return;
+      busy=true;
+      try{await resetFirestoreConnection();}finally{busy=false;}
+    };
+    const onVis=()=>{
+      if(document.visibilityState==="hidden"){hiddenAt=Date.now();return;}
+      resume(false);
+    };
+    // A bfcache restore is always a resume, however brief: the page was frozen.
+    const onShow=(e)=>{if(e&&e.persisted)resume(true);};
+    document.addEventListener("visibilitychange",onVis);
+    window.addEventListener("pageshow",onShow);
+    return()=>{document.removeEventListener("visibilitychange",onVis);window.removeEventListener("pageshow",onShow);};
+  },[]);
 
   // The Fleet / Maintenance / Drivers tabs share one `search` box — clear it when
   // switching tabs so a filter typed on one tab doesn't silently hide rows on another.

@@ -88,6 +88,9 @@ jobs:
       - name: opening the app costs a bounded number of reads, however much history there is
         run: node startup-fanout.mjs
         working-directory: .uitest
+      - name: coming back from the background does not leave a dead connection
+        run: node resume-reset.mjs
+        working-directory: .uitest
       - name: fleet app boots and storage.list is correct
         run: node app-boot.mjs
         working-directory: .uitest

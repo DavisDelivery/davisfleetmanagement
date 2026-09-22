@@ -20,5 +20,5 @@ boot.build.js
 # driving the real app against a shaped backend to watch the SDK's state machine — those
 # probes hardcode absolute scratch paths, are never run by CI, and are not tests. Real
 # tests are named for the behaviour they guard and are listed in .github/workflows/checks.yml.
-.uitest/probe-tmp/
+.uitest/probe-*/
 .uitest/zz-*.mjs
