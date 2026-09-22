@@ -68,6 +68,7 @@ const mk = (id) => ({
   onSnapshot(cb) { setTimeout(() => cb({ forEach() {} }), 0); return () => {}; }
 });
 window.__DB = { collection() { const q = mq(null, null); return { doc: mk, where: q.where, get: q.get }; } };
+window.__DB.settings=function(o){window.__SETTINGS=o;};
 window.firebase = { initializeApp() {}, firestore() { return window.__DB; } };
 window.firebase.firestore.FieldPath = { documentId: () => "__name__" };
 localStorage.setItem("fl-device-user", "Harness");

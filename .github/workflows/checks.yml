@@ -85,6 +85,9 @@ jobs:
       - name: one slow document does not stop the app, or seed a demo roster over a real fleet
         run: node cold-start-partial.mjs
         working-directory: .uitest
+      - name: opening the app costs a bounded number of reads, however much history there is
+        run: node startup-fanout.mjs
+        working-directory: .uitest
       - name: fleet app boots and storage.list is correct
         run: node app-boot.mjs
         working-directory: .uitest
