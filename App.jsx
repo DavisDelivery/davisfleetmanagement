@@ -597,7 +597,15 @@ const LOAD_TIMEOUT_MS=20000;
 // arrived and put the whole app on the error screen. That is the failure being
 // reported from a phone with full bars: nothing was wrong with the signal, one
 // document was just big.
-const READ_TIMEOUT_MS=12000;
+// v2.28.0: 15s, not 12s, and the reason matters. The SDK arms its OWN verdict —
+// online_state_timeout, 10s — when the watch stream starts, which is after the client
+// bootstraps on its serial queue. Ours was armed at mount. At 12s we were routinely
+// cutting the SDK off before it could say "Failed to get document because the client is
+// offline", so every failure read as a flat anonymous timeout and told us nothing about
+// why. Sitting just above 10s + bootstrap lets the SDK's real error surface on the
+// screen instead. The cost is three seconds in the worst case, on a path that now does
+// 20 reads instead of 123.
+const READ_TIMEOUT_MS=15000;
 const NOT_FOUND_RE=/not found/i;
 function withTimeout(promise,ms,label){
   let timer;
