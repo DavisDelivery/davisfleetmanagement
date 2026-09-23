@@ -76,6 +76,9 @@ jobs:
       - name: shop portal boots
         run: node portal-syntax.mjs
         working-directory: .uitest
+      - name: the portal inside Settings reads live data and never writes it
+        run: node mechanic-test-mode.mjs
+        working-directory: .uitest
       - name: cold start ships no compiler and stays under budget
         run: node coldstart.mjs
         working-directory: .uitest
