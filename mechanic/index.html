@@ -213,7 +213,7 @@
   <div class="header-logo">🔧</div>
   <div>
     <div class="header-title">Davis Fleet — Shop Portal</div>
-    <div class="header-sub">mechanics.davisfleetmanagement.netlify.app</div>
+    <div class="header-sub" id="portal-address">fleet.davisdelivery.com/mechanic</div>
   </div>
   <div class="header-badge" id="open-badge">0</div>
 </div>
@@ -1167,6 +1167,14 @@ window.addEventListener("resize", () => {
 });
 
 // ── BOOT ──────────────────────────────────────────────────────────────
+// v2.29.0: the header names where this portal lives, so a mechanic can read the
+// address off the screen. It used to say mechanics.davisfleetmanagement.netlify.app,
+// which the portal was never served from; the site has since answered on more than
+// one davisdelivery.com name, so read the real one instead of hardcoding another.
+(function () {
+  const el = document.getElementById("portal-address");
+  if (el) el.textContent = location.host + location.pathname.replace(/\/(index\.html)?$/, "");
+})();
 if (TEST_BLOCKED) {
   // Opened as ?test outside the fleet app. Refuse rather than run: running LIVE
   // would betray the ?test in the address bar, and running as a test would silently

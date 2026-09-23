@@ -293,6 +293,8 @@ console.log("\n═ the real portal still saves ═");
   await p3.goto(`http://localhost:${PORT}/mechanic/`, { waitUntil: "domcontentloaded" });
   await p3.waitForSelector(`#card-${REPAIR_ID}`, { timeout: 15000 }).catch(() => {});
   pass("no banner on the real portal", !(await p3.$("#test-mode-banner")));
+  const addr = await p3.evaluate(() => document.getElementById("portal-address")?.textContent);
+  pass("the header shows the address it was opened at", addr === `localhost:${PORT}/mechanic`, JSON.stringify(addr));
   await p3.type(`#ni-${REPAIR_ID}`, "Live note");
   await p3.click(`#card-${REPAIR_ID} .btn-add`);
   await sleep(800);   // the same wait as above: if this sees a write, that one would have
