@@ -246,7 +246,7 @@ pass("item F no longer offers a roster-fix button", !/➕ Add #|🔀 It's really
 // ("Reassigned #2651 → #2561…") can still be on screen here (5s auto-dismiss) and
 // would contain "2651" too, so exclude it explicitly and match the real column format.
 await page.evaluate(() => {
-  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Fleet");
+  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Fleet List");
   if (b) b.click();
 });
 await new Promise(r => setTimeout(r, 500));

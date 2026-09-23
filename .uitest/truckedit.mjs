@@ -78,7 +78,7 @@ await sleep(1800);
 console.log("\n═ Truck Report — edit transmission + axle ═");
 t("app mounted", (await page.$eval("body", (b) => b.innerText.length)) > 100);
 
-await clickText("Fleet");
+await clickText("Fleet List");
 await sleep(800);
 // Open #0877's Truck Report by clicking its number.
 const opened = await page.evaluate(() => {
@@ -138,7 +138,7 @@ t("report now displays the new axle", /Axle:?\s*Single/.test(body.replace(/\n/g,
 // The Single/Tandem fleet filter reads the same field — it must follow the edit.
 await clickText("×");
 await sleep(500);
-await clickText("Fleet");
+await clickText("Fleet List");
 await sleep(600);
 const tandemNow = await page.evaluate(() => JSON.parse(window.__KV["fl-trucks"]).filter((x) => x.ax === "Tandem").length);
 t("no tractors left classified Tandem after the change", tandemNow === 0, `tandem=${tandemNow}`);

@@ -118,6 +118,9 @@ jobs:
       - name: reassigning a missing truck to an existing one fixes typos, not just gaps
         run: node review-queue-reassign.mjs
         working-directory: .uitest
+      - name: Fleet List models are dropdowns and Deleted is a column, and looking changes nothing
+        run: node fleet-list.mjs
+        working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
   sync:

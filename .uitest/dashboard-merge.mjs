@@ -90,7 +90,7 @@ await page.waitForFunction(
 const r = await page.evaluate(() => {
   const tabs = [...document.querySelectorAll("button")]
     .map(b => (b.textContent || "").trim())
-    .filter(t => ["Dashboard", "Dispatch", "Weekly Board", "Fleet", "Maintenance", "Costs", "Drivers", "Attendance"].includes(t));
+    .filter(t => ["Dashboard", "Dispatch", "Weekly Board", "Fleet List", "Maintenance", "Costs", "Drivers", "Attendance"].includes(t));
   const body = document.getElementById("root").textContent || "";
   const at = (s) => body.indexOf(s);
   return {
