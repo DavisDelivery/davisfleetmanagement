@@ -676,9 +676,13 @@ function SettingsScreen(){
   const[held,setHeld]=useState([]);
   const[frameKey,setFrameKey]=useState(0);
   const[wide,setWide]=useState(false);
+  const frameRef=useRef(null);
   useEffect(()=>{
     const onMsg=(e)=>{
       if(e.origin!==window.location.origin)return;
+      // Only the frame on screen now. A save the previous frame posted just before Reset
+      // can still be in flight, and counting it would tell a fresh view it has changes.
+      if(!frameRef.current||e.source!==frameRef.current.contentWindow)return;
       const d=e.data;
       if(d&&d.type==="fleet-mechanic-test"&&d.event==="write"&&typeof d.key==="string")setHeld(h=>[...h,d.key]);
     };
@@ -715,7 +719,7 @@ function SettingsScreen(){
     </div>
     <div style={{display:"flex",justifyContent:"center"}}>
       <div style={{width:wide?"100%":"min(400px,100%)",background:"#0f172a",borderRadius:wide?10:32,padding:wide?6:"14px 10px",boxShadow:"0 10px 30px rgba(15,23,42,.25)",transition:"width .2s"}}>
-        <iframe key={frameKey} title="Mechanic portal (test view)" src="/mechanic/?test=1"
+        <iframe ref={frameRef} key={frameKey} title="Mechanic portal (test view)" src="/mechanic/?test=1"
           style={{display:"block",width:"100%",height:wide?760:780,border:0,borderRadius:wide?6:22,background:"#fff"}}/>
       </div>
     </div>

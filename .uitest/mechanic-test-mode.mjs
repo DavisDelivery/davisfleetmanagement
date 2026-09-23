@@ -6,7 +6,9 @@
  *
  * "The database" is this server, not a variable in the page: the portal's Firestore
  * stub reports every read, listen and write to /__db. A write that escaped test mode by
- * ANY route would show up here, whichever window or client it came from.
+ * ANY route would show up here, whichever window or client it came from. Reports are
+ * synchronous, so a write is on the server before set() returns and "nothing arrived"
+ * is a fact at the moment it is checked, not a guess made after a sleep.
  *
  *   1. Nothing loads until Settings is opened — the frame is a second Firestore client
  *      and must never ride along on a cold start.
@@ -74,10 +76,11 @@ window.__KV=${JSON.stringify({ "fl-trucks": TRUCKS, "fl-repairs": REPAIRS })};
   window.__STATKEY="fl-stat-"+wk; window.__KV[window.__STATKEY]=JSON.stringify(s);
 })();
 window.__SUBS={};
-const report=(kind,id)=>{ try{ fetch("/__db",{method:"POST",keepalive:true,
-  body:JSON.stringify({kind,id,framed:window.self!==window.top,url:location.pathname+location.search})}); }catch(e){} };
+const report=(kind,id)=>{ try{ const x=new XMLHttpRequest(); x.open("POST","/__db",false);
+  x.send(JSON.stringify({kind,id,framed:window.self!==window.top,url:location.pathname+location.search})); }catch(e){} };
 const snapOf=(id)=>({exists:window.__KV[id]!==undefined,data:()=>({v:window.__KV[id]})});
-const emit=(id)=>setTimeout(()=>(window.__SUBS[id]||[]).forEach(cb=>cb(snapOf(id))),0);
+// __EMITS counts deliveries, so a test can know a push has landed before judging it.
+const emit=(id)=>setTimeout(()=>{(window.__SUBS[id]||[]).forEach(cb=>cb(snapOf(id)));window.__EMITS=(window.__EMITS||0)+1;},0);
 const mk=(id)=>({
   async get(){ report("read",id); return snapOf(id); },
   // Like Firestore: a local write is echoed to this client's own listeners.
@@ -123,6 +126,14 @@ let failed = 0;
 const pass = (l, ok, x = "") => { if (!ok) failed++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${x ? "  — " + x : ""}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const writesSince = (n) => db.slice(n).filter((e) => e.kind === "write" || e.kind === "delete");
+// Anything that crosses a task boundary — a postMessage out of the frame, the render it
+// triggers, a stub call made after the screen has already changed — is waited for, not
+// read once. Reading once flaked on CI: a DevTools evaluate can run ahead of a message
+// the frame has already queued, and the count came back 1 instead of 3.
+const until = async (fn, ms = 5000) => {
+  const end = Date.now() + ms;
+  for (;;) { const v = await fn(); if (v || Date.now() > end) return v; await sleep(50); }
+};
 
 const browser = await launch();
 const errs = [];
@@ -191,8 +202,9 @@ console.log("\n═ a name tried out in the test view stays there ═");
 {
   promptAnswer = "Test Mechanic";
   await frame.click("#who-bar");
-  await sleep(300);
-  const chip = await frame.evaluate(() => document.getElementById("who-bar").textContent);
+  const chipText = () => frame.evaluate(() => document.getElementById("who-bar").textContent);
+  await until(async () => /Test Mechanic/.test(await chipText()));
+  const chip = await chipText();
   pass("the test view uses the new name", /Test Mechanic/.test(chip), chip.trim());
   const stored = await page.evaluate(() => localStorage.getItem("fl-device-user"));
   pass("the fleet app's own name is untouched", stored === "Harness", JSON.stringify(stored));
@@ -211,8 +223,10 @@ const before = db.length;
 
   // Another device saves while the test is running. The live copy must not snap the
   // test edit away — the owner would see their change vanish and think it broke.
+  const emits = await frame.evaluate(() => window.__EMITS || 0);
   await frame.evaluate(() => window.__pushRemote("fl-repairs"));
-  await sleep(300);
+  const delivered = await until(() => frame.evaluate((n) => (window.__EMITS || 0) > n, emits));
+  pass("the live update was delivered to the portal", delivered);
   pass("a live update does not wipe the test edit",
     /Replace brake chamber/.test(await frame.evaluate(() => document.getElementById("open-list").textContent)));
 
@@ -220,10 +234,12 @@ const before = db.length;
   await frame.waitForFunction((id) => !document.getElementById(`card-${id}`), { timeout: 5000 }, REPAIR_ID).catch(() => {});
   pass("closing the repair takes it off the open list", !(await frame.$(`#card-${REPAIR_ID}`)));
   pass("and it shows in history", (await frame.evaluate(() => document.getElementById("count-history").textContent.trim())) === "1");
+  await until(() => db.slice(before).some((e) => e.kind === "read" && /^fl-stat-/.test(e.id)));
   pass("closing went on to look at the Weekly Board, so it DID try to write there",
     db.slice(before).some((e) => e.kind === "read" && /^fl-stat-/.test(e.id)),
     db.slice(before).map((e) => `${e.kind}:${e.id}`).join(" "));
 
+  await until(async () => /3 saves held back/.test(await heldText()));
   const t = await heldText();
   pass("the Settings screen counts what was held back", /3 saves held back/.test(t), t);
   pass("and names both things a close would have changed", /repair tickets/.test(t) && /Weekly Board status/.test(t), t);
@@ -244,7 +260,8 @@ const before = db.length;
   pass("update, batch and transactions fail instead of reaching the database",
     probe.update === "threw" && probe.batch === "threw" && probe.txn === "threw", JSON.stringify(probe));
 
-  await sleep(800);   // same window the live-portal check below proves is long enough
+  // Exact, not timed: reports are synchronous, and all three saves had been attempted
+  // before the summary could reach 3 (it counts the attempts).
   const leaked = writesSince(0);
   pass("NOT ONE write reached the database", leaked.length === 0, leaked.map((e) => `${e.kind}:${e.id}`).join(" "));
   pass("the stored repair is still open", await frame.evaluate(() => JSON.parse(window.__KV["fl-repairs"])[0].status === "open"));
@@ -266,6 +283,16 @@ console.log("\n═ Reset goes back to live data ═");
   pass("the test note is gone", !!fresh && !/Replace brake chamber/.test(await fresh.evaluate(() => document.body.textContent)));
   pass("the test name is gone", !!fresh && /Harness/.test(await fresh.evaluate(() => document.getElementById("who-bar").textContent)));
   pass("the summary starts over", /Nothing changed yet/.test(await heldText()), await heldText());
+
+  // Only the frame on screen moves the counter. Stand-in for a save the replaced frame
+  // posted just before Reset: the same message, from another window. Messages posted to
+  // a window are handled in order, so by the time the live frame's marker is counted
+  // the stand-in has been seen — and it must not have been counted.
+  await page.evaluate(() => window.postMessage({ type: "fleet-mechanic-test", event: "write", key: "fl-repairs" }, location.origin));
+  if (fresh) await fresh.evaluate(() => window.parent.postMessage({ type: "fleet-mechanic-test", event: "write", key: "fl-marker" }, location.origin));
+  await until(async () => /fl-marker/.test(await heldText()));
+  const only = await heldText();
+  pass("only the frame on screen moves the counter", /^1 save held back \(fl-marker\)/.test(only), only);
   frame = fresh;
 }
 
@@ -297,7 +324,7 @@ console.log("\n═ the real portal still saves ═");
   pass("the header shows the address it was opened at", addr === `localhost:${PORT}/mechanic`, JSON.stringify(addr));
   await p3.type(`#ni-${REPAIR_ID}`, "Live note");
   await p3.click(`#card-${REPAIR_ID} .btn-add`);
-  await sleep(800);   // the same wait as above: if this sees a write, that one would have
+  await p3.waitForFunction(() => /Live note/.test(document.getElementById("open-list").textContent), { timeout: 5000 }).catch(() => {});
   const wrote = writesSince(mark);
   pass("adding a note writes the repair to the database",
     wrote.some((e) => e.kind === "write" && e.id === "fl-repairs" && !e.framed), wrote.map((e) => `${e.kind}:${e.id}`).join(" "));
