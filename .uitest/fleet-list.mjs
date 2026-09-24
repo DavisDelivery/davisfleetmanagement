@@ -191,6 +191,56 @@ console.log("\n═ a Deleted column, right beside Trans ═");
   await until(async () => (await truck("0424")).del === true);
 }
 
+console.log("\n═ the two tables line up ═");
+{
+  // Box Trucks and Tractors are separate tables stacked one above the other. Measured,
+  // not eyeballed: every column must start and end at the same x in both, and nothing
+  // may be wider than its column (a select or a name spilling into the next cell).
+  const measure = () => page.evaluate(() => {
+    const tables = [...document.querySelectorAll("table")]
+      .filter((t) => [...t.querySelectorAll("thead th")].some((th) => th.textContent.trim() === "Deleted"));
+    return {
+      cols: tables.map((t) => [...t.querySelectorAll("thead th")].map((th) => {
+        const r = th.getBoundingClientRect(); return [th.textContent.trim(), Math.round(r.left), Math.round(r.right)];
+      })),
+      spill: tables.flatMap((t) => [...t.querySelectorAll("tbody td")]
+        .filter((td) => td.scrollWidth > td.clientWidth + 1)
+        .map((td) => `${td.parentElement.firstElementChild.textContent.trim()}: ${(td.textContent || td.innerHTML).trim().slice(0, 24)}`)),
+    };
+  });
+  const offBy = (cols) => cols.length !== 2 ? ["not two tables"] :
+    cols[0].map((c, i) => { const o = cols[1][i] || ["?", NaN, NaN]; return c[0] !== o[0] || Math.abs(c[1] - o[1]) > 1 || Math.abs(c[2] - o[2]) > 1 ? `${c[0]} ${c[1]}-${c[2]} vs ${o[1]}-${o[2]}` : null; }).filter(Boolean);
+
+  const wide = await measure();
+  pass("at a desktop width, every column lines up across both tables", offBy(wide.cols).length === 0, offBy(wide.cols).join(" ; "));
+  pass("and nothing spills out of its column", wide.spill.length === 0, wide.spill.slice(0, 4).join(" ; "));
+  // Box trucks and tractors offer different make lists, so a dropdown left to size
+  // itself comes out a different width in each table. Every control is one width.
+  const widths = await page.evaluate(() => {
+    const tables = [...document.querySelectorAll("table")]
+      .filter((t) => [...t.querySelectorAll("thead th")].some((th) => th.textContent.trim() === "Deleted"));
+    const col = (h) => [...new Set(tables.flatMap((t) => {
+      const i = [...t.querySelectorAll("thead th")].map((th) => th.textContent.trim()).indexOf(h);
+      return [...t.querySelectorAll("tbody tr")].map((tr) => tr.children[i] && tr.children[i].querySelector("select,input"))
+        .filter(Boolean).map((el) => Math.round(el.getBoundingClientRect().width));
+    }))];
+    return { make: col("Make"), model: col("Model"), year: col("Year") };
+  });
+  pass("every Make dropdown is the same width in both tables", widths.make.length === 1, JSON.stringify(widths.make));
+  pass("every Model box is the same width, dropdown or not", widths.model.length === 1, JSON.stringify(widths.model));
+  pass("every Year box is the same width", widths.year.length === 1, JSON.stringify(widths.year));
+
+  await page.setViewport({ width: 820, height: 1000 });
+  await sleep(300);
+  const narrow = await measure();
+  pass("on a narrow screen they still line up", offBy(narrow.cols).length === 0, offBy(narrow.cols).join(" ; "));
+  pass("scrolling sideways instead of squeezing the days", await page.evaluate(() =>
+    [...document.querySelectorAll("table")].filter((t) => [...t.querySelectorAll("thead th")].some((th) => th.textContent.trim() === "Deleted"))
+      .every((t) => t.parentElement.scrollWidth > t.parentElement.clientWidth)));
+  await page.setViewport({ width: 1400, height: 1000 });
+  await sleep(300);
+}
+
 console.log("\n═ the truck report shows both ═");
 {
   await page.evaluate(() => window.__cell("0424", "Truck #").click());
