@@ -213,7 +213,7 @@
   <div class="header-logo">🔧</div>
   <div>
     <div class="header-title">Davis Fleet — Shop Portal</div>
-    <div class="header-sub">mechanics.davisfleetmanagement.netlify.app</div>
+    <div class="header-sub" id="portal-address">fleet.davisdelivery.com/mechanic</div>
   </div>
   <div class="header-badge" id="open-badge">0</div>
 </div>
@@ -313,7 +313,95 @@ const firebaseConfig = {
   appId: "1:397276214754:web:aa7bd4723c301fb876b5bb"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const realDb = firebase.firestore();
+
+// ── TEST MODE (v2.29.0) ─────────────────────────────────────────────────────
+// The fleet app's Settings screen embeds this portal so the owner can use it the
+// way a mechanic does — without it, nobody in the office ever sees this UI, and it
+// never gets better. But this page writes REAL data: closing a repair here closes
+// it for everyone (fl-repairs) and flips the truck back to "HERE" on the Weekly
+// Board (fl-stat-<week>). So in test mode every read comes from the live database,
+// and every write stays in this page and is thrown away on reload.
+//
+// Test mode needs BOTH ?test=1 AND being inside a frame — the fleet app's Settings
+// screen is the only page that frames the portal. That is the safety property: a
+// mechanic who ends up on the ?test URL directly must not be able to do real work in
+// a mode that silently discards it, so that combination refuses to run at all
+// instead of guessing.
+const TEST_REQUESTED = new URLSearchParams(location.search).has("test");
+const FRAMED = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
+const TEST_MODE = TEST_REQUESTED && FRAMED;
+const TEST_BLOCKED = TEST_REQUESTED && !FRAMED;
+
+function makeTestDb(real) {
+  const held = new Map();        // key -> value string written this session
+  const listeners = new Map();   // key -> Set of onSnapshot callbacks
+  const snapOf = (v) => ({ exists: v !== undefined && v !== null, data: () => ({ v }) });
+  const tellParent = (key) => {
+    try { window.parent.postMessage({ type: "fleet-mechanic-test", event: "write", key, held: held.size }, location.origin); } catch (e) {}
+  };
+  const fire = (key) => {
+    const cbs = listeners.get(key); if (!cbs) return;
+    const snap = snapOf(held.get(key));
+    cbs.forEach((cb) => { try { cb(snap); } catch (e) {} });
+  };
+  const doc = (key) => ({
+    async get() {
+      if (held.has(key)) return snapOf(held.get(key));
+      return real.collection("kv").doc(key).get();
+    },
+    async set(o) {
+      held.set(key, o && o.v);   // NOT sent to Firestore — that is the whole point
+      tellParent(key);
+      fire(key);
+    },
+    async delete() { held.set(key, null); tellParent(key); fire(key); },
+    onSnapshot(cb, errCb) {
+      let cbs = listeners.get(key);
+      if (!cbs) listeners.set(key, (cbs = new Set()));
+      cbs.add(cb);
+      // Live data until this session edits the key; after that the session's copy
+      // wins, so a test edit is not snapped back by the next real update.
+      const unsubReal = real.collection("kv").doc(key).onSnapshot(
+        (snap) => { if (!held.has(key)) cb(snap); },
+        (err) => { if (errCb) errCb(err); }
+      );
+      return () => { cbs.delete(cb); try { unsubReal(); } catch (e) {} };
+    },
+  });
+  return {
+    collection: () => ({ doc }),
+    settings: (o) => real.settings(o),
+    disableNetwork: () => real.disableNetwork(),
+    enableNetwork: () => real.enableNetwork(),
+  };
+}
+
+const db = TEST_MODE ? makeTestDb(realDb) : realDb;
+// v2.28.0: the shop portal shares the app's transport and therefore its failure mode —
+// once the WebChannel handshake is answered the client marks itself Online, cancels its
+// own 10s watchdog, and a read on a connected-but-silent stream never settles. Mirrors
+// index.html: the same transport setting, and a reset when the portal comes back from a
+// long background, since iOS kills a suspended tab's connections and fires no event the
+// SDK listens for. Guarded — a throw here would leave the mechanics with a blank page.
+try { if (typeof db.settings === "function") db.settings({ useFetchStreams: false, merge: true }); }
+catch (e) { console.warn("Firestore settings() rejected; continuing on defaults:", e && e.message); }
+(function () {
+  var hiddenAt = null, busy = false;
+  async function resume(force) {
+    var away = hiddenAt === null ? 0 : Date.now() - hiddenAt;
+    hiddenAt = null;
+    if (busy || (!force && away < 30000)) return;
+    if (typeof db.disableNetwork !== "function") return;
+    busy = true;
+    try { await db.disableNetwork(); await db.enableNetwork(); } catch (e) {} finally { busy = false; }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    resume(false);
+  });
+  window.addEventListener("pageshow", function (e) { if (e && e.persisted) resume(true); });
+})();
 
 // ── STORAGE HELPERS (mirrors App.jsx window.storage) ─────────────────
 async function fsGet(key) {
@@ -615,11 +703,17 @@ function escHtml(s) {
    (entry.by). Existing notes have no `by` and simply render without an
    author. It's an honour-system label, not authentication. */
 const DEVICE_USER_KEY = "fl-device-user";
+// Test mode: the fleet app is on this origin and signs its own notes from the same
+// key, so a name tried out in the test view would become the office's name. It
+// starts from the stored name and keeps any change in memory only.
+let testDeviceUser = null;
 function getDeviceUser() {
+  if (TEST_MODE && testDeviceUser !== null) return testDeviceUser;
   try { return (localStorage.getItem(DEVICE_USER_KEY) || "").trim(); } catch (e) { return ""; }
 }
 function setDeviceUser(name) {
-  try { localStorage.setItem(DEVICE_USER_KEY, (name || "").trim()); } catch (e) {}
+  if (TEST_MODE) testDeviceUser = (name || "").trim();
+  else { try { localStorage.setItem(DEVICE_USER_KEY, (name || "").trim()); } catch (e) {} }
   renderWhoChip();
 }
 function renderWhoChip() {
@@ -1073,7 +1167,37 @@ window.addEventListener("resize", () => {
 });
 
 // ── BOOT ──────────────────────────────────────────────────────────────
-init();
+// v2.29.0: the header names where this portal lives, so a mechanic can read the
+// address off the screen. It used to say mechanics.davisfleetmanagement.netlify.app,
+// which the portal was never served from; the site has since answered on more than
+// one davisdelivery.com name, so read the real one instead of hardcoding another.
+(function () {
+  const el = document.getElementById("portal-address");
+  if (el) el.textContent = location.host + location.pathname.replace(/\/(index\.html)?$/, "");
+})();
+if (TEST_BLOCKED) {
+  // Opened as ?test outside the fleet app. Refuse rather than run: running LIVE
+  // would betray the ?test in the address bar, and running as a test would silently
+  // throw away a mechanic's real work.
+  document.body.innerHTML =
+    '<div style="max-width:420px;margin:60px auto;padding:24px;font-family:system-ui,sans-serif;text-align:center;color:#1e293b">' +
+    '<div style="font-size:34px">🧪</div>' +
+    '<h2 style="margin:10px 0 8px">This is the test view</h2>' +
+    '<p style="color:#475569;line-height:1.5">It only runs inside the fleet app&rsquo;s Settings screen, so nothing done here can be mistaken for real work.</p>' +
+    '<p style="color:#475569;line-height:1.5"><b>Mechanics:</b> use the portal without <code>?test</code> in the address.</p>' +
+    '<a href="' + location.pathname + '" style="display:inline-block;margin-top:10px;padding:10px 18px;background:#1e5b92;color:#fff;border-radius:6px;text-decoration:none;font-weight:700">Open the real portal</a>' +
+    '</div>';
+} else {
+  if (TEST_MODE) {
+    const bar = document.createElement("div");
+    bar.id = "test-mode-banner";
+    bar.setAttribute("role", "status");
+    bar.style.cssText = "position:sticky;top:0;z-index:9999;background:#b45309;color:#fff;padding:8px 12px;font:600 13px/1.35 system-ui,sans-serif;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.2)";
+    bar.textContent = "TEST MODE — real trucks and repairs, but nothing you do here is saved.";
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+  init();
+}
 </script>
 </body>
 </html>

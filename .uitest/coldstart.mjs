@@ -35,6 +35,7 @@ window.__KV = ${JSON.stringify(KV)};
 const mk = (id) => ({ async get(){const v=window.__KV[id];if(v===undefined)throw new Error("not found");return {exists:true,data:()=>({v})};},
   async set(o){window.__KV[id]=o.v;return true;}, async delete(){}, onSnapshot(cb){setTimeout(()=>cb({forEach(){}}),0);return()=>{};} });
 window.__DB={collection(){return{doc:mk};}};
+window.__DB.settings=function(o){window.__SETTINGS=o;};
 window.firebase={initializeApp(){},firestore(){return window.__DB;}};
 window.firebase.firestore.FieldPath={documentId:()=>"__name__"};
 window.storage={async get(k){const d=await mk(k).get();return {key:k,value:d.data().v};},

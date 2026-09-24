@@ -8,6 +8,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1e5b92">
 <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231e5b92'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-weight='bold'>F</text></svg>">
+<!-- The Firestore TLS handshake used to start only after 515 KB of CDN script had
+     downloaded and run. These let it overlap. Firestore's own requests are credentialed
+     (supportsCrossDomainXhr with withCredentials, which the fetch shim maps to
+     credentials:include), and an anonymous preconnect is not guaranteed to be reused by
+     a credentialed request — hence use-credentials here and a bare hint for gstatic,
+     whose script loads are no-cors. Unmeasured: a hint that fails to match is wasted,
+     not harmful. -->
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin="use-credentials">
+<link rel="preconnect" href="https://www.gstatic.com">
 <style>
   body { margin: 0; font-family: 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif; background: #f5f7fa; }
   #loading { display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; gap: 12px; color: #6b7785; font-size: 14px; }
@@ -39,6 +48,51 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+// v2.28.0 — transport hardening. Read the caveats: this is the least-evidenced change
+// in this file, and an independent review corrected several claims that stood here.
+//
+// SETTLED, and reproduced against the real bundle with the backend shaped in puppeteer:
+//   handshake held open       -> all reads reject at 10.0s, "client is offline"
+//   handshake aborted         -> all reads reject at  0.03s, same message
+//   handshake OK, then silent -> all reads hang; the app's ceiling calls it a timeout
+// Only the third matches the screen the owner photographed. Once the handshake POST is
+// answered the client marks itself Online and CANCELS its 10s "Backend didn't respond"
+// timer, after which a get() settles only on a snapshot or on a transition to Offline —
+// and a connected-but-silent stream never transitions. Measured: a get() on such a
+// stream was still unsettled after 300 seconds. All reads share one Listen stream, so
+// they fail together, on one clock. That much is not in doubt.
+//
+// NOT SETTLED: what silences the stream on the phone. This setting is a guess at it.
+//
+// What IS verified about the setting, in the bytes this page loads (4.6.2):
+//   oc=!0 ... Object.assign({useFetchStreams:oc}, settings)   -> the default is TRUE
+//   this.useFetchStreams && (o.xmlHttpFactory = new fn({}))   -> installs a fetch shim
+//   fn: fetch(new Request(...)) ... e.body.getReader()        -> streamed response body
+// and Chromium reports every Listen request as resourceType "fetch". Turning it off
+// leaves both factory slots unset, so closure falls through to native XMLHttpRequest.
+//
+// Corrections to what was written here before, all of them verified against the tagged
+// @firebase/firestore sources rather than inferred from changelog titles:
+//   - useFetchStreams has defaulted to TRUE in register.ts at EVERY version from 4.3.1
+//     through 4.9.2. It was never "disabled and re-enabled"; that history was wrong.
+//     What #7729 and #8197 flipped is webchannel_connection.ts, and BOTH sides of that
+//     flip are fetch() — "xmlhttprequest" there means closure's XhrIo abstraction over
+//     FetchXmlHttp, not native XHR. 4.6.2 is already the rolled-back state.
+//   - So this line does not restore a configuration Firebase ever shipped. It selects a
+//     third one (native XHR). That may still be worth having, since it is the only
+//     setting that leaves the fetch/ReadableStream path entirely — but it is a guess,
+//     not a return to a known-good default.
+//   - "WebKit buffers streamed fetch bodies" was asserted here with no source and is
+//     removed. It also argues against itself: experimentalAutoDetectLongPolling is on
+//     by default and its whole job is to spot a buffering path and drop to long
+//     polling. A transport that buffered would degrade, not hang.
+// merge:true keeps auto-detect and every other default in place.
+//
+// The changes that actually make the app survive this are in App.jsx, not here: reset
+// the connection on timeout and on resume, and never let a failed read masquerade as
+// empty data. If this line turns out to do nothing, those still hold.
+try { if (typeof db.settings === "function") db.settings({ useFetchStreams: false, merge: true }); }
+catch (e) { console.warn("Firestore settings() rejected; continuing on defaults:", e && e.message); }
 window.db = db; // expose for real-time onSnapshot listeners in App.jsx
 window.storage = {
   async get(key) { try { const doc = await db.collection("kv").doc(key).get(); if (!doc.exists) throw new Error("not found"); return { key, value: doc.data().v }; } catch (e) { window.__lastStorageError = e.message || String(e); throw e; } },

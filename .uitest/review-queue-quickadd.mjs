@@ -99,6 +99,7 @@ const mk = (id) => ({
   onSnapshot(cb) { setTimeout(() => cb({ forEach() {} }), 0); return () => {}; }
 });
 window.__DB = { collection() { const q = mq(null, null); return { doc: mk, where: q.where, get: q.get }; } };
+window.__DB.settings=function(o){window.__SETTINGS=o;};
 window.firebase = { initializeApp() {}, firestore() { return window.__DB; } };
 window.firebase.firestore.FieldPath = { documentId: () => "__name__" };
 localStorage.setItem("fl-device-user", "Harness");
@@ -208,7 +209,7 @@ pass("item B no longer offers a roster-fix button (its blocker isn't a roster is
 // never fire at that boundary since both characters are \w. Match on digit-adjacency
 // instead, and read past the toast (still on screen here) by excluding its wrapper.
 await page.evaluate(() => {
-  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Fleet");
+  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Fleet List");
   if (b) b.click();
 });
 await new Promise(r => setTimeout(r, 500));

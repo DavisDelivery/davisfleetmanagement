@@ -76,6 +76,9 @@ jobs:
       - name: shop portal boots
         run: node portal-syntax.mjs
         working-directory: .uitest
+      - name: the portal inside Settings reads live data and never writes it
+        run: node mechanic-test-mode.mjs
+        working-directory: .uitest
       - name: cold start ships no compiler and stays under budget
         run: node coldstart.mjs
         working-directory: .uitest
@@ -84,6 +87,15 @@ jobs:
         working-directory: .uitest
       - name: one slow document does not stop the app, or seed a demo roster over a real fleet
         run: node cold-start-partial.mjs
+        working-directory: .uitest
+      - name: opening the app costs a bounded number of reads, however much history there is
+        run: node startup-fanout.mjs
+        working-directory: .uitest
+      - name: coming back from the background does not leave a dead connection
+        run: node resume-reset.mjs
+        working-directory: .uitest
+      - name: a week that failed to load is never written back over the real one
+        run: node week-write-guard.mjs
         working-directory: .uitest
       - name: fleet app boots and storage.list is correct
         run: node app-boot.mjs
@@ -105,6 +117,9 @@ jobs:
         working-directory: .uitest
       - name: reassigning a missing truck to an existing one fixes typos, not just gaps
         run: node review-queue-reassign.mjs
+        working-directory: .uitest
+      - name: Fleet List models are dropdowns and Deleted is a column, and looking changes nothing
+        run: node fleet-list.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.

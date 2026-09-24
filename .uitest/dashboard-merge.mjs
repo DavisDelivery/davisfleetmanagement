@@ -55,6 +55,7 @@ const mk = (id) => ({
   onSnapshot(cb) { setTimeout(() => cb({ forEach() {} }), 0); return () => {}; }
 });
 window.__DB = { collection() { const q = mq(null, null); return { doc: mk, where: q.where, get: q.get }; } };
+window.__DB.settings=function(o){window.__SETTINGS=o;};
 window.firebase = { initializeApp() {}, firestore() { return window.__DB; } };
 window.firebase.firestore.FieldPath = { documentId: () => "__name__" };
 localStorage.setItem("fl-device-user", "Harness");
@@ -89,7 +90,7 @@ await page.waitForFunction(
 const r = await page.evaluate(() => {
   const tabs = [...document.querySelectorAll("button")]
     .map(b => (b.textContent || "").trim())
-    .filter(t => ["Dashboard", "Dispatch", "Weekly Board", "Fleet", "Maintenance", "Costs", "Drivers", "Attendance"].includes(t));
+    .filter(t => ["Dashboard", "Dispatch", "Weekly Board", "Fleet List", "Maintenance", "Costs", "Drivers", "Attendance"].includes(t));
   const body = document.getElementById("root").textContent || "";
   const at = (s) => body.indexOf(s);
   return {
