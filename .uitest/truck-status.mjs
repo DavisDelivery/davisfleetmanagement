@@ -2,7 +2,7 @@
  * A truck is Out of Service while it has an open repair ticket — nothing else (v2.31.0).
  *
  * #1287 read "In Repair" for three days with its last ticket closed weeks before: someone
- * picked "@ Shop" on the Weekly Board, and any board text mentioning shop, Interstate,
+ * picked "@ Shop" on the Driver Board, and any board text mentioning shop, Interstate,
  * repair or mech made a truck "In Repair" (and "OOS"/"BD" made it Out of Service) with no
  * ticket behind it. The owner's rule: only Out of Service, and only with an open ticket.
  *
@@ -13,7 +13,7 @@
  *   1004  blank            no ticket
  *
  * Checked where status is read — the Dashboard tiles, the Fleet List, the driver
- * dropdown — and where it is written: the Weekly Board picker only marks a cell Out of
+ * dropdown — and where it is written: the Driver Board picker only marks a cell Out of
  * Service once a ticket exists, and Cancel leaves the cell as it was. Also covers the
  * Shop dropdown on the app's repair screens.
  */
@@ -87,7 +87,7 @@ page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resourc
 page.on("dialog", (d) => d.accept());
 await page.setViewport({ width: 1400, height: 1000 });
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded" });
-await page.waitForFunction(() => /Weekly Board/.test(window.__text()), { timeout: 60000 }).catch(() => {});
+await page.waitForFunction(() => /Driver Board/.test(window.__text()), { timeout: 60000 }).catch(() => {});
 
 await page.evaluate(() => {
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -147,7 +147,7 @@ console.log("\n═ the Fleet List: Out of Service only with a ticket, and no In 
 
 console.log("\n═ the driver dropdown offers every truck without a ticket ═");
 {
-  await page.evaluate(() => window.__tab("Weekly Board"));
+  await page.evaluate(() => window.__tab("Driver Board"));
   await until(() => page.evaluate(() => !!document.getElementById("truck-status-board")));
   const legend = await page.evaluate(() => document.getElementById("truck-status-board").textContent);
   pass("the Truck Status Board key has no In Repair", !/In Repair/.test(legend));
@@ -166,7 +166,7 @@ console.log("\n═ the driver dropdown offers every truck without a ticket ═")
   await sleep(200);
 }
 
-console.log("\n═ the Weekly Board picker: Out of Service goes through a ticket ═");
+console.log("\n═ the Driver Board picker: Out of Service goes through a ticket ═");
 {
   await page.evaluate(() => window.__statusCell("1001").click());
   const options = await until(() => page.evaluate(() => { const s = window.__statusCell("1001").querySelector("select"); return s ? [...s.options].map((o) => o.value) : null; }));

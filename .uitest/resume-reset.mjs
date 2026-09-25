@@ -80,7 +80,7 @@ const browser = await launch();
 const page = await browser.newPage();
 const errs=[]; page.on("pageerror",e=>errs.push(e.message));
 await page.goto(`http://localhost:${PORT}/`,{waitUntil:"domcontentloaded"});
-await page.waitForFunction(()=>/Weekly Board/.test(window.__text()),{timeout:60000}).catch(()=>{});
+await page.waitForFunction(()=>/Driver Board/.test(window.__text()),{timeout:60000}).catch(()=>{});
 
 // Drive visibility directly: Page.setVisibilityState does not move document.hidden in a
 // way the app can read, so override the property and dispatch, which is what the browser
@@ -133,7 +133,7 @@ console.log("\n═ a bfcache restore always counts as a resume ═");
 console.log("\n═ and the app is still usable ═");
 {
   pass("no page errors", errs.length===0, errs.join(" | "));
-  pass("the roster is still on screen", /Weekly Board/.test(await page.evaluate(()=>window.__text())));
+  pass("the roster is still on screen", /Driver Board/.test(await page.evaluate(()=>window.__text())));
 }
 
 console.log(`\n${failed?`FAILED: ${failed} check(s)`:"PASSED: all checks"}\n`);

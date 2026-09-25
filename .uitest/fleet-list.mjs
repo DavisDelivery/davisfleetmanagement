@@ -73,7 +73,7 @@ page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resourc
 page.on("dialog", (d) => d.accept());
 await page.setViewport({ width: 1400, height: 1000 });
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded" });
-await page.waitForFunction(() => /Weekly Board/.test(window.__text()), { timeout: 60000 }).catch(() => {});
+await page.waitForFunction(() => /Driver Board/.test(window.__text()), { timeout: 60000 }).catch(() => {});
 
 await page.evaluate(() => {
   // The cell under `header` in the row whose first cell is truck `id`, in whichever

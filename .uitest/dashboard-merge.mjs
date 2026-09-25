@@ -90,11 +90,13 @@ await page.waitForFunction(
 const r = await page.evaluate(() => {
   const tabs = [...document.querySelectorAll("button")]
     .map(b => (b.textContent || "").trim())
-    .filter(t => ["Dashboard", "Dispatch", "Weekly Board", "Fleet List", "Maintenance", "Costs", "Drivers", "Attendance"].includes(t));
+    .filter(t => ["Dashboard", "Dispatch", "Driver Board", "Fleet List", "Maintenance", "Costs", "Drivers", "Attendance"].includes(t));
   const body = document.getElementById("root").textContent || "";
   const at = (s) => body.indexOf(s);
   return {
     tabs,
+    // v2.31.1: the owner renamed the Weekly Board tab to Driver Board.
+    oldBoardTab: [...document.querySelectorAll("button")].some(b => (b.textContent || "").trim() === "Weekly Board"),
     activeTabText: (document.querySelector("button[style*='rgb(30, 91, 146)']") || {}).textContent || "",
     hasTiles: /Total Fleet/.test(body),
     hasDispatchLists: /AVAILABLE TRUCKS|ON THE ROAD|NEEDS TRUCK|DOWN \/ OOS/.test(body),
@@ -114,6 +116,8 @@ console.log(`\npage errors: ${errs.length ? errs.slice(0, 3).join(" | ") : "none
 pass("no page errors", errs.length === 0);
 pass("Dispatch tab is gone", !r.tabs.includes("Dispatch"), r.tabs.join(" · "));
 pass("Dashboard tab still exists", r.tabs.includes("Dashboard"));
+pass("the board tab is called Driver Board", r.tabs.includes("Driver Board"), r.tabs.join(" · "));
+pass("and no tab is still called Weekly Board", !r.oldBoardTab);
 pass("seven tabs, not eight", r.tabs.length === 7, `${r.tabs.length}`);
 pass("lands on Dashboard by default", /Dashboard/.test(r.activeTabText), r.activeTabText.trim());
 pass("merged screen shows the stat tiles", r.hasTiles);

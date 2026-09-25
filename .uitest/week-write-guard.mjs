@@ -104,7 +104,7 @@ const boot = async (failWeek) => {
     window.__PREFAIL = fail ? ["fl-asgn-","fl-stat-"] : [];
   }, WEEK_REAL, failWeek);
   await page.goto(`http://localhost:${PORT}/`,{waitUntil:"domcontentloaded"});
-  await page.waitForFunction(()=>/Weekly Board/.test(window.__text()),{timeout:60000}).catch(()=>{});
+  await page.waitForFunction(()=>/Driver Board/.test(window.__text()),{timeout:60000}).catch(()=>{});
   return { page, errs };
 };
 
@@ -127,7 +127,7 @@ console.log("\n═ a week whose read FAILED must not be writable ═");
   // truck. That is the real path into saveAsgn(), and next={...asgn,[key]:val} — so
   // without the guard it writes a one-key object over the week that is on disk.
   const edited = await page.evaluate(async ()=>{
-    const tab=[...document.querySelectorAll("button")].find(x=>/Weekly Board/.test(x.textContent||""));
+    const tab=[...document.querySelectorAll("button")].find(x=>/Driver Board/.test(x.textContent||""));
     if(tab)tab.click();
     await new Promise(r=>setTimeout(r,500));
     const row=[...document.querySelectorAll("table tr")].find(r=>/Alvarez/.test(r.textContent||""));
@@ -162,7 +162,7 @@ console.log("\n═ a healthy week still loads and still saves ═");
   const { page, errs } = await boot(false);
   await new Promise(r=>setTimeout(r,1200));
   const drivers = await page.evaluate(()=>window.__text());
-  pass("the app opened", /Weekly Board/.test(drivers));
+  pass("the app opened", /Driver Board/.test(drivers));
   pass("no page errors", errs.length===0, errs.join(" | "));
   // The guard must not block a week that read cleanly — prove it by checking the flag
   // the app exposes through behaviour: a save is attempted when the board is edited.

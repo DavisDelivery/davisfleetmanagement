@@ -1,5 +1,5 @@
 /**
- * Weekly Board → Driver / Truck Assignments table.
+ * Driver Board → Driver / Truck Assignments table.
  *
  * A day cell with an assignment renders two lines (the truck # badge, then its
  * type — e.g. "7608" / "Tractor M"). An empty cell renders one line (a dash). Every
@@ -96,7 +96,7 @@ await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle0" });
 await page.waitForFunction(() => { const r = document.getElementById("root"); return r && !r.querySelector("#loading"); }, { timeout: 45000 }).catch(() => {});
 
 await page.evaluate(() => {
-  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Weekly Board");
+  const b = [...document.querySelectorAll("button")].find(x => (x.textContent || "").trim().replace(/\d+$/, "").trim() === "Driver Board");
   if (b) b.click();
 });
 await new Promise(r => setTimeout(r, 700));
