@@ -130,7 +130,9 @@ pass("no page errors", errs.length === 0);
 pass("the Driver → Truck table rendered", info.found);
 pass("all 11 driver rows present", info.rowCount === 11, `rowCount=${info.rowCount}`);
 pass("the truck badge still shows", /7608/.test(info.bodyText));
-pass("the truck type still shows", /Tractor M/.test(info.bodyText));
+// v2.31.2: the tag reads "Tractor · M" (kind, then transmission) — it used to print the
+// stored make, which for tractors now recorded as Freightliners hid that they were tractors.
+pass("the truck type still shows", /Tractor · M/.test(info.bodyText));
 pass("empty cells still show a dash", /—/.test(info.bodyText));
 
 const distinct = new Set(info.heights);

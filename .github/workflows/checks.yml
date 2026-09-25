@@ -127,6 +127,9 @@ jobs:
       - name: a truck is Out of Service only while it has an open repair ticket
         run: node truck-status.mjs
         working-directory: .uitest
+      - name: every truck list says Box or Tractor, with make and model
+        run: node truck-labels.mjs
+        working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
   sync:
