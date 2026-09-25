@@ -117,7 +117,7 @@ const open = async (lat) => {
   const page = await browser.newPage();
   const errs=[]; page.on("pageerror",e=>errs.push(e.message));
   await page.goto(`http://localhost:${PORT}/?lat=${lat}`,{waitUntil:"domcontentloaded"});
-  await page.waitForFunction(()=>/Weekly Board/.test(window.__text()),{timeout:90000}).catch(()=>{});
+  await page.waitForFunction(()=>/Driver Board/.test(window.__text()),{timeout:90000}).catch(()=>{});
   return { page, errs };
 };
 const settle = async (page,ms)=>{ await new Promise(r=>setTimeout(r,ms));
@@ -130,7 +130,7 @@ console.log("\n═ opening the app on a two-year install ═");
   const ops = await settle(page, 4000);
   const gets = ops.filter(o=>o.kind==="get");
   pass("no page errors", errs.length===0, errs.join(" | "));
-  pass("the app opens", await page.evaluate(()=>/Weekly Board/.test(window.__text())));
+  pass("the app opens", await page.evaluate(()=>/Driver Board/.test(window.__text())));
 
   // The budget is the point: it must not scale with WEEKS or MONTHS.
   pass(`startup stays within its Firestore budget (${ops.length} ops, budget 40)`,
@@ -175,7 +175,7 @@ console.log("\n═ clicking through weeks must supersede, not stack ═");
   const { page } = await open(40);
   await settle(page, 2500);
   const before = (await page.evaluate(()=>window.__OPS)).length;
-  await page.evaluate(()=>{const t=[...document.querySelectorAll("button")].find(x=>/Weekly Board/.test(x.textContent||""));if(t)t.click();});
+  await page.evaluate(()=>{const t=[...document.querySelectorAll("button")].find(x=>/Driver Board/.test(x.textContent||""));if(t)t.click();});
   await new Promise(r=>setTimeout(r,400));
   const clicks = await page.evaluate(async()=>{
     let n=0;

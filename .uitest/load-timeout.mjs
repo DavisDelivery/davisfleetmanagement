@@ -119,8 +119,8 @@ const boot = async (mode, waitMs) => {
       offline: /Can.t reach the database/i.test(txt),
       // "still spinning" = neither errored nor mounted. Matching the spinner's own
       // text would also match the error copy, which says "loading your fleet" too.
-      stuck: !/Can.t reach the database/i.test(txt) && !/Weekly Board/.test(txt),
-      mounted: /Weekly Board/.test(txt),
+      stuck: !/Can.t reach the database/i.test(txt) && !/Driver Board/.test(txt),
+      mounted: /Driver Board/.test(txt),
       hasRetry: !!btn,
     };
   });
@@ -162,10 +162,10 @@ console.log("\n═ Try again actually recovers ═");
     const b = [...document.querySelectorAll("button")].find(x => /Try again/i.test(x.textContent || ""));
     if (b) b.click();
   });
-  await page.waitForFunction(() => /Weekly Board/.test(document.getElementById("root").textContent || ""), { timeout: 30000 }).catch(() => {});
+  await page.waitForFunction(() => /Driver Board/.test(document.getElementById("root").textContent || ""), { timeout: 30000 }).catch(() => {});
   const after = await page.evaluate(() => {
     const t = document.getElementById("root").textContent || "";
-    return { mounted: /Weekly Board/.test(t), stillError: /Can.t reach the database/i.test(t), hasTruck: /0424/.test(t) };
+    return { mounted: /Driver Board/.test(t), stillError: /Can.t reach the database/i.test(t), hasTruck: /0424/.test(t) };
   });
   pass("the app comes up on retry, no reload needed", after.mounted);
   pass("the error screen is gone", !after.stillError);

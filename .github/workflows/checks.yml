@@ -79,6 +79,9 @@ jobs:
       - name: the portal inside Settings reads live data and never writes it
         run: node mechanic-test-mode.mjs
         working-directory: .uitest
+      - name: the shop portal's Shop is a dropdown, and opening it changes no repair
+        run: node portal-shop.mjs
+        working-directory: .uitest
       - name: cold start ships no compiler and stays under budget
         run: node coldstart.mjs
         working-directory: .uitest
@@ -120,6 +123,12 @@ jobs:
         working-directory: .uitest
       - name: Fleet List models are dropdowns and Deleted is a column, and looking changes nothing
         run: node fleet-list.mjs
+        working-directory: .uitest
+      - name: a truck is Out of Service only while it has an open repair ticket
+        run: node truck-status.mjs
+        working-directory: .uitest
+      - name: every truck list says Box or Tractor, with make and model
+        run: node truck-labels.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.

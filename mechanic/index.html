@@ -274,8 +274,8 @@
           </select>
         </div>
         <div class="form-field">
-          <label class="form-label">Shop / Location</label>
-          <input class="form-input" id="new-shop" placeholder="e.g. Peach State, in-house...">
+          <label class="form-label">Shop</label>
+          <select class="form-select" id="new-shop"></select>
         </div>
         <div class="form-field">
           <label class="form-label">Est. Return</label>
@@ -417,10 +417,20 @@ async function fsSet(key, value) {
 let repairs = [];
 let trucks = [];
 const OOS_REASONS = ["Mechanical Repair","Planned Maintenance","Tires","Body/Paint","Electrical","DOT Inspection","Accident Repair","Waiting Parts","Other"];
+// v2.31.0: the shops repairs go to. The fleet app (App.jsx SHOPS) keeps the same
+// list; change both together. A shop saved before there was a list stays as its own
+// option, so opening a card never changes a repair.
+const SHOPS = ["Interstate Truck Sales", "Complete Fleet Services"];
+function shopOptionsHtml(current) {
+  const cur = current || "";
+  const opt = (v, label) => `<option value="${escHtml(v)}"${v === cur ? " selected" : ""}>${escHtml(label)}</option>`;
+  return opt("", "—") + SHOPS.map((s) => opt(s, s)).join("") + (cur && !SHOPS.includes(cur) ? opt(cur, cur) : "");
+}
 
 // ── INIT ─────────────────────────────────────────────────────────────
 async function init() {
   renderWhoChip(); // show who's using this device (name is stamped on notes added here)
+  document.getElementById("new-shop").innerHTML = shopOptionsHtml("");
   // Set up real-time listener for trucks (fires immediately + on changes)
   db.collection("kv").doc("fl-trucks").onSnapshot(snap => {
     if (!snap.exists) {
@@ -828,9 +838,7 @@ function repairCardHtml(r) {
       </div>
       <div class="shop-row">
         <span class="shop-label">Shop:</span>
-        <input class="shop-input" placeholder="Shop / location..." value="${escHtml(r.shop || "")}"
-          onblur="updateShop('${r.id}', this.value)"
-          onkeydown="if(event.key==='Enter')this.blur()">
+        <select class="shop-input" title="Shop" onchange="updateShop('${r.id}', this.value)">${shopOptionsHtml(r.shop)}</select>
       </div>
       ${notesLogHtml(r.id, r.notesLog, r.notes && !r.notesLog ? r.notes : null)}
       <div class="note-input-row">

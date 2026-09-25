@@ -77,11 +77,11 @@ const t0 = Date.now();
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded" });
 await page.waitForFunction(() => {
   const r = document.getElementById("root");
-  return r && /Weekly Board/.test(r.textContent || "");
+  return r && /Driver Board/.test(r.textContent || "");
 }, { timeout: 90000 }).catch(() => {});
 const ms = Date.now() - t0;
 
-const up = await page.evaluate(() => /Weekly Board/.test(document.getElementById("root").textContent || ""));
+const up = await page.evaluate(() => /Driver Board/.test(document.getElementById("root").textContent || ""));
 pass("the app reaches interactive", up);
 pass("no page errors", errs.length === 0, errs.slice(0, 2).join(" | "));
 pass(`cold start within ${BUDGET_MS} ms at ${CPU}x CPU throttle`, ms < BUDGET_MS, `${ms} ms`);

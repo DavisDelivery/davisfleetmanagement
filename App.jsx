@@ -1,4 +1,4 @@
-const APP_VERSION = "2.30.1";
+const APP_VERSION = "2.31.2";
 const DAVIS_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCACMARgDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAEHBQYIBAMC/8QATRAAAQMDAgMFAwYJCAgHAAAAAQIDBAAFEQYhBxIxExRBUWEigZEVMkJScaEII2JzgrGywdEWJCUncnSSsxcmMzY3Q3XCU1VWk5Si0v/EABkBAQADAQEAAAAAAAAAAAAAAAADBAUCAf/EADARAAICAgEBBQgBBAMAAAAAAAABAgMEERIhEzFBUXEFFCJhgaGx8CPB0eHxFTOR/9oADAMBAAIRAxEAPwDqMCpqE9KmgFMUpQCmKUoBilKUApSlAKUpQClKUAqMVNKAUpSgFKUoBSlKAUpSgGKUpQDFKUoBSlKAUpSgFKUoCKUNKACpqBU0ApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAQaUNKACpqBU0ApSlAKUqM0BNK1u6a50xa5Lke4X63MPtnlW2p4FST5EDofSvg3xF0gtXKNR21J/Le5f1132c+/TOHbBdNo2ulYy36gs9xIFvu1vlE9AzJQs/AGsnXLTXedJp9wpSleHp550yPAirkzX2o8dvdbrqglKd8bk+tYr+WGnP8Az61//JT/ABrFcXxnhzev7Df+YmuZosV6XKajRWlOyHVBDbaRupR6AVpYWDHIrc5S1ozczNljzUIrezrBGrdPLUEpvtsJPh3lH8ay0aSxKa7SM80839dtYUPiK5Vd0RqhpBWuwXDlG5w1zfcKx1ruVysM4u2+RIgymzhQTlBz5KSev2EVY/4uE1/FZt/vkQL2nOD/AJIaR2BStF4X64Tq2C4xMShq6xgC6lOyXEnYLSPDfYjwP21vNZNtcqpOE11Rq1WRtipxfRniud2t9qQ2q5zo0RLhKUF9wICiOoGa80LUtknSm40K7wJEhzIQ22+lSlbZ2ANUPxtvvytrBUNpeY1uT2A8i4d1n44H6NaTapz1rucSfGOH4zqXUepBzj39PfWpT7K51Kbem0ZdvtTha4JbSOv5kpiFGcky3m2I7Y5luOK5UpHmT4ViBq7TpIAvtsydsd5T/GvU0uHqPTyVDC4NwjdPyFp/WM/dXJt5trtqusy3Sh+NjOqZV64PX3jB99V8LDhkOUZPTRYzMuWOoyitpnYopmtU4X3v5d0XAkOL5pLKe7P+fOjbPvGD76zOpLq3ZLFOuT2OSM0pzB8T9Ee84FU5VyjN1+O9FyNsZQ7Tw1s+EnVNhjSHGJN5tzTzailba5CQpJHUEZ2Nelu9W122ruLdwiqgIzzSA6C2nBwcq6VyIovzpqlKy7Kku58ytaj+8muiNWWduw8Gp1sawe7w0pUR9JfMkqPvJNX8jAhS4R5dZMoY+dO5Tlx6RRtLGqrBIebZYvVucdcUEoQiQklROwAGetZnxrknR3+91k/vzP7YrobirqV3TOlXZEMhM2Q4I7CjvyE5JV7gD78VxlYPZWRrg9uR1jZ3a1ysmtJGZveprLY1BN2ucWKs79mtft4/sjf7qxcbiHpOS4EN3yKFH/xApA+KgBXNVst9x1Bd0xoaHJdwkqKiVKypR6lSlH9ZrYbnw21Xbo6nnLYX2wMq7s4l0j9Eb/AVbfs2iGo2WdfoVl7Rvn8VcOn1Om48hmSyl6O6260rdK21BST9hFfWue+BEK7PakediyX41sij+dNj5rijslBSds+OeoA9a6ErMyqFRZwT2aWLe76+bWhSlKrlgg0oaUAFTUJqaAUJxSvHPgMz0huWFOMeLJVhC/7QHzh6Hb0oeM1+46tW+6uJpSA5epqTyqdQrkiMn8t47Ej6qcn7KrvXFp1CzqDSMrUV9MtyXdm0dyipLcZlKfb2GcqO3U1djLSGWkNtIShtAwlCQAEjyAHSq+4rJ5rxoo/Vua1fBhZ/dVqiaUtRXn+CtfBuG5Py/JzLAvlxiXJ56E6VrfcUtxlbYdbdySSFNkEKznyrpXhdN79ZGHhCciRieyft0xBAjL+uwpzctH6pJ5fDpg85aNQufNTDMqSw2vshlhwoI5nm0E5HXZZ61dE7htpy18RdPwJLMmdbrlGkoKZUlayX2wFA5BB+bnbpWhmcH8L6P+xQxOa+JdV/ctSXpnT9xBEqzWuQT4qjNk/EDNYZ1t3RDrbzbz72mHFht5p5RWq3knCVoUdyznAUkk8ucjbIr4nhPoz6FmU2fNuS8k/cqvnK4VWJyI9GjSb3EbdQW1JbuTpSQRggpUSCPQ1mqUO5yevT/JouM+9RW/X/AAb6Kmte0BLXL0hay/nvDDXdXsnJ7RoltWfekn31sNQSXFtE0XySZpvGBSUcOL0pZCUhCMk/nE1z9oRSTrjT+FDec1jfr7VXzxwP9Vl//Nt/5qK5k4an+sXTX/UGf2q2fZ8tY816/gyM6HLIg/T8nagFVL+EHY2FabF/YaQJsRxCHV4wXGlHlwfMgkEH7atodKqb8I6/xoGixaO0SZtxdRhvO4bQrmUo+mQB7/Ss7DcldHj5mhlKLplyKn4R38ROIVm5eZBkPd2WOoUFjGPjg+6umtXXpGn9Nz7mvBUw0S2k/SWdkj4kVydwfgOXLiXYG2wSGpAkrPklsFRP3Ae+re47/LWpblbdLabhSZamsS5amhhCFHIbClnAG3Mrc+IrQzYxsyIqXl19CjiN148uPn09SpIkeTeLszGbJclzHgjmPUrUdz8Tmtq4r6Yb0xqFpqIOWDIYQton6yQEr+8Z/Sr76atNr4Y3tm7ayvrEi5sNq7G1QcvuIWoY5lHYAgE9cDfrWYGtNUcSJuNL2WBbYEQnN1noS6Y48SFKHKFYHRIJ9R1qzPLl2inBfAl6IqwxI9m4zfxt+ptPBa9KiaNeZvfNCiRHfxEmUOybWhe+EqVgHBz08xWvcc7ZZ2Et6mXLlIcmpSy2w1H2ecSDhRUrHKOXHhvjbNYO16w0/addWltyQ9qWSZCWZV8uKypLXNsO7oJwhIJGVeWcedW9xb06dS6DucNtHPLZT3mP59ojfHvHMPfVCU3VkKzu5F6Natx3W+vEqz8HXVKBfplkdygTG+2aBO3aI6gfan9mtp/CBvfY2uBZmle3JX3h4D6iNkj3q3/RrnPTd3eseoLddY2e0iPodA+sAd0+8ZHvrYeJerl6j1pcLhEdV3LIajAj/lpGAcHpk5Pvq88feUrX3d/1Kau1jOpd/wDQ3fgpY/lbWbcl1HNHtye8KJ6c/RA+OT+jVycVh/V5ffzH/cmsNwHsrls0JHmSxiXc1d6VtghHRsf4d/0qyfGNxTXDPUK0bKTH2/xpqhkX9rlp+CaX3LuPR2WK14tNnPejj/rfZP78z+2KvDjtaX7jo9EiKhTioL/buJSMnkIKVH3ZB+zNc46JlvP6508HFkj5RY2Gw/2grtCW8zGjvPyXENsNpUtxazhKUgZJPpirPtC5wvhOPgV8CjnTOEn3nI+mb7L07eGblbi327YKeVwZStJ6g+hq37Nxqgu8qLzbH46vFyOsOJ+3Bwf11lLxwx0xqZhNxs764XeE9oh6CpKmXM+PIcj4Yqr9d8Lr9pm1SbnFlxLlBjpK3SlstuoT4q5ckEDxwfdUkrsTLa7RakRxpy8VPs3tHQWm7xZ71GdlWORHeQtXM72Y5VcxHVY2OcDx8qzFcXaC1VPsGr7dOZeUGy8hp9sbJcaUoBSSPfkeRArtHzHlWXmY3YT0ntM08TId0eq00KUpVQtg0oaUBCelTUDpU0ApSvPLlpipBU28vPQNNlZ+6gb0eiq+4pjNz0mfqzJCvhEdP7qyFw13GilSUW+QtQ2/GSorA/8Au6D91aVfdTq1Ld7Sh0WeCiKt9SQb0w866txhxpCAhGdypY8as01yT5P5/grXWRceK+X5OerHIXGblOMrU26mMFIWk4KVBxsgj1yKyd01nqK6rhKuN4lyFQ1lxhZVyrbURgkKSAenrX1j6H1a22pI05dPab7M5YI8v4V+mbTD08UPauW9DkuKKWIQiCQ5gHBcWgrSAnOwGSSQcDatyU697em//TGjGzuW0Zmw6/DBAuyblJ81ruEhX7LiSPvq1NJ6m0vfGJjqpN4tbcNtLj0r5Yf7FHMrlSCVKBCiegKffWg6dixNTzJlkk6Ut1wdZYEhmfZFphOraOMOJSohK+o2OMdCKxLNscs1o19aHkyEKajxHkiQ12bmBITjKckA4X4EjyJFVJ112dF0fTx82WYTnX1fVdfDyLig32x2RDo07rm1vJddU+uNdXg4la1HKiHU4WnJ8+YelbvpTUTd+Yf/ABSWpDBTzpbeS82tKhlK23E7KQQDvgHIIIGK4pVnPjV+8Gb1JtaLWx8muvW2XCjNvzEKAEZwvvpb5h4hRUBtuOvSosrDUIck9slxstylxa0jfeOO3Cu//m2/81FckW2fJtdyjT4K+zlRnEutL5QrlUDkHB2Ndx3u1Qr5a37ddY4kQnwA40VEBWCCNwQeoFal/oj0N/6fZ/8Aed//AFUWJlwpg4TW9kuViztmpRZz69xe1y62UfLRQDtluM0k/HlrUXXrpqG7ZcVLudzkKA35nXVnwHn+4V1kjhPodCsjT0c4+s64R96q2Wy2C0WNsos9thwkkYPYNBJV9p6mpvf6oL+OHX6Ii9ytn/2T6FWcNtNQOFenpOodYSGo9xkpDfJnmLSOoaSB85ZIBOPIDoCa0DX/ABmvF+L0Sxc9otisglCvx7o81KHzfsT8TXQWpdEae1NLbk32399dbTyNlbzgCB6JCgB67b1i2OFOiGHm3W9Px+dtQWnmccUMg53BVgj0NQV5FXJ2WpuX2Jp0WcezraUfuU7wn4RPahS1edTh1i1rPaNR8lLkr8onqlB8+p9BvXQ8ix293T71lTGaZtrrCo3YtpCUpQoYOB76yYwAMYxTNV7sid0uTJ6aIVR0jhC92x+z3ebbJgIfiPKYWfMpOM+8b++uv+E2o/5T6Fts5xXNLbT3eR+cRsT7xhXvr933h1pS+3R643azNSJj2O0dLi0lWAANgoDoBWS0xpezaWYfZsMIQ2n1hbiEuLUCoDAPtE42qxk5UL60tdV+sgx8adM299Gcn8W9PfyZ17c4baOWK6vvUfbbs15OB9h5h7qxeiLE5qbVdstCAeWS6A6R9FsbrP8AhBrr7U2i9PaokMP322NzHmUFttalrSQknOPZIzvXx03oTTGnJ5n2O1NRpRQWu1S4tfsnGRuojwFTx9opVcdPloheA3ZvfTZsrDSGGW2mUBDSEhKEgbJSBgD4VpnGj/hdqL+7f96a3XNeO8WyHerZIt9zYEiHITyOtEkcwznGRv4VmVy4zUn4GjOPKLiji7Qe2utPf9RY/wAwV0H+EUdRr0w3HssRx21LUVXBxnKnAkfNSUjfk8SR5AHA67NB4XaMgTo8yJY2m5MdxLraw84eVSTkHBV5it0z8au35kZ2Rsiu7zKdOLKFcoSff5HE+ktcX/Sij8iXFbTCjlTCwHGlHz5TsD6jBrYdUcX9Taisr1rkmFHjPp5HjGZKVOJ8U5KjgHxxXROoOHGkr86p642WN26t1OsZZWfUlBGffWEicFtEMuBw26Q+OoS7LcUk/AjNTe+Y8nzlDqRe6XxXGMuhQHCfSkrVer4aG2lGBFdQ/Lex7KEpOeXP1lEYA+0+Fdk9a8VotcGzwkQ7XDYhxUfNaZQEpz57dT617apZWQ75b1pIuY1CpjrxYpSlViwDShpQEJqahNTQCqh4vaMvN01LF1Jb3GTCtkJSltlxQc50dooFKQME5Kcb+FW9XjuVth3Jrs50dDyOmFZ/dUldjrlyRHZWrI6Zybqmw6Wi2zWb1rcZW5Cnw2oBS7zZbWjKwN/aBPNvvjlrW9FxZ7NxZujFvnOxmw82mSxGW4lt0tKCTlIO6VKSfTrXUEzg5oSUD/QLbCj4x3nG8fBWK/MThbGtcMRdP6l1NaY4UVJZjzEqbBO5PKpJq+s2Ki49fqUXiS5b/ByqxbHVIHfJrcFwD5kxL6CPfyEffVvcCrJZdVXO9fKkePNaiWyJCaS4kKCApB7RQz0VzZ36jerBl6B1ilJ+TuJV0HkmXEbcHxH8K0+Vwx4lRrrNulv1XbXZsuP3V5wILCnG/AEBBGR4HqPOk8hWxa5a/fQRx3XLet/vqUpY7t8izOeOZQkR3FttSY8xTKwjJGBgEY6/Gtta1oVXBybOcuk512OYjiZjjMlDjPNzcigpsZHNuPWvRb+D+u7Jc25LdhtFzCAU9nIebdZORjJSop91bbF0jrUY7fhtoRQ/KSlP6nDViV9Xjp/UgjRb4bX0NMVqqwnc6ehZ/uEcV97RqZdy1PaIkLvbLbsyKhMVDrbbGEODlHZIQM43PXrvWQ1Jwe1ffbkJcew2GzAoCVMRZmGiR9IJwcHHXHlmt64Q6AvmhkyXJdltsydIUMyflDBbSM4ShPZHHUknO+3lXE76VDaW36nUaLXLTfT0Nq48q5eFt5VzFOFMbg427ZHjWu6ZFotfFO2W/Qs8yLZIgvOXSOzLVIYaIx2a8kkJUTt1q1HojVzt6o13gx3GnMc8dzDyDg5GcjB39KWu0260tKbtcCJCbUcqTHZS2CfXAGazY2qMOHqaEqnKfL0KCtka3TOIWoV3OJZnwi/rSHpt5XFebSFJPsNA4Xg7jPU7Vv8APusK18c3XLnPjw2Dp9ICpDyW0lXbk/SIGcA1uL+lNPSJa5T9itbspa+0U8uIhSyrOeYkjOc+NebV8XTDMVd11PAtzyGkhvtZMVLyzk7ISMEk5JwB61JK6M31Xho5jS4rp57Nevjwc4z6OU06FNLts1aSlWUqGE4PrWiamTPtmorxw8hB4R9STmZcR0E/iY7hJkgHwAKD7s1eLEO3uuRJjcWOXGWuSO72QCm21Aeyk4ykEY2r8zUWxufFmTUwkTEhbTD73KHACkqUlCjv0BJA8ATXELlHXTw/rtHUqnLxKf4xxYidZ6UgrjQHobcCQlLE2eqGzhJSE5cG4IxsPGvrr9mMzwbsUeBGjFg3GMju0GaX21Euq5m0vE5OSSMk7Z9KspljTesoTFwXBhXSOCttp2TFCsYVg8vOM4yPsOxrIoslpRAZgotsJMJlYcbjhhIbQsHIUE4wDnfPnXSv0oryPHTtyfmVZwgiszLzrSKmE5bLUns4blkkSlPraXynnWck4CgcAg4OPSvzw3sk17W0y33eeZcDRqjGt6CTzKLuVJWvzKW8JFW03b4TdwenNxY6JryQhyQlsBxaR0BV1IHrX7YhxY8iQ/HjstPyFBTziEAKdIGAVEbkgbb15K/fLXiI0618jXuKCUL0Bem3Lqi0JWxyd8WVBLeVAblO+D83bzrR+CsiBHu15tEe3Qo81qK087JttwVKivpOQCASeRZzkjqfdVpQ5sC8MS0MKblMNPORXgUZTzoOFp3GFYOx6jII8K+VkgWaAJLNki2+MkOcr6IaEJw5jOFhP0sEbHfeuI2ag4M6lXuamiieB8WAudZpUiHZjK7R4plKvK+9lWVhI7tnHp9m9Y/iIWW9Ta/ku2iTIdblR2mLmiYplFuWtpISpQBzjO+cY29a6Bi6W09EltyoljtbEltXMh1uKhK0nzBAyDUXJFgiKkN3JNsZNyB7ZL4QnvIQgklYPzglIJJPQCp/eVzc9fu9kXu74KO/3RovELvOnIOk9YKeVLds/Zx7i40ciRHdSErV5H2sEH8qsN3WSngVq6/z+ZNwvzT1xcyTlCFHDSR5AJx8aspy6aXXp4NuP21VnP8ANQypILZwM9nyY8E74x036V9n7npyQ41YX5dreVJZSEQFLQrtGiMpwjxSQNvDAqNW6SWu5/bvJHV1b3/srzX7zKo+gLffJbsTS0xGJ7qXC2lawyktIWsdEk58f1Vk4UXS8DRGtGNGXDvEduK8Xmm5Snm46+xVsgknGepwTv8AZViSYESVCMOVFYeiFISWHGwpGB0HKdq+cO0W6Hb1QIkCKxBUClUdplKW1AjBBSBg58a87VcUv9d47J7bKb4FRLemVb5PdLK3NVb8h+PeVvyXCQnm52CcIyNzjodqvKsPbtM2K1yhJttmtsSQAUh1iMhCwD1GQM1mK5us7SXJHdUOEeIpSlREgpQ9KUBAqagdKmgFKUoBSlKAUpSgFKUoBSlKAg0qaUBFVTxDlXS56ybh2FL779nhqlJabKCO8uFKAooWMK5GVuKwSAStI2q168TFrhR7lKnsRWUTZQSl95KfbcCRhIJ9BXsXo8ktlUJg8RJTb0Zp+6W5AkLDbzz7LyiFupQg53yhttC3VdCpbgSMAV47hB1xd4T0G6W66ORXFKSXFqjqcS27JIc5dx7SWEhKemQ64TsADd+K/DzLbzS2nUhTa0lKknoQRgiuufyOeBVHC26Xy4XuTGMd1m2W0PIdbDyFNJecXzIaCk55whtKNx1LqlHwFedSeJYjMzY4lqkOtlT0N4spCJCWnDsQfZY5y2kJGSrs8nHMTVq2e0wrNBTDtkdEeOklXKnJyT1JJySfUmvbgU5de4ceneU/MgcQyXVMyrkljEcpSh1ovKKy2hec+yOzQ2tZxsVPHBIBr5SF8SXkPvdznpdkJfLkdp5pCGnEcxZQ2oqyEKykFYAJ5AOqiRcuBTApz+Q4fMrWTC1BatNaYt1htssrjOtPSWw8hPa4WFLS85zeyVZWs4CgVbZIznBwo/ERKIsxEWU08X0KeihTDYkOBtbjjjpH0FLLbA35ghvJ3xVzYFMCvFL5DiVNGa1y/OtTf9LtRHUNyJLr62Uq7wCntEEJJ7NrAVge1nmOBsKyOtNMu3++XWXKgyQzHhtRIKozba3H3FOJccV7RA5ByNowogYLngasjFMU5eJ7xKSuuj9UvOIU+HH7s7LTce8x1BLKnHSGnmXF5BS0mOhCPZGVE5B2xW46Xt9wY1i/JhRLhbrG5HUZLE5SCFyPYS2GUpzypQ2gpyDykcoGcE1vmKnFHNsKGgKUpXJ0KUpQClKUBB6UqT0pQEDpU1AqaAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgIPSlD0pXgAqa/NTnavQTSozQGgJpUZpnagJpUZpmgJpUZ3oTQE0r85qc0BNKjNM0BNKjNM0BNKjNCaAmlRmmaAmlfnNTmgJpX5zU5oCaVGaZoCaVGaZoCaVANM0BNKjNM0BNKjNR40BJNKilAf//Z";
 
 const ST = [
@@ -114,14 +114,35 @@ const MAKES=["Freightliner","Hino","International","Ford","Isuzu","Kenworth","Pe
 // normalizeMake uses.
 const MAKE_ALIASES={"FRTLN":"Freightliner","INTL":"International","HINO":"Hino"};
 const MODELS_BY_MAKE={Freightliner:["Cascadia","M2"],Hino:["268","338","L6","L7"]};
+// v2.31.0: the shops repairs go to — a dropdown everywhere a repair's shop is set.
+// The shop portal (mechanic/index.html) keeps the same list; change both together.
+const SHOPS=["Interstate Truck Sales","Complete Fleet Services"];
+// v2.31.2: what a truck IS, for every list that names one — "Box · Hino 338",
+// "Tractor · Freightliner Cascadia". Lists used to put a box truck's make and a tractor's
+// type in the same slot, so a box truck never said it was one, and once the tractors
+// were recorded as Freightliners "Freightliner" could mean either. A make of "Tractor"
+// is an old placeholder, not a make, and is left out. Same shape as the shop portal's
+// truckLabel().
+const truckDesc=(t)=>{
+  if(!t)return "";
+  const kind=t.type==="tractor"?"Tractor":"Box";
+  const mk=String(MAKE_ALIASES[t.mk]||t.mk||"").trim();
+  const what=[mk.toLowerCase()==="tractor"?"":mk,t.md].filter(Boolean).join(" ");
+  return what?`${kind} · ${what}`:kind;
+};
 const modelOptionsFor=(mk)=>{
   const name=String(MAKE_ALIASES[mk]||mk||"").trim().toLowerCase();
   const key=Object.keys(MODELS_BY_MAKE).find(k=>k.toLowerCase()===name);
   return key?MODELS_BY_MAKE[key]:null;
 };
 const C={brand:"#1e5b92",dark:"#153f66",light:"#e8f0f7",accent:"#d4841b",red:"#c0392b",green:"#27ae60",yellow:"#e6a817",purple:"#7b5ea7",cyan:"#2596be"};
-const SC={available:C.green,assigned:C.brand,repair:C.yellow,oos:C.red,"for-sale":C.purple,unassigned:C.accent};
-const SL={available:"Available",assigned:"Assigned",repair:"In Repair",oos:"Out of Service","for-sale":"For Sale",unassigned:"Needs Assignment"};
+const SC={available:C.green,assigned:C.brand,oos:C.red,"for-sale":C.purple,unassigned:C.accent};
+const SL={available:"Available",assigned:"Assigned",oos:"Out of Service","for-sale":"For Sale",unassigned:"Needs Assignment"};
+// v2.31.0: a truck is Out of Service while it has an open repair ticket — nothing else
+// puts it down, and nothing produces "In Repair" any more. Board text that used to
+// ("OOS", "BD", "@ Shop", "@ Interstate", anything mentioning repair or mech) is
+// recognised here only so status can ignore it, and so typing it routes to a ticket.
+const boardSaysDown=(text)=>{const s=String(text||"").toLowerCase().trim();return s==="oos"||s==="bd"||s.includes("repair")||s.includes("interstate")||s.includes("shop")||s.includes("mech");};
 
 /* ── Motive mileage folding (v2.20.0) ────────────────────────────────────────
    Pure, so it can be tested without a browser or a Motive key. Folds one page of
@@ -677,11 +698,12 @@ function describeReads(results){
     .map(r=>`${r.key} ${r.timedOut?`timed out after ${(r.ms/1000).toFixed(1)}s`:r.err}`);
 }
 
-// ── MODEL DROPDOWN ──
-// v2.30.0: one control for the Fleet List, Add Truck and the Truck Report editor. A
-// model already stored that is not on the list (an older free-text "M2 106") stays as
-// its own option, so opening a screen never changes a truck — only picking does.
-function ModelSelect({opts,value,onChange,style,title,emptyLabel="—"}){
+// ── LIST DROPDOWN ──
+// v2.30.0: one control for every fixed list — Model (Fleet List, Add Truck, the Truck
+// Report editor) and, since v2.31.0, a repair's Shop. A value already stored that is
+// not on the list (an older free-text "M2 106", a shop typed before there was a list)
+// stays as its own option, so opening a screen never changes a record — only picking does.
+function ListSelect({opts,value,onChange,style,title,emptyLabel="—"}){
   const v=value||"";
   return <select value={v} onChange={e=>onChange(e.target.value)} style={style} title={title}>
     <option value="">{emptyLabel}</option>
@@ -714,7 +736,7 @@ function SettingsScreen(){
     return()=>window.removeEventListener("message",onMsg);
   },[]);
   const reset=()=>{setHeld([]);setFrameKey(k=>k+1);};
-  const touched=[...new Set(held.map(k=>k==="fl-repairs"?"repair tickets":k.startsWith("fl-stat-")?"Weekly Board status":k==="fl-trucks"?"truck list":k))];
+  const touched=[...new Set(held.map(k=>k==="fl-repairs"?"repair tickets":k.startsWith("fl-stat-")?"Driver Board status":k==="fl-trucks"?"truck list":k))];
   const box={background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"16px 18px",marginBottom:16};
   const btn={padding:"8px 14px",fontSize:13,fontWeight:700,borderRadius:6,cursor:"pointer",border:"1px solid #cbd5e1",background:"#fff",color:"#1e293b",minHeight:36};
   return <div style={{maxWidth:980,margin:"0 auto"}}>
@@ -799,6 +821,7 @@ function App(){
   // Repair form
   const[showRepairForm,setShowRepairForm]=useState(null); // truckId or null
   const[repairForm,setRepairForm]=useState({reason:"Mechanical Repair",notes:"",shop:"",estReturn:"",cost:""});
+  const[pendingOOS,setPendingOOS]=useState(null); // v2.31.0: {truckId,key,text} — a board cell waiting on its repair ticket
   // v2.18.0: which work item currently has its "add note" box open — `${repairId}:${idx}`.
   // A repair order holds several jobs (radiator AND injector); a mechanic finishes one
   // at a time, so each needs its own notes and its own done state without closing the
@@ -4156,12 +4179,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     });
 
     // Flag any copied assignment that landed a driver on a truck that is out of
-    // service now (open repair ticket, or an OOS status on the target day).
-    const isDownTruck=(tid)=>{
-      if(repairs.some(r=>r.truckId===tid&&r.status==="open"))return true;
-      const st=(nextStat[`${tid}-${targetDay}`]||"").toLowerCase().trim();
-      return st==="oos"||st==="bd"||st.includes("repair")||st.includes("interstate")||st.includes("shop")||st.includes("mech");
-    };
+    // service now — an open repair ticket (v2.31.0: board text alone no longer counts).
+    const isDownTruck=(tid)=>repairs.some(r=>r.truckId===tid&&r.status==="open");
     const oosAssignments=[];
     drivers.forEach(d=>{const v=next[`${d.name}-${targetDay}`];if(v&&!OFF_OPTS.includes(v)&&isDownTruck(v))oosAssignments.push({driver:d.name,truck:v});});
 
@@ -4194,7 +4213,10 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
   const oosTrucks=useMemo(()=>new Set(repairs.filter(r=>r.status==="open").map(r=>r.truckId)),[repairs]);
   // Who else has this truck on this day (excludes the given driver).
   const truckHolders=(truckId,day,exceptName)=>drivers.filter(d=>d.name!==exceptName&&asgn[`${d.name}-${day}`]===truckId).map(d=>d.name);
-  const downByDay=useMemo(()=>{const m={};DAYS.forEach(day=>{const s=new Set();trucks.forEach(t=>{const n=(tStat[`${t.id}-${day}`]||"").toLowerCase();if(n==="oos"||n==="bd"||n.includes("interstate")||n.includes("repair")||n==="4sale"||n.includes("mech"))s.add(t.id);});m[day]=s;});return m;},[tStat,trucks]);
+  // v2.31.0: a truck is off the assignment list on a day only while an open repair
+  // ticket covers it (opened that day or before), or it is marked for sale. Board text
+  // like "@ Shop" with no ticket behind it no longer hides a working truck.
+  const downByDay=useMemo(()=>{const ymd=x=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;const mon=gM(weekDate);const m={};DAYS.forEach((day,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);const col=ymd(d);const s=new Set();trucks.forEach(t=>{const n=(tStat[`${t.id}-${day}`]||"").toLowerCase();if(n==="4sale"||repairs.some(r=>r.truckId===t.id&&r.status==="open"&&r.dateIn&&ymd(localDate(r.dateIn))<=col))s.add(t.id);});m[day]=s;});return m;},[tStat,trucks,repairs,weekDate]);
 
   const getAvail=useCallback((role,day,cur)=>{
     const type=dTT(role);const used=usedByDay[day]||new Set();const down=downByDay[day]||new Set();
@@ -4202,14 +4224,16 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
   },[trucks,usedByDay,downByDay]);
 
   const gTS=(id,day)=>{
-    // 1. Open repair → always show as repair/oos
+    // 1. Open repair ticket → Out of Service. v2.31.0: the ONLY way to be down. Board
+    //    text alone ("OOS", "@ Shop", "@ Interstate") used to put a truck Out of Service
+    //    or "In Repair" with no ticket behind it — #1287 read In Repair for three days
+    //    with its last ticket closed weeks before. That text now reads as a blank cell.
     const hasOpenRepair=repairs.some(r=>r.truckId===id&&r.status==="open");
     if(hasOpenRepair)return"oos";
-    const st=tStat[`${id}-${day}`]||"";
+    const raw=tStat[`${id}-${day}`]||"";
+    const st=boardSaysDown(raw)?"":raw;
     const stl=st.toLowerCase().trim();
-    // 2. Explicit down statuses from truck status board
-    if(stl==="oos"||stl==="bd")return"oos";
-    if(stl.includes("interstate")||stl.includes("repair")||stl.includes("shop")||stl.includes("mech"))return"repair";
+    // 2. (Down statuses from the board used to be read here — see 1.)
     if(stl.includes("sale"))return"for-sale";
     // 3. Supervisor explicitly marked available
     if(stl==="here"||stl==="avail"||stl==="available"||stl==="ok")return"available";
@@ -4234,7 +4258,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       const prev=drivers.some(d=>asgn[`${d.name}-${DAYS[i]}`]===id);
       if(prev)return"unassigned";
       const ps=(tStat[`${id}-${DAYS[i]}`]||"").toLowerCase();
-      if(ps&&ps!=="here"&&ps!=="avail"&&ps!=="available"&&ps!=="ok"&&ps!=="oos"&&ps!=="bd"&&!ps.includes("sale"))return"unassigned";
+      if(ps&&ps!=="here"&&ps!=="avail"&&ps!=="available"&&ps!=="ok"&&!boardSaysDown(ps)&&!ps.includes("sale"))return"unassigned";
     }
     // 7. No history at all → available
     return"available";
@@ -4260,13 +4284,12 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     const assignedTrucks=new Set();
     drivers.forEach(d=>{const v=asgn[`${d.name}-${dk}`];if(v&&!OFF_OPTS.includes(v)&&v!=="")assignedTrucks.add(v);});
     // Each truck falls into exactly ONE bucket so the tiles reconcile to `total`:
-    // down (oos) > in-repair > assigned (has a driver) > available.
+    // down (an open repair ticket — v2.31.0, board text alone no longer counts, and
+    // there is no separate in-repair bucket) > assigned (has a driver) > available.
     let oos=0,repair=0,assigned=0,avail=0;
     trucks.forEach(t=>{
       const hasOpenRepair=repairs.some(r=>r.truckId===t.id&&r.status==="open");
-      const s=(tStat[`${t.id}-${dk}`]||"").toLowerCase();
-      if(hasOpenRepair||s==="oos"||s==="bd"){oos++;return;}
-      if(s.includes("interstate")||s.includes("repair")){repair++;return;}
+      if(hasOpenRepair){oos++;return;}
       if(assignedTrucks.has(t.id)){assigned++;return;}
       avail++;
     });
@@ -4285,9 +4308,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     const oosT=[],repairT=[],assignedT=[],availT=[];
     trucks.forEach(t=>{
       const hasOpenRepair=repairs.some(r=>r.truckId===t.id&&r.status==="open");
-      const s=(tStat[`${t.id}-${dk}`]||"").toLowerCase();
-      if(hasOpenRepair||s==="oos"||s==="bd"){oosT.push(t);return;}
-      if(s.includes("interstate")||s.includes("repair")){repairT.push(t);return;}
+      if(hasOpenRepair){oosT.push(t);return;}
       if(assignedTrucks.has(t.id)){assignedT.push(t);return;}
       availT.push(t);
     });
@@ -4404,7 +4425,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
   // twice in Open Repairs (once for Apr 20, once for Apr 21) for the same breakdown.
   const openRepairFormIfNeeded=async(truckId)=>{
     const hasOpenRepair=repairs.some(r=>r.truckId===truckId&&r.status==="open");
-    if(hasOpenRepair)return;
+    if(hasOpenRepair)return false;
     // v2.10.50: guard against re-opening a ticket on a truck that was JUST repaired.
     // If a repair on this truck was closed within the last 36 hours, the OOS the
     // dispatcher is reacting to is almost certainly the stale status from that same
@@ -4417,12 +4438,22 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       if(hoursSince<36){
         const when=new Date(recentClose.dateClosed).toLocaleString();
         if(!await uiConfirm(`Truck #${truckId} had a repair closed ${Math.round(hoursSince)}h ago (${when}).\n\nThis OOS is probably leftover status from that repair. Opening a new ticket will mark it down again.\n\nIs this a NEW, separate breakdown?\n\n• OK = yes, open a new repair ticket\n• Cancel = no, just leave it (don't open a ticket)`)){
-          return;
+          return false;
         }
       }
     }
     setShowRepairForm(truckId);
     setRepairForm({reason:"Mechanical Repair",notes:"",shop:"",estReturn:"",cost:""});
+    return true;
+  };
+  // v2.31.0: Out of Service from the Weekly Board goes through a ticket. With one
+  // already open the cell is marked at once; otherwise the repair form opens and the
+  // cell is only marked when the ticket is logged — Cancel leaves the cell as it was,
+  // so no truck can read OOS with nothing open behind it.
+  const requestOOS=async(truckId,key,text="OOS")=>{
+    if(repairs.some(r=>r.truckId===truckId&&r.status==="open")){saveTStat({...tStat,[key]:text});return;}
+    setPendingOOS({truckId,key,text});
+    if(!await openRepairFormIfNeeded(truckId))setPendingOOS(null);
   };
   const closeRepair=async(id,cost)=>{
     const closedBy=await ensureDeviceUser();
@@ -4500,7 +4531,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     const open=repairs.filter(r=>r.status==="open");
     const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     const typeOf=r=>{const t=trucks.find(x=>x.id===r.truckId);return t?t.type:"straight";};
-    const makeLabel=r=>{const t=trucks.find(x=>x.id===r.truckId);return t?`${t.type==="straight"?normalizeMake(t.mk):"Tractor"} · ${t.tr==="A"?"Auto":"Man"}`:"";};
+    const makeLabel=r=>{const t=trucks.find(x=>x.id===r.truckId);return t?`${truckDesc(t)} · ${t.tr==="A"?"Auto":"Man"}`:"";};
     const cardHTML=r=>{
       const notesLog=r.notesLog||(r.notes?[{ts:r.dateIn||r.id,text:r.notes}]:[]);
       // v2.18.0: the printed sheet is what goes out to the bay, so it has to show
@@ -4710,7 +4741,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           <div style={{borderLeft:`2px solid ${C.brand}33`,paddingLeft:10}}><div style={{fontSize:13,fontWeight:700,color:C.dark,lineHeight:1.2}}>Fleet</div><div style={{fontSize:13,fontWeight:700,color:C.dark,lineHeight:1.2}}>Management</div><div onClick={()=>setShowAdmin(a=>!a)} title="Tap to toggle admin/diagnostic tools" style={{fontSize:8,color:showAdmin?C.accent:"#94a3b8",marginTop:1,cursor:"pointer",userSelect:"none",fontWeight:showAdmin?700:400}}>v{APP_VERSION}{showAdmin?" · admin":""}</div></div>
         </div>
         <div style={s.tabs}>
-          {[["dashboard","Dashboard"],["board","Weekly Board"],["fleet","Fleet List"],["maint","Maintenance"],["costs","Costs"],["drivers","Drivers"],["attend","Attendance"],["settings","Settings"]].map(([k,l])=>
+          {[["dashboard","Dashboard"],["board","Driver Board"],["fleet","Fleet List"],["maint","Maintenance"],["costs","Costs"],["drivers","Drivers"],["attend","Attendance"],["settings","Settings"]].map(([k,l])=>
             <button key={k} onClick={()=>setTab(k)} style={tab===k?{...s.tab,...s.tabOn}:s.tab}>{l}{k==="maint"&&stats.openRepairs>0?<span style={s.badge}>{stats.openRepairs}</span>:null}{k==="costs"&&cores.filter(c=>c.status==="outstanding").length>0?<span style={s.badge}>{cores.filter(c=>c.status==="outstanding").length}</span>:null}</button>
           )}
         </div>
@@ -4858,9 +4889,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           // Truck status using viewDay
           const trucksInUse=new Set();
           working.concat(ownerWorking).forEach(d=>trucksInUse.add(d.truck));
-          const trucksDown=trucks.filter(t=>{const st=viewTStat(t.id).toLowerCase();return st==="oos"||st==="bd"||st.includes("interstate")||st.includes("repair")||st.includes("mech");});
-          // Also include any trucks with open repair tickets (independent of daily status)
-          repairs.filter(r=>r.status==="open").forEach(r=>{if(!trucksDown.find(t=>t.id===r.truckId)){const t=trucks.find(x=>x.id===r.truckId);if(t)trucksDown.push(t);}});
+          // v2.31.0: down = an open repair ticket, the same rule as every other status.
+          const trucksDown=trucks.filter(t=>repairs.some(r=>r.truckId===t.id&&r.status==="open"));
           const trucksAvail=trucks.filter(t=>!trucksInUse.has(t.id)&&!trucksDown.find(x=>x.id===t.id));
           const openRep=repairs.filter(r=>r.status==="open");
 
@@ -4928,14 +4958,14 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               {working.map(d=> <tr key={d.name} style={s.tr}>
                 <td style={{...s.ltd,fontWeight:600,color:C.brand,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setDriverReport(d.name)}>{d.name}</td>
                 <td style={{...s.ltd,fontFamily:"monospace",fontWeight:700,cursor:"pointer",color:C.brand,textDecoration:"underline"}} onClick={()=>setHistoryTruck(d.truck)}>#{d.truck}</td>
-                <td style={s.ltd}>{d.truckInfo?d.truckInfo.type==="straight"?d.truckInfo.mk:"Tractor":"—"}</td>
+                <td style={s.ltd}>{d.truckInfo?truckDesc(d.truckInfo):"—"}</td>
                 <td style={s.ltd}>{d.truckInfo?<span style={{fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:3,background:d.truckInfo.tr==="A"?"#27ae6018":"#e6a81718",color:d.truckInfo.tr==="A"?C.green:C.accent}}>{d.truckInfo.tr==="A"?"A":"M"}</span>:"—"}</td>
               </tr>)}
               {ownerWorking.length>0&&<tr><td colSpan={4} style={s.roleDiv}>Owner Operators</td></tr>}
               {ownerWorking.map(d=> <tr key={d.name} style={s.tr}>
                 <td style={{...s.ltd,fontWeight:600,color:C.brand,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setDriverReport(d.name)}>{d.name}</td>
                 <td style={{...s.ltd,fontFamily:"monospace",fontWeight:700,cursor:"pointer",color:C.brand,textDecoration:"underline"}} onClick={()=>setHistoryTruck(d.truck)}>#{d.truck}</td>
-                <td style={s.ltd}>{d.truckInfo?d.truckInfo.type==="straight"?d.truckInfo.mk:"Tractor":"—"}</td>
+                <td style={s.ltd}>{d.truckInfo?truckDesc(d.truckInfo):"—"}</td>
                 <td style={s.ltd}>{d.truckInfo?<span style={{fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:3,background:d.truckInfo.tr==="A"?"#27ae6018":"#e6a81718",color:d.truckInfo.tr==="A"?C.green:C.accent}}>{d.truckInfo.tr==="A"?"A":"M"}</span>:"—"}</td>
               </tr>)}
             </tbody></table></div>
@@ -4963,7 +4993,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(120px, 1fr))",gap:6}}>
                 {trucksAvail.map(t=><div key={t.id} style={{padding:"8px 10px",background:"#fff",borderRadius:6,border:"1px solid #e2e8f0",cursor:"pointer"}} onClick={()=>setHistoryTruck(t.id)}>
                   <div style={{fontFamily:"monospace",fontWeight:700,fontSize:13,color:C.brand}}>#{t.id}</div>
-                  <div style={{fontSize:10,color:"#6b7785"}}>{t.type==="straight"?t.mk:"Tractor"} · {t.tr==="A"?"A":"M"} · {t.ax==="Tandem"?"T":"S"}</div>
+                  <div style={{fontSize:10,color:"#6b7785"}}>{truckDesc(t)} · {t.tr==="A"?"A":"M"} · {t.ax==="Tandem"?"T":"S"}</div>
                 </div>)}
               </div>
             </div>}
@@ -4973,7 +5003,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               <div style={{fontSize:13,fontWeight:700,color:C.red,marginBottom:6}}>DOWN / OOS — {trucksDown.length}</div>
               {trucksDown.map(t=>{const r=repairs.find(x=>x.truckId===t.id&&x.status==="open");
                 return <div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:"#fef2f2",borderRadius:6,border:`1px solid ${C.red}22`,marginBottom:4,cursor:"pointer"}} onClick={()=>setHistoryTruck(t.id)}>
-                  <div><span style={{fontFamily:"monospace",fontWeight:700,color:C.red}}>#{t.id}</span><span style={{fontSize:11,color:"#6b7785",marginLeft:8}}>{t.type==="straight"?t.mk:"Tractor"}</span></div>
+                  <div><span style={{fontFamily:"monospace",fontWeight:700,color:C.red}}>#{t.id}</span><span style={{fontSize:11,color:"#6b7785",marginLeft:8}}>{truckDesc(t)}</span></div>
                   {r&&<span style={{fontSize:10,color:C.red,fontWeight:600}}>{r.reason}{r.shop&&` · ${r.shop}`}</span>}
                 </div>;
               })}
@@ -5061,7 +5091,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           if(!cfg)return null;
           const truckChip=(t,extra)=><div key={t.id} onClick={()=>{close();setHistoryTruck(t.id);}} style={{padding:"8px 10px",background:"#fff",borderRadius:6,border:"1px solid #e2e8f0",cursor:"pointer"}}>
             <div style={{fontFamily:"monospace",fontWeight:700,fontSize:13,color:C.brand}}>#{t.id}</div>
-            <div style={{fontSize:10,color:"#6b7785"}}>{t.type==="straight"?normalizeMake(t.mk):"Tractor"} · {t.tr==="A"?"Auto":"Man"} · {t.ax==="Tandem"?"Tandem":"Single"}</div>
+            <div style={{fontSize:10,color:"#6b7785"}}>{truckDesc(t)} · {t.tr==="A"?"Auto":"Man"} · {t.ax==="Tandem"?"Tandem":"Single"}</div>
             {extra}
           </div>;
           return <div style={s.modal} onClick={close}>
@@ -5078,13 +5108,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))",gap:6}}>{cfg.list.map(t=>truckChip(t,<div style={{fontSize:11,color:C.green,fontWeight:600,marginTop:2}}>{(statLists.driverOf[t.id]||[]).map(n=>n.split(" ")[0]).join(", ")}</div>))}</div>
                     : cfg.kind==="oos"
                       ? <div style={{display:"flex",flexDirection:"column",gap:4}}>{cfg.list.map(t=>{const r=repairs.find(x=>x.truckId===t.id&&x.status==="open");return <div key={t.id} onClick={()=>{close();setHistoryTruck(t.id);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:"#fef2f2",borderRadius:6,border:`1px solid ${C.red}22`,cursor:"pointer"}}>
-                          <div><span style={{fontFamily:"monospace",fontWeight:700,color:C.red}}>#{t.id}</span><span style={{fontSize:11,color:"#6b7785",marginLeft:8}}>{t.type==="straight"?normalizeMake(t.mk):"Tractor"}</span></div>
+                          <div><span style={{fontFamily:"monospace",fontWeight:700,color:C.red}}>#{t.id}</span><span style={{fontSize:11,color:"#6b7785",marginLeft:8}}>{truckDesc(t)}</span></div>
                           <span style={{fontSize:10,color:C.red,fontWeight:600}}>{r?`${r.reason}${r.shop?` · ${r.shop}`:""}`:"Marked OOS"}</span>
                         </div>;})}</div>
                       : cfg.kind==="repairs"
                         ? <div style={{display:"flex",flexDirection:"column",gap:4}}>{cfg.list.map(r=>{const t=trucks.find(x=>x.id===r.truckId);return <div key={r.id} onClick={()=>{close();setHistoryTruck(r.truckId);}} style={{padding:"8px 10px",background:"#fff",borderRadius:6,border:"1px solid #e2e8f0",cursor:"pointer"}}>
                             <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontFamily:"monospace",fontWeight:700,color:C.brand}}>#{r.truckId}</span><span style={{fontSize:11,fontWeight:700,color:C.red}}>{r.reason}</span></div>
-                            <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>In: {dateStr(r.dateIn)}{r.shop?` · ${r.shop}`:""}{t?` · ${t.type==="straight"?normalizeMake(t.mk):"Tractor"}`:""}</div>
+                            <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>In: {dateStr(r.dateIn)}{r.shop?` · ${r.shop}`:""}{t?` · ${truckDesc(t)}`:""}</div>
                           </div>;})}</div>
                         : cfg.kind==="drivers"
                           ? <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{cfg.list.map(d=><span key={d.name} onClick={()=>{close();setDriverReport(d.name);}} style={{fontSize:11,padding:"5px 10px",background:"#fff",color:"#334155",borderRadius:6,fontWeight:600,border:"1px solid #e2e8f0",cursor:"pointer"}}>{drvIcon(d.role)} {d.name} <span style={{color:"#94a3b8"}}>({(d.role||"").replace("Davis ","").replace("Owner Operator","Owner Op")})</span></span>)}</div>
@@ -5445,7 +5475,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                       append("","#000");
                       append("=== RECOVERY COMPLETE ===","#16a34a");
                       append(`Navigate to a past week with ← Prev (e.g. April 2026) to see your data.`,"#16a34a");
-                      append(`If the Weekly Board still looks empty after navigating, hard-refresh the page.`,"#475569");
+                      append(`If the Driver Board still looks empty after navigating, hard-refresh the page.`,"#475569");
                       await window.storage.set("fl-dvir-imported",JSON.stringify({date:new Date().toISOString(),weeks:weeksWithData.length}));
                     }else{
                       append("","#000");
@@ -5501,13 +5531,13 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                       {editVal.trim()&&<button onClick={()=>commitEdit(ck,"assign")} style={s.goBtn}>GO</button>}
                       <select style={s.tSel} value="" onChange={e=>{if(e.target.value)commitEdit(ck,"assign",e.target.value);}}>
                         <option value="">— Pick {dTT(dr.role)==="tractor"?"Tractor":dTT(dr.role)==="straight"?"Box Truck":"Truck"} —</option>
-                        {av.map(t=><option key={t.id} value={t.id}>{t.id} · {t.type==="straight"?t.mk:"Tractor"} · {t.tr==="A"?"Auto":"Man"} · {t.ax==="Tandem"?"Tndm":"Sngl"}</option>)}
+                        {av.map(t=><option key={t.id} value={t.id}>{t.id} · {truckDesc(t)} · {t.tr==="A"?"Auto":"Man"} · {t.ax==="Tandem"?"Tndm":"Sngl"}</option>)}
                       </select>
                       <button onClick={()=>setEditCell(null)} style={s.doneBtn}>Done</button>
                     </div></td>;}
                     return <td key={day} style={dup?{...s.td,...dayCol,background:"#fef2f2",boxShadow:`inset 0 0 0 1.5px ${C.red}`}:oos?{...s.td,...dayCol,background:"#fff7ed",boxShadow:`inset 0 0 0 1.5px ${C.accent}`}:{...s.td,...dayCol}} title={dup?`Truck ${val} is double-booked on ${day}`:oos?`Truck ${val} is out of service (open repair) — reassign`:undefined} onClick={()=>startEdit(ck,val)}>{val?<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,maxWidth:"100%"}}>
                       <span style={{fontWeight:700,fontFamily:isOff?"inherit":"monospace",fontSize:isOff?9:(String(val).length>7?10:12),whiteSpace:"normal",wordBreak:"break-word",overflowWrap:"anywhere",lineHeight:1.15,maxWidth:"100%",textAlign:"center",color:dup?C.red:oos?C.accent:(isOff?C.accent:"#1e293b")}}>{dup?"⚠ ":oos?"🔧 ":""}{val}</span>
-                      {ti&&<span style={{fontSize:8,color:dup?C.red:oos?C.accent:"#94a3b8"}}>{dup?"double-booked":oos?"IN SHOP":`${ti.mk} ${ti.tr}`}</span>}
+                      {ti&&<span style={{fontSize:8,color:dup?C.red:oos?C.accent:"#94a3b8"}}>{dup?"double-booked":oos?"IN SHOP":`${ti.type==="tractor"?"Tractor":"Box"} · ${ti.tr}`}</span>}
                     </div>:<span style={{color:"#cbd5e1"}}>—</span>}</td>;
                   })}
                 </tr>)
@@ -5524,9 +5554,9 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             <div style={{display:"flex",gap:12,marginBottom:8,flexWrap:"wrap"}}>{Object.entries(SL).map(([k,v])=><span key={k} style={{display:"flex",alignItems:"center",gap:4,fontSize:10,color:"#6b7785"}}><span style={{width:8,height:8,borderRadius:4,background:SC[k]}}/>{v}</span>)}</div>
             <div style={s.tWrap}><table style={s.table}><thead><tr><th style={{...s.th,...s.thS}}>Truck #</th><th style={s.th}>Type</th><th style={s.th}>Tr</th><th style={s.th}>Ax</th>{DAYS.map(d=><th key={d} style={s.th}>{d}</th>)}</tr></thead><tbody>
               <tr><td colSpan={9} style={s.secDiv}>Straight Trucks</td></tr>
-              {trucks.filter(t=>t.type==="straight").map(t=><TSRow key={t.id} t={t} tStat={tStat} ec={editCell} ev={editVal} sev={setEditVal} se={startEdit} ce={commitEdit} gs={gTS} onOOS={()=>openRepairFormIfNeeded(t.id)}/>)}
+              {trucks.filter(t=>t.type==="straight").map(t=><TSRow key={t.id} t={t} tStat={tStat} ec={editCell} ev={editVal} sev={setEditVal} se={startEdit} ce={commitEdit} gs={gTS} onOOS={(key,text)=>requestOOS(t.id,key,text)}/>)}
               <tr><td colSpan={9} style={s.secDiv}>Tractors</td></tr>
-              {trucks.filter(t=>t.type==="tractor").map(t=><TSRow key={t.id} t={t} tStat={tStat} ec={editCell} ev={editVal} sev={setEditVal} se={startEdit} ce={commitEdit} gs={gTS} onOOS={()=>openRepairFormIfNeeded(t.id)}/>)}
+              {trucks.filter(t=>t.type==="tractor").map(t=><TSRow key={t.id} t={t} tStat={tStat} ec={editCell} ev={editVal} sev={setEditVal} se={startEdit} ce={commitEdit} gs={gTS} onOOS={(key,text)=>requestOOS(t.id,key,text)}/>)}
             </tbody></table></div>
           </div>
         </div>}
@@ -5555,7 +5585,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               <select style={s.fInp} value={newT.mk} onChange={e=>setNewT({...newT,mk:e.target.value})}>{MAKES.map(m=><option key={m} value={m}>{m}</option>)}</select>
             </div>
             {modelOptionsFor(newT.mk)
-              ?<ModelSelect opts={modelOptionsFor(newT.mk)} value={newT.md} onChange={v=>setNewT({...newT,md:v})} style={s.fInp} title="Model" emptyLabel="Model —"/>
+              ?<ListSelect opts={modelOptionsFor(newT.mk)} value={newT.md} onChange={v=>setNewT({...newT,md:v})} style={s.fInp} title="Model" emptyLabel="Model —"/>
               :<input style={s.fInp} placeholder="Model" value={newT.md||""} onChange={e=>setNewT({...newT,md:e.target.value})}/>}
             <div style={{display:"flex",gap:6}}>
               <select style={s.fInp} value={newT.tr} onChange={e=>setNewT({...newT,tr:e.target.value})}><option value="A">Auto</option><option value="M">Manual</option></select>
@@ -5568,7 +5598,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
           {fleetView==="tile"&&<div style={s.cardGrid}>{filteredTrucks.map(t=>{
             const st2=gTS(t.id,dk);const dr=findDriverForTruck(t.id);const openR=repairs.filter(r=>r.truckId===t.id&&r.status==="open");const totalR=repairs.filter(r=>r.truckId===t.id).length;
             // v2.10.20: if truck is OOS/in-repair but has a driver, dim the driver display to flag the inconsistency (driver needs reassignment)
-            const drDown=dr&&(st2==="oos"||st2==="repair");
+            const drDown=dr&&st2==="oos";
             return <div key={t.id} style={s.tCard}><div style={s.cHdr}><span style={{...s.tNum,cursor:"pointer",textDecoration:"underline",textDecorationColor:C.brand+"44"}} onClick={()=>setHistoryTruck(t.id)}>#{t.id}</span><span style={{...s.sBdg,background:SC[st2]+"18",color:SC[st2],borderColor:SC[st2]}}>{SL[st2]}</span></div>
               <div style={s.cBody}><Row l="Type" v={t.type==="straight"?"Box Truck":"Tractor"}/><Row l="Make" v={normalizeMake(t.mk)}/>{t.md?<Row l="Model" v={t.md}/>:null}
                 {/* v2.10.43: inline-editable Year field. Empty by default, click to add. */}
@@ -5613,7 +5643,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 <td style={{...s.ltd,fontWeight:700,fontFamily:"monospace",color:C.brand,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setHistoryTruck(t.id)}>{t.id}</td>
                 <td style={s.ltd}>
                   <select value={t.mk} onChange={e=>updateTruck(t.id,{mk:e.target.value})}
-                    style={{fontSize:11,padding:"2px 4px",border:"1px solid #e2e8f0",borderRadius:4,background:"#fff",outline:"none",cursor:"pointer",maxWidth:120}}>
+                    style={{width:112,boxSizing:"border-box",fontSize:11,padding:"2px 4px",border:"1px solid #e2e8f0",borderRadius:4,background:"#fff",outline:"none",cursor:"pointer"}}>
                     {makeOpts.map(m=><option key={m} value={m}>{m}</option>)}
                     {!makeOpts.includes(t.mk)&&<option value={t.mk}>{normalizeMake(t.mk)}</option>}
                   </select>
@@ -5622,7 +5652,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     v2.30.0: a dropdown when the make has a model list (Freightliner, Hino). */}
                 <td style={s.ltd}>
                   {modelOpts
-                    ?<ModelSelect opts={modelOpts} value={t.md} onChange={v=>updateTruck(t.id,{md:v})} title={`Model of #${t.id}`}
+                    ?<ListSelect opts={modelOpts} value={t.md} onChange={v=>updateTruck(t.id,{md:v})} title={`Model of #${t.id}`}
                       style={{width:96,boxSizing:"border-box",fontSize:11,padding:"2px 4px",border:"1px solid #e2e8f0",borderRadius:4,background:"#fff",outline:"none",cursor:"pointer"}}/>
                     :<input placeholder="—" defaultValue={t.md||""}
                       onBlur={e=>{const v=e.target.value.trim();if(v!==(t.md||""))updateTruck(t.id,{md:v});}}
@@ -5652,7 +5682,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                   const isToday=i===di;
                   const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
                   const dayOOS=repairOOSOn(t.id,colDate);
-                  return <td key={d} style={{...s.ltd,textAlign:"center",background:isToday?"#f0f9ff":dayOOS?"#fef2f2":"transparent",fontSize:11,whiteSpace:"nowrap",padding:"4px 6px"}}>
+                  return <td key={d} title={dayOOS?"":driver} style={{...s.ltd,textAlign:"center",background:isToday?"#f0f9ff":dayOOS?"#fef2f2":"transparent",fontSize:11,whiteSpace:"nowrap",padding:"4px 6px",overflow:"hidden",textOverflow:"ellipsis"}}>
                     {dayOOS
                       ?<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>
                       :driver
@@ -5664,12 +5694,21 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 <td style={s.ltd}><button style={s.xBtn} title={`Remove / retire truck ${t.id}`} onClick={()=>removeTruck(t.id)}>×</button></td>
               </tr>;
             };
+            // v2.30.2: Box Trucks and Tractors are two tables stacked one above the other,
+            // and each sized its columns to its own contents (different make lists, driver
+            // names, status badges), so no column lined up with the one above it. Both now
+            // share one set of fixed widths, and the five days split what is left evenly.
+            // Below LIST_MIN_W the table scrolls sideways rather than squeezing the days.
+            const LIST_COLS=["Truck #","Make","Model","Year","Trans","Deleted","Axle","Status",...DAYS,"Repairs",""];
+            const LIST_COL_W={"Truck #":64,"Make":128,"Model":112,"Year":76,"Trans":52,"Deleted":68,"Axle":68,"Status":118,"Repairs":64,"":40};
+            const LIST_MIN_W=1140;
             const renderTable=(list,label,borderColor)=>(
               <div style={{flex:"1 1 600px",minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:700,marginBottom:8,paddingBottom:6,borderBottom:`2px solid ${borderColor}`,color:C.dark}}>{label} ({list.length})</div>
                 <div style={s.tWrap}>
-                  <table style={{...s.table,fontSize:12}}>
-                    <thead><tr>{["Truck #","Make","Model","Year","Trans","Deleted","Axle","Status",...DAYS,"Repairs",""].map((h,i)=>{
+                  <table style={{...s.table,fontSize:12,tableLayout:"fixed",minWidth:LIST_MIN_W}}>
+                    <colgroup>{LIST_COLS.map((h,i)=><col key={h+i} style={LIST_COL_W[h]?{width:LIST_COL_W[h]}:undefined}/>)}</colgroup>
+                    <thead><tr>{LIST_COLS.map((h,i)=>{
                       const dayIdx=["Mon","Tue","Wed","Thu","Fri"].indexOf(h);
                       const isTodayCol=dayIdx===di;
                       return <th key={h+i} style={{...s.th,whiteSpace:"nowrap",background:isTodayCol?"#f0f9ff":"transparent",color:isTodayCol?C.brand:"inherit"}}>{h}</th>;
@@ -5713,7 +5752,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                     <tbody>
                       {truckList.map(t=>{
                         const st2=gTS(t.id,dk);
-                        const isDown=st2==="oos"||st2==="repair";
+                        const isDown=st2==="oos";
                         return <tr key={t.id} style={{...s.tr,background:isDown?"#fef2f2":"transparent"}}>
                           <td style={{...s.ltd,fontWeight:700,fontFamily:"monospace",color:isDown?C.red:C.brand,cursor:"pointer",whiteSpace:"nowrap"}} onClick={()=>setHistoryTruck(t.id)}>
                             #{t.id}
@@ -5842,7 +5881,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                    fleet list, still show the form rather than silently rendering
                    nothing — a missing label beats a form that won't appear. */
                 const pickedTruck=picked?(trucks.find(t=>t.id===picked)||{id:picked,type:"",mk:""}):null;
-                const label=t=>`#${t.id} — ${t.type==="straight"?t.mk:"Tractor"}`;
+                const label=t=>`#${t.id} — ${truckDesc(t)}`;
                 return(<>
                   {pickedTruck
                     ?<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:6}}>
@@ -5861,7 +5900,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                       {OOS_REASONS.map(r=><option key={r} value={r}>{r}</option>)}
                     </select>
                     <input style={s.fInp} placeholder="Notes (what's wrong)" value={repairForm.notes} onChange={e=>setRepairForm({...repairForm,notes:e.target.value})}/>
-                    <input style={s.fInp} placeholder="Shop / Location" value={repairForm.shop} onChange={e=>setRepairForm({...repairForm,shop:e.target.value})}/>
+                    <ListSelect opts={SHOPS} value={repairForm.shop} onChange={v=>setRepairForm({...repairForm,shop:v})} style={s.fInp} title="Shop" emptyLabel="Shop —"/>
                     <div style={{display:"flex",gap:6}}>
                       <input style={s.fInp} type="date" placeholder="Est Return" value={repairForm.estReturn} onChange={e=>setRepairForm({...repairForm,estReturn:e.target.value})}/>
                       <input style={s.fInp} type="number" placeholder="Cost $" value={repairForm.cost} onChange={e=>setRepairForm({...repairForm,cost:e.target.value})}/>
@@ -5948,7 +5987,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               const openItems=notesLog.length-doneItems;
               return <div key={r.id} style={{...s.repairCard,marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
-                  <div style={{flex:"1 1 auto"}}><span style={{fontFamily:"monospace",fontWeight:700,fontSize:16,color:C.brand,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setHistoryTruck(r.truckId)}>#{r.truckId}</span>{t&&<span style={{fontSize:11,color:"#6b7785",marginLeft:8}}>{t.type==="straight"?t.mk:"Tractor"} · {t.tr==="A"?"Auto":"Man"}</span>}</div>
+                  <div style={{flex:"1 1 auto"}}><span style={{fontFamily:"monospace",fontWeight:700,fontSize:16,color:C.brand,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setHistoryTruck(r.truckId)}>#{r.truckId}</span>{t&&<span style={{fontSize:11,color:"#6b7785",marginLeft:8}}>{truckDesc(t)} · {t.tr==="A"?"Auto":"Man"}</span>}</div>
                   {notesLog.length>0&&<span title={`${doneItems} of ${notesLog.length} item(s) done`} style={{fontSize:10,fontWeight:700,padding:"3px 7px",borderRadius:10,whiteSpace:"nowrap",background:allItemsDone?C.green+"1a":"#f1f5f9",color:allItemsDone?C.green:"#64748b",border:`1px solid ${allItemsDone?C.green+"55":"#e2e8f0"}`}}>{doneItems}/{notesLog.length} done</span>}
                   <select value={r.reason} onChange={e=>updateRepair(r.id,{reason:e.target.value})} style={{fontSize:11,fontWeight:700,padding:"3px 6px",borderRadius:4,background:C.red+"14",color:C.red,border:`1px solid ${C.red}44`,cursor:"pointer",outline:"none"}} title="Change reason">
                     {OOS_REASONS.map(opt=><option key={opt} value={opt}>{opt}</option>)}
@@ -6030,13 +6069,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 </div>
 
                 <div style={{display:"flex",gap:8,marginTop:8,fontSize:11,color:"#6b7785",flexWrap:"wrap",alignItems:"center"}}>
-                  <input
-                    placeholder="Shop"
-                    defaultValue={r.shop||""}
-                    onBlur={e=>{if(e.target.value!==(r.shop||""))updateRepair(r.id,{shop:e.target.value});}}
-                    onKeyDown={e=>{if(e.key==="Enter")e.target.blur();}}
-                    style={{flex:"1 1 120px",fontSize:11,padding:"4px 6px",border:"1px solid #e2e8f0",borderRadius:4,outline:"none",background:"#fff",boxSizing:"border-box"}}
-                  />
+                  <ListSelect opts={SHOPS} value={r.shop} onChange={v=>updateRepair(r.id,{shop:v})} title="Shop" emptyLabel="Shop —"
+                    style={{flex:"1 1 120px",fontSize:11,padding:"4px 6px",border:"1px solid #e2e8f0",borderRadius:4,outline:"none",background:"#fff",boxSizing:"border-box",cursor:"pointer"}}/>
                   <span>In: {dateStr(r.dateIn)}{r.openedBy?<span style={{color:C.brand,fontWeight:600}}> by {r.openedBy}</span>:null}</span>
                   {r.estReturn&&<span>Est: {dateStr(r.estReturn)}</span>}
                   {r.cost>0&&<span>${r.cost.toLocaleString()}</span>}
@@ -7204,7 +7238,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 
                 {/* BY DRIVER */}
                 <div style={{fontSize:13,fontWeight:800,color:"#1e293b",marginBottom:8,paddingBottom:6,borderBottom:`2px solid ${C.brand}`}}>👤 Who's Buying the Fuel (by Driver)</div>
-                <div style={{fontSize:11,color:"#6b7785",marginBottom:10}}>Drivers matched to each purchase via the Weekly Board assignment for that week. Purchases with multiple drivers on the same truck that week are split evenly.</div>
+                <div style={{fontSize:11,color:"#6b7785",marginBottom:10}}>Drivers matched to each purchase via the Driver Board assignment for that week. Purchases with multiple drivers on the same truck that week are split evenly.</div>
                 <div style={{marginBottom:20,border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1.8fr 1fr 1fr 1fr 1.2fr",background:"#f1f5f9",padding:"8px 10px",fontSize:10,fontWeight:700,color:"#475569",textTransform:"uppercase"}}>
                     <div>Driver</div>
@@ -7968,20 +8002,20 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
       </div>
 
       {/* ── Repair Form Modal (from truck status board) ── */}
-      {showRepairForm&&tab==="board"&&<div style={s.modal} onClick={()=>setShowRepairForm(null)}><div style={s.modalBox} onClick={e=>e.stopPropagation()}>
+      {showRepairForm&&tab==="board"&&<div style={s.modal} onClick={()=>{setShowRepairForm(null);setPendingOOS(null);}}><div style={s.modalBox} onClick={e=>e.stopPropagation()}>
         <div style={{fontSize:16,fontWeight:700,color:"#1e293b",marginBottom:12}}>Log Repair — Truck #{showRepairForm}</div>
         <select style={s.fInp} value={repairForm.reason} onChange={e=>setRepairForm({...repairForm,reason:e.target.value})}>
           {OOS_REASONS.map(r=><option key={r} value={r}>{r}</option>)}
         </select>
         <input style={s.fInp} placeholder="Notes" value={repairForm.notes} onChange={e=>setRepairForm({...repairForm,notes:e.target.value})}/>
-        <input style={s.fInp} placeholder="Shop / Location" value={repairForm.shop} onChange={e=>setRepairForm({...repairForm,shop:e.target.value})}/>
+        <ListSelect opts={SHOPS} value={repairForm.shop} onChange={v=>setRepairForm({...repairForm,shop:v})} style={s.fInp} title="Shop" emptyLabel="Shop —"/>
         <div style={{display:"flex",gap:6}}>
           <input style={s.fInp} type="date" value={repairForm.estReturn} onChange={e=>setRepairForm({...repairForm,estReturn:e.target.value})}/>
           <input style={s.fInp} type="number" placeholder="Cost $" value={repairForm.cost} onChange={e=>setRepairForm({...repairForm,cost:e.target.value})}/>
         </div>
         <div style={{display:"flex",gap:8,marginTop:4}}>
-          <button style={s.saveBtn} onClick={()=>{addRepair(showRepairForm);commitEdit(`${showRepairForm}-${DAYS[todayDI()]}`,"status","OOS");}}>Log & Set OOS</button>
-          <button style={s.canBtn} onClick={()=>setShowRepairForm(null)}>Cancel</button>
+          <button style={s.saveBtn} onClick={()=>{const p=pendingOOS&&pendingOOS.truckId===showRepairForm?pendingOOS:null;addRepair(showRepairForm);commitEdit(p?p.key:`${showRepairForm}-${DAYS[Math.min(todayDI(),4)]}`,"status",p?p.text:"OOS");setPendingOOS(null);}}>Log & Set OOS</button>
+          <button style={s.canBtn} onClick={()=>{setShowRepairForm(null);setPendingOOS(null);}}>Cancel</button>
         </div>
       </div></div>}
 
@@ -8027,7 +8061,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
               <label style={{flex:"1 1 140px",minWidth:120}}>
                 <div style={{fontSize:10,color:"#6b7785",marginBottom:3}}>Model</div>
                 {modelOptionsFor(truckEdit.mk)
-                  ?<ModelSelect opts={modelOptionsFor(truckEdit.mk)} value={truckEdit.md} onChange={v=>setTruckEdit({...truckEdit,md:v})} style={{...s.fInp,width:"100%",boxSizing:"border-box"}}/>
+                  ?<ListSelect opts={modelOptionsFor(truckEdit.mk)} value={truckEdit.md} onChange={v=>setTruckEdit({...truckEdit,md:v})} style={{...s.fInp,width:"100%",boxSizing:"border-box"}}/>
                   :<input style={{...s.fInp,width:"100%",boxSizing:"border-box"}} placeholder="Model" value={truckEdit.md} onChange={e=>setTruckEdit({...truckEdit,md:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")commitTruckEdit();if(e.key==="Escape")setTruckEdit(null);}}/>}
               </label>
               {/* v2.18.3: transmission and axle were set once on Add Truck and then
@@ -8238,7 +8272,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             <div key={th.truckId} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f1f5f9"}}>
               <div>
                 <span style={{fontFamily:"monospace",fontWeight:700,fontSize:13,color:C.brand,cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setDriverReport(null);setTimeout(()=>setHistoryTruck(th.truckId),100);}}>#{th.truckId}</span>
-                <span style={{fontSize:10,color:"#94a3b8",marginLeft:6}}>{th.type==="straight"?th.mk:"Tractor"} · {th.tr==="A"?"Auto":"Man"}</span>
+                <span style={{fontSize:10,color:"#94a3b8",marginLeft:6}}>{truckDesc(th)} · {th.tr==="A"?"Auto":"Man"}</span>
               </div>
               <div style={{textAlign:"right"}}>
                 <div style={{fontSize:11,fontWeight:600,color:"#1e293b"}}>{th.days} day{th.days>1?"s":""}</div>
@@ -8627,7 +8661,7 @@ function CostsNewView({trucks,costEntries,repairs,truckMiles,milesMeta,onOpenMot
           return <tr key={p.truckId} style={f.length?{background:"#fdf6f5"}:null}>
             <td style={td}><span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{p.truckId}</span>
               {f.length?<span style={{color:FV.bad}}> ⚑</span>:null}</td>
-            <td style={{...td,fontSize:11,color:"#6b7785"}}>{p.t?(p.t.type==="straight"?"Box":"Tractor"):"—"} · {p.t?p.t.mk:""}</td>
+            <td style={{...td,fontSize:11,color:"#6b7785"}}>{p.t?truckDesc(p.t):"—"}</td>
             <td style={tdN}>{p.miles>0?fvNum(p.miles):<span style={{color:"#94a3b8"}}>—</span>}</td>
             {FV_BUCKETS.map(b=><td key={b} style={tdN}>{fvMoney(p.buckets[b])}</td>)}
             <td style={{...tdN,fontWeight:700}}>{fvMoney(p.total)}</td>
@@ -8763,7 +8797,7 @@ function MaintNewView({trucks,repairs,onOpenTicket}){
               onClick={()=>onOpenTicket&&onOpenTicket(r)}>
               <td style={td}>
                 <span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{r.truckId}</span>
-                <span style={{fontSize:10.5,color:"#94a3b8"}}> {t?(t.type==="straight"?t.mk:"Tractor"):""}</span>
+                <span style={{fontSize:10.5,color:"#94a3b8"}}> {t?truckDesc(t):""}</span>
                 {repeats.has(r.id)?<FvChip label="⟳ repeat" color={FV.warn}
                   title="Same reason on this truck within 30 days — worth a look before it's a breakdown"/>:null}
               </td>
@@ -8812,16 +8846,22 @@ function MaintNewView({trucks,repairs,onOpenTicket}){
 
 function TSRow({t,tStat,ec,ev,sev,se,ce,gs,onOOS}){
   const [showManual, setShowManual] = useState(false);
-  return <tr style={s.tr}><td style={{...s.td,fontWeight:700,fontFamily:"monospace",color:"#1e293b",position:"sticky",left:0,background:"#fff",zIndex:1}}>{t.id}</td><td style={{...s.td,fontSize:11}}>{t.type==="straight"?t.mk:"Tractor"}</td>
+  return <tr style={s.tr}><td style={{...s.td,fontWeight:700,fontFamily:"monospace",color:"#1e293b",position:"sticky",left:0,background:"#fff",zIndex:1}}>{t.id}</td><td style={{...s.td,fontSize:11}}>{truckDesc(t)}</td>
     <td style={s.td}><span style={{fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:3,background:t.tr==="A"?"#27ae6018":"#e6a81718",color:t.tr==="A"?C.green:C.accent}}>{t.tr==="A"?"A":"M"}</span></td>
     <td style={{...s.td,fontSize:11}}>{t.ax==="Tandem"?"T":"S"}</td>
     {DAYS.map(day=>{const key=`${t.id}-${day}`;const val=tStat[key]||"";const st2=gs(t.id,day);const isE=ec===key;
+      // v2.31.0: Out of Service needs a repair ticket, so it is handed to onOOS
+      // (requestOOS), which decides in one place: with a ticket open it marks the cell,
+      // without one it opens the repair form and marks the cell once that is logged.
+      // Typed text that means "down" ("@ shop", "BD"…) goes the same way.
+      const markDown=(text)=>{se(null);setShowManual(false);onOOS(key,text);};
       const pick=(v)=>{
         if(v==="__manual__"){setShowManual(true);sev(val||"");return;}
-        if(v==="OOS"){ce(key,"status","OOS");onOOS();setShowManual(false);return;}
+        if(v==="OOS"){markDown("OOS");return;}
         ce(key,"status",v);
         setShowManual(false);
       };
+      const saveManual=()=>{if(boardSaysDown(ev))markDown(ev.trim());else{ce(key,"status");setShowManual(false);}};
       return <td key={day} style={{...s.td,background:SC[st2]+"0a",minWidth:100}} onClick={()=>{if(!isE){se(key,val);setShowManual(false);}}}>
         {isE?<div style={{display:"flex",flexDirection:"column",gap:4,padding:2}} onClick={e=>e.stopPropagation()}>
           {!showManual?<>
@@ -8829,15 +8869,13 @@ function TSRow({t,tStat,ec,ev,sev,se,ce,gs,onOOS}){
               <option value="">— Select status —</option>
               <option value="Available">Available</option>
               <option value="OOS">Out of Service (opens repair)</option>
-              <option value="@ Interstate">@ Interstate</option>
-              <option value="@ Shop">@ Shop</option>
               <option value="__manual__">Manual entry...</option>
             </select>
             <button onClick={()=>{se(null);setShowManual(false);}} style={{fontSize:9,padding:"3px 6px",background:"#f1f5f9",color:"#6b7785",border:"1px solid #d1d9e0",borderRadius:3,cursor:"pointer"}}>Cancel</button>
           </>:<>
-            <input autoFocus value={ev} onChange={e=>sev(e.target.value)} placeholder="Type status..." onKeyDown={e=>{if(e.key==="Enter"){ce(key,"status");setShowManual(false);}if(e.key==="Escape"){sev("");se(null);setShowManual(false);}}} style={s.cInp}/>
+            <input autoFocus value={ev} onChange={e=>sev(e.target.value)} placeholder="Type status..." onKeyDown={e=>{if(e.key==="Enter")saveManual();if(e.key==="Escape"){sev("");se(null);setShowManual(false);}}} style={s.cInp}/>
             <div style={{display:"flex",gap:4}}>
-              <button onClick={()=>{ce(key,"status");setShowManual(false);}} style={{flex:1,fontSize:9,padding:"3px 6px",background:C.green,color:"#fff",border:"none",borderRadius:3,cursor:"pointer",fontWeight:700}}>Save</button>
+              <button onClick={saveManual} style={{flex:1,fontSize:9,padding:"3px 6px",background:C.green,color:"#fff",border:"none",borderRadius:3,cursor:"pointer",fontWeight:700}}>Save</button>
               <button onClick={()=>setShowManual(false)} style={{flex:1,fontSize:9,padding:"3px 6px",background:"#f1f5f9",color:"#6b7785",border:"1px solid #d1d9e0",borderRadius:3,cursor:"pointer"}}>Back</button>
             </div>
           </>}
@@ -8910,7 +8948,7 @@ function ManualCostForm({trucks,cats,onAdd}){
     <div style={{display:"flex",gap:6}}>
       <select style={s.fInp} value={f.truckId} onChange={e=>setF({...f,truckId:e.target.value})}>
         <option value="">Truck #</option>
-        {trucks.map(t=><option key={t.id} value={t.id}>#{t.id} — {t.type==="straight"?t.mk:"Tractor"}</option>)}
+        {trucks.map(t=><option key={t.id} value={t.id}>#{t.id} — {truckDesc(t)}</option>)}
       </select>
       <select style={s.fInp} value={f.category} onChange={e=>setF({...f,category:e.target.value})}>
         {cats.map(c=><option key={c} value={c}>{c}</option>)}
