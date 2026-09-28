@@ -143,9 +143,9 @@ console.log("\n═ the reported failure: one big document, full bars ═");
 {
   // fl-miles stalls; everything else answers at once. Before, the shared 20s ceiling
   // meant this showed "Can't reach the database".
-  const r = await boot({ stall: ["fl-miles"], waitFor: () => /Weekly Board/.test(window.__text()) });
+  const r = await boot({ stall: ["fl-miles"], waitFor: () => /Driver Board/.test(window.__text()) });
   pass("the app opens instead of claiming the database is unreachable",
-    /Weekly Board/.test(r.text) && !/Can.t reach the database/i.test(r.text), r.text.slice(0, 90));
+    /Driver Board/.test(r.text) && !/Can.t reach the database/i.test(r.text), r.text.slice(0, 90));
   pass("the real roster is what loaded, not the built-in demo fleet",
     new RegExp(`(?<!\\\\d)${REAL_TRUCK}(?!\\\\d)`).test(r.text), r.text.slice(0, 120));
   pass("no page errors", r.errs.length === 0, r.errs.join(" | "));
@@ -168,8 +168,8 @@ console.log("\n═ the dangerous one: a failed roster read ═");
 // ══ 3. the ledger must not hold the app shut ══════════════════════════════════
 console.log("\n═ the bare spinner: a slow cost ledger ═");
 {
-  const r = await boot({ stall: ["fl-costs"], waitFor: () => /Weekly Board/.test(window.__text()), timeout: 15000 });
-  pass("the app opens without waiting for the ledger", /Weekly Board/.test(r.text), r.text.slice(0, 90));
+  const r = await boot({ stall: ["fl-costs"], waitFor: () => /Driver Board/.test(window.__text()), timeout: 15000 });
+  pass("the app opens without waiting for the ledger", /Driver Board/.test(r.text), r.text.slice(0, 90));
   pass("and opens promptly — not after a 20s timeout", r.ms < 10000, `${r.ms} ms`);
 
   const costs = await r.page.evaluate(() => {
@@ -185,8 +185,8 @@ console.log("\n═ the bare spinner: a slow cost ledger ═");
 // ══ 4. a healthy load still behaves ═══════════════════════════════════════════
 console.log("\n═ nothing stalled: the ordinary case still works ═");
 {
-  const r = await boot({ waitFor: () => /Weekly Board/.test(window.__text()) });
-  pass("the app opens", /Weekly Board/.test(r.text));
+  const r = await boot({ waitFor: () => /Driver Board/.test(window.__text()) });
+  pass("the app opens", /Driver Board/.test(r.text));
   pass("promptly", r.ms < 8000, `${r.ms} ms`);
   pass("no page errors", r.errs.length === 0, r.errs.join(" | "));
   const ledger = await r.page.evaluate(() => new Promise(res => setTimeout(() => {

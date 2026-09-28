@@ -1,7 +1,7 @@
 /**
  * The Settings screen embeds the real mechanic portal so the owner can use it the way
  * the shop does. That portal writes live data: closing a repair closes it for everyone
- * and puts the truck back on the Weekly Board. Everything here is about making sure the
+ * and puts the truck back on the Driver Board. Everything here is about making sure the
  * test view cannot do either.
  *
  * "The database" is this server, not a variable in the page: the portal's Firestore
@@ -67,7 +67,7 @@ localStorage.setItem("fl-device-user","Harness");
 const PORTAL_STUB = `<script>
 window.__KV=${JSON.stringify({ "fl-trucks": TRUCKS, "fl-repairs": REPAIRS })};
 // Today's week, with the truck down every day: closing the repair must then want to
-// put it back to HERE on the Weekly Board, so there IS a second write to hold back.
+// put it back to HERE on the Driver Board, so there IS a second write to hold back.
 (function(){
   function gMon(d){const x=new Date(d);const day=x.getDay();const diff=x.getDate()-day+(day===0?-6:1);return new Date(x.setDate(diff));}
   const m=gMon(new Date());
@@ -153,7 +153,7 @@ const page = await browser.newPage();
 watch(page); answer(page);
 await page.setViewport({ width: 1200, height: 1000 });
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded" });
-await page.waitForFunction(() => /Weekly Board/.test(window.__text()), { timeout: 60000 }).catch(() => {});
+await page.waitForFunction(() => /Driver Board/.test(window.__text()), { timeout: 60000 }).catch(() => {});
 
 const heldText = () => page.evaluate(() => document.querySelector('[data-testid="held-summary"]')?.textContent || "");
 const portalFrame = async () => {
@@ -168,7 +168,7 @@ const portalFrame = async () => {
 console.log("\n═ nothing loads until Settings is opened ═");
 {
   await sleep(500);
-  pass("the fleet app is up", /Weekly Board/.test(await page.evaluate(() => window.__text())));
+  pass("the fleet app is up", /Driver Board/.test(await page.evaluate(() => window.__text())));
   pass("the portal page was never requested", portalLoads === 0, `${portalLoads} load(s)`);
   pass("and there is no frame for it in the page",
     (await page.evaluate(() => document.querySelectorAll("iframe").length)) === 0);
@@ -235,14 +235,14 @@ const before = db.length;
   pass("closing the repair takes it off the open list", !(await frame.$(`#card-${REPAIR_ID}`)));
   pass("and it shows in history", (await frame.evaluate(() => document.getElementById("count-history").textContent.trim())) === "1");
   await until(() => db.slice(before).some((e) => e.kind === "read" && /^fl-stat-/.test(e.id)));
-  pass("closing went on to look at the Weekly Board, so it DID try to write there",
+  pass("closing went on to look at the Driver Board, so it DID try to write there",
     db.slice(before).some((e) => e.kind === "read" && /^fl-stat-/.test(e.id)),
     db.slice(before).map((e) => `${e.kind}:${e.id}`).join(" "));
 
   await until(async () => /3 saves held back/.test(await heldText()));
   const t = await heldText();
   pass("the Settings screen counts what was held back", /3 saves held back/.test(t), t);
-  pass("and names both things a close would have changed", /repair tickets/.test(t) && /Weekly Board status/.test(t), t);
+  pass("and names both things a close would have changed", /repair tickets/.test(t) && /Driver Board status/.test(t), t);
 
   // No button deletes a document today, and nothing calls update(), batch() or a
   // transaction. Probe them directly so a future portal change cannot quietly add a
@@ -265,7 +265,7 @@ const before = db.length;
   const leaked = writesSince(0);
   pass("NOT ONE write reached the database", leaked.length === 0, leaked.map((e) => `${e.kind}:${e.id}`).join(" "));
   pass("the stored repair is still open", await frame.evaluate(() => JSON.parse(window.__KV["fl-repairs"])[0].status === "open"));
-  pass("the stored Weekly Board still has the truck down",
+  pass("the stored Driver Board still has the truck down",
     await frame.evaluate(() => Object.values(JSON.parse(window.__KV[window.__STATKEY])).every((v) => v === "OOS")));
 }
 

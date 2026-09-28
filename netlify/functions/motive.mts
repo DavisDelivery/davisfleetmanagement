@@ -277,6 +277,56 @@ export default async (req: Request) => {
         });
       }
 
+      /* ───────────────── days — distance per vehicle per day (v2.32.0) ─────────────────
+         GET /api/motive?action=days&dates=2026-09-21,2026-09-22
+         One rollup per calendar day, in Motive's company rollup timezone — the
+         office's day. Used to flag a truck that drove on a day nobody was on it
+         on the Driver Board.
+
+         Motive does not document whether end_date is inclusive. Each day first
+         asks for start_date = end_date = D, which is exactly D if inclusive. If
+         nothing at all comes back driven on any day, the end must be exclusive,
+         and the days are asked again as [D, D+1). That order means a wrong guess
+         shows no flags, never a doubled day or a flag on the wrong day.       */
+      case "days": {
+        const dates = (url.searchParams.get("dates") || "").split(",").map((d) => d.trim()).filter(Boolean);
+        if (!dates.length || dates.length > 7 || !dates.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))) {
+          return json({ error: "dates must be 1-7 values like 2026-09-21" }, 400);
+        }
+        const nextDay = (d: string) => {
+          const t = new Date(`${d}T00:00:00Z`);
+          t.setUTCDate(t.getUTCDate() + 1);
+          return t.toISOString().slice(0, 10);
+        };
+        const pull = (exclusive: boolean) =>
+          Promise.all(dates.map((d) => fetchUtilization(apiKey, d, exclusive ? nextDay(d) : d)));
+        const moved = (rs: any[]) =>
+          rs.some((r) => r.ok && r.items.some((v: any) => v.quality === "ok" && ((v.miles || 0) > 0 || (v.drivingTimeSec || 0) > 0)));
+
+        let mode = "inclusive";
+        let results: any[] = await pull(false);
+        const failed = results.find((r) => !r.ok);
+        if (failed) {
+          return json({ error: `Motive vehicle_utilization failed (HTTP ${failed.status})`, detail: String(failed.body || "").slice(0, 500) }, failed.status || 502);
+        }
+        if (!moved(results)) {
+          const again = await pull(true);
+          if (again.every((r: any) => r.ok) && moved(again)) { results = again; mode = "exclusive"; }
+        }
+        return json({
+          mode,
+          days: dates.map((date, i) => ({
+            date,
+            vehicles: results[i].items.map((v: any) => ({
+              vehicleId: v.vehicleId, number: v.number, miles: v.miles,
+              drivingTimeSec: v.drivingTimeSec, quality: v.quality,
+            })),
+          })),
+          source: "v2_vehicle_utilization",
+          fetchedAt: new Date().toISOString(),
+        });
+      }
+
       /* ───────────────── milesReconcile — sanity check ─────────────────
          Motive's rollup timezone is not ours, so twelve 1-month pulls and one
          12-month pull will not agree exactly. This measures the disagreement
@@ -338,7 +388,7 @@ export default async (req: Request) => {
       }
       default:
         return json(
-          { error: "Unknown action. Use: vehicles, vehicle, drivers, odometers, miles, milesReconcile" },
+          { error: "Unknown action. Use: vehicles, vehicle, drivers, odometers, miles, days, milesReconcile" },
           400
         );
     }

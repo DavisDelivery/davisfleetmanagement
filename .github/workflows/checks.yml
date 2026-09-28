@@ -61,6 +61,9 @@ jobs:
       - name: a repair shop's own formatting imports as money, not zero
         run: node complete-fleet.mjs
         working-directory: .uitest
+      - name: a truck Motive saw driving with nobody on the board is flagged, and no day is doubled
+        run: node moved-no-driver.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
@@ -78,6 +81,9 @@ jobs:
         working-directory: .uitest
       - name: the portal inside Settings reads live data and never writes it
         run: node mechanic-test-mode.mjs
+        working-directory: .uitest
+      - name: the shop portal's Shop is a dropdown, and opening it changes no repair
+        run: node portal-shop.mjs
         working-directory: .uitest
       - name: cold start ships no compiler and stays under budget
         run: node coldstart.mjs
@@ -120,6 +126,15 @@ jobs:
         working-directory: .uitest
       - name: Fleet List models are dropdowns and Deleted is a column, and looking changes nothing
         run: node fleet-list.mjs
+        working-directory: .uitest
+      - name: a truck is Out of Service only while it has an open repair ticket
+        run: node truck-status.mjs
+        working-directory: .uitest
+      - name: every truck list says Box or Tractor, with make and model
+        run: node truck-labels.mjs
+        working-directory: .uitest
+      - name: the Driver Board and Dashboard show a truck that drove with no driver
+        run: node moved-banner.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
