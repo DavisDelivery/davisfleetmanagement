@@ -61,6 +61,9 @@ jobs:
       - name: a repair shop's own formatting imports as money, not zero
         run: node complete-fleet.mjs
         working-directory: .uitest
+      - name: a truck Motive saw driving with nobody on the board is flagged, and no day is doubled
+        run: node moved-no-driver.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
@@ -129,6 +132,9 @@ jobs:
         working-directory: .uitest
       - name: every truck list says Box or Tractor, with make and model
         run: node truck-labels.mjs
+        working-directory: .uitest
+      - name: the Driver Board and Dashboard show a truck that drove with no driver
+        run: node moved-banner.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.
