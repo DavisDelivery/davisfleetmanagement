@@ -64,6 +64,9 @@ jobs:
       - name: a truck Motive saw driving with nobody on the board is flagged, and no day is doubled
         run: node moved-no-driver.mjs
         working-directory: .uitest
+      - name: the ledger cleanup tombstones what it removes, so the sync can't re-import it
+        run: node ledger-tombstones.mjs
+        working-directory: .uitest
 
   # Both entry points actually boot. puppeteer's postinstall fetches its own Chrome,
   # which .uitest/browser.mjs falls back to when CHROME_PATH is unset.
@@ -135,6 +138,15 @@ jobs:
         working-directory: .uitest
       - name: the Driver Board and Dashboard show a truck that drove with no driver
         run: node moved-banner.mjs
+        working-directory: .uitest
+      - name: drivers assigned from the Fleet List show on the Driver Board, and the other way round
+        run: node fleet-assign.mjs
+        working-directory: .uitest
+      - name: the Shop board keeps box trucks and tractors in separate tables that line up
+        run: node shop-board.mjs
+        working-directory: .uitest
+      - name: the ledger cleanup button tombstones what it removes, and writes nothing if it can't
+        run: node repair.mjs
         working-directory: .uitest
 
   # The invoice import pipeline, stubbed end to end.

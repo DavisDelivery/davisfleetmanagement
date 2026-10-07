@@ -1,4 +1,4 @@
-const APP_VERSION = "2.32.0";
+const APP_VERSION = "2.33.0";
 const DAVIS_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCACMARgDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAEHBQYIBAMC/8QATRAAAQMDAgMFAwYJCAgHAAAAAQIDBAAFEQYhBxIxExRBUWEigZEVMkJScaEII2JzgrGywdEWJCUncnSSsxcmMzY3Q3XCU1VWk5Si0v/EABkBAQADAQEAAAAAAAAAAAAAAAADBAUCAf/EADARAAICAgEBBQgBBAMAAAAAAAABAgMEERIhEzFBUXEFFCJhgaGx8CPB0eHxFTOR/9oADAMBAAIRAxEAPwDqMCpqE9KmgFMUpQCmKUoBilKUApSlAKUpQClKUAqMVNKAUpSgFKUoBSlKAUpSgGKUpQDFKUoBSlKAUpSgFKUoCKUNKACpqBU0ApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAQaUNKACpqBU0ApSlAKUqM0BNK1u6a50xa5Lke4X63MPtnlW2p4FST5EDofSvg3xF0gtXKNR21J/Le5f1132c+/TOHbBdNo2ulYy36gs9xIFvu1vlE9AzJQs/AGsnXLTXedJp9wpSleHp550yPAirkzX2o8dvdbrqglKd8bk+tYr+WGnP8Az61//JT/ABrFcXxnhzev7Df+YmuZosV6XKajRWlOyHVBDbaRupR6AVpYWDHIrc5S1ozczNljzUIrezrBGrdPLUEpvtsJPh3lH8ay0aSxKa7SM80839dtYUPiK5Vd0RqhpBWuwXDlG5w1zfcKx1ruVysM4u2+RIgymzhQTlBz5KSev2EVY/4uE1/FZt/vkQL2nOD/AJIaR2BStF4X64Tq2C4xMShq6xgC6lOyXEnYLSPDfYjwP21vNZNtcqpOE11Rq1WRtipxfRniud2t9qQ2q5zo0RLhKUF9wICiOoGa80LUtknSm40K7wJEhzIQ22+lSlbZ2ANUPxtvvytrBUNpeY1uT2A8i4d1n44H6NaTapz1rucSfGOH4zqXUepBzj39PfWpT7K51Kbem0ZdvtTha4JbSOv5kpiFGcky3m2I7Y5luOK5UpHmT4ViBq7TpIAvtsydsd5T/GvU0uHqPTyVDC4NwjdPyFp/WM/dXJt5trtqusy3Sh+NjOqZV64PX3jB99V8LDhkOUZPTRYzMuWOoyitpnYopmtU4X3v5d0XAkOL5pLKe7P+fOjbPvGD76zOpLq3ZLFOuT2OSM0pzB8T9Ee84FU5VyjN1+O9FyNsZQ7Tw1s+EnVNhjSHGJN5tzTzailba5CQpJHUEZ2Nelu9W122ruLdwiqgIzzSA6C2nBwcq6VyIovzpqlKy7Kku58ytaj+8muiNWWduw8Gp1sawe7w0pUR9JfMkqPvJNX8jAhS4R5dZMoY+dO5Tlx6RRtLGqrBIebZYvVucdcUEoQiQklROwAGetZnxrknR3+91k/vzP7YrobirqV3TOlXZEMhM2Q4I7CjvyE5JV7gD78VxlYPZWRrg9uR1jZ3a1ysmtJGZveprLY1BN2ucWKs79mtft4/sjf7qxcbiHpOS4EN3yKFH/xApA+KgBXNVst9x1Bd0xoaHJdwkqKiVKypR6lSlH9ZrYbnw21Xbo6nnLYX2wMq7s4l0j9Eb/AVbfs2iGo2WdfoVl7Rvn8VcOn1Om48hmSyl6O6260rdK21BST9hFfWue+BEK7PakediyX41sij+dNj5rijslBSds+OeoA9a6ErMyqFRZwT2aWLe76+bWhSlKrlgg0oaUAFTUJqaAUJxSvHPgMz0huWFOMeLJVhC/7QHzh6Hb0oeM1+46tW+6uJpSA5epqTyqdQrkiMn8t47Ej6qcn7KrvXFp1CzqDSMrUV9MtyXdm0dyipLcZlKfb2GcqO3U1djLSGWkNtIShtAwlCQAEjyAHSq+4rJ5rxoo/Vua1fBhZ/dVqiaUtRXn+CtfBuG5Py/JzLAvlxiXJ56E6VrfcUtxlbYdbdySSFNkEKznyrpXhdN79ZGHhCciRieyft0xBAjL+uwpzctH6pJ5fDpg85aNQufNTDMqSw2vshlhwoI5nm0E5HXZZ61dE7htpy18RdPwJLMmdbrlGkoKZUlayX2wFA5BB+bnbpWhmcH8L6P+xQxOa+JdV/ctSXpnT9xBEqzWuQT4qjNk/EDNYZ1t3RDrbzbz72mHFht5p5RWq3knCVoUdyznAUkk8ucjbIr4nhPoz6FmU2fNuS8k/cqvnK4VWJyI9GjSb3EbdQW1JbuTpSQRggpUSCPQ1mqUO5yevT/JouM+9RW/X/AAb6Kmte0BLXL0hay/nvDDXdXsnJ7RoltWfekn31sNQSXFtE0XySZpvGBSUcOL0pZCUhCMk/nE1z9oRSTrjT+FDec1jfr7VXzxwP9Vl//Nt/5qK5k4an+sXTX/UGf2q2fZ8tY816/gyM6HLIg/T8nagFVL+EHY2FabF/YaQJsRxCHV4wXGlHlwfMgkEH7atodKqb8I6/xoGixaO0SZtxdRhvO4bQrmUo+mQB7/Ss7DcldHj5mhlKLplyKn4R38ROIVm5eZBkPd2WOoUFjGPjg+6umtXXpGn9Nz7mvBUw0S2k/SWdkj4kVydwfgOXLiXYG2wSGpAkrPklsFRP3Ae+re47/LWpblbdLabhSZamsS5amhhCFHIbClnAG3Mrc+IrQzYxsyIqXl19CjiN148uPn09SpIkeTeLszGbJclzHgjmPUrUdz8Tmtq4r6Yb0xqFpqIOWDIYQton6yQEr+8Z/Sr76atNr4Y3tm7ayvrEi5sNq7G1QcvuIWoY5lHYAgE9cDfrWYGtNUcSJuNL2WBbYEQnN1noS6Y48SFKHKFYHRIJ9R1qzPLl2inBfAl6IqwxI9m4zfxt+ptPBa9KiaNeZvfNCiRHfxEmUOybWhe+EqVgHBz08xWvcc7ZZ2Et6mXLlIcmpSy2w1H2ecSDhRUrHKOXHhvjbNYO16w0/addWltyQ9qWSZCWZV8uKypLXNsO7oJwhIJGVeWcedW9xb06dS6DucNtHPLZT3mP59ojfHvHMPfVCU3VkKzu5F6Natx3W+vEqz8HXVKBfplkdygTG+2aBO3aI6gfan9mtp/CBvfY2uBZmle3JX3h4D6iNkj3q3/RrnPTd3eseoLddY2e0iPodA+sAd0+8ZHvrYeJerl6j1pcLhEdV3LIajAj/lpGAcHpk5Pvq88feUrX3d/1Kau1jOpd/wDQ3fgpY/lbWbcl1HNHtye8KJ6c/RA+OT+jVycVh/V5ffzH/cmsNwHsrls0JHmSxiXc1d6VtghHRsf4d/0qyfGNxTXDPUK0bKTH2/xpqhkX9rlp+CaX3LuPR2WK14tNnPejj/rfZP78z+2KvDjtaX7jo9EiKhTioL/buJSMnkIKVH3ZB+zNc46JlvP6508HFkj5RY2Gw/2grtCW8zGjvPyXENsNpUtxazhKUgZJPpirPtC5wvhOPgV8CjnTOEn3nI+mb7L07eGblbi327YKeVwZStJ6g+hq37Nxqgu8qLzbH46vFyOsOJ+3Bwf11lLxwx0xqZhNxs764XeE9oh6CpKmXM+PIcj4Yqr9d8Lr9pm1SbnFlxLlBjpK3SlstuoT4q5ckEDxwfdUkrsTLa7RakRxpy8VPs3tHQWm7xZ71GdlWORHeQtXM72Y5VcxHVY2OcDx8qzFcXaC1VPsGr7dOZeUGy8hp9sbJcaUoBSSPfkeRArtHzHlWXmY3YT0ntM08TId0eq00KUpVQtg0oaUBCelTUDpU0ApSvPLlpipBU28vPQNNlZ+6gb0eiq+4pjNz0mfqzJCvhEdP7qyFw13GilSUW+QtQ2/GSorA/8Au6D91aVfdTq1Ld7Sh0WeCiKt9SQb0w866txhxpCAhGdypY8as01yT5P5/grXWRceK+X5OerHIXGblOMrU26mMFIWk4KVBxsgj1yKyd01nqK6rhKuN4lyFQ1lxhZVyrbURgkKSAenrX1j6H1a22pI05dPab7M5YI8v4V+mbTD08UPauW9DkuKKWIQiCQ5gHBcWgrSAnOwGSSQcDatyU697em//TGjGzuW0Zmw6/DBAuyblJ81ruEhX7LiSPvq1NJ6m0vfGJjqpN4tbcNtLj0r5Yf7FHMrlSCVKBCiegKffWg6dixNTzJlkk6Ut1wdZYEhmfZFphOraOMOJSohK+o2OMdCKxLNscs1o19aHkyEKajxHkiQ12bmBITjKckA4X4EjyJFVJ112dF0fTx82WYTnX1fVdfDyLig32x2RDo07rm1vJddU+uNdXg4la1HKiHU4WnJ8+YelbvpTUTd+Yf/ABSWpDBTzpbeS82tKhlK23E7KQQDvgHIIIGK4pVnPjV+8Gb1JtaLWx8muvW2XCjNvzEKAEZwvvpb5h4hRUBtuOvSosrDUIck9slxstylxa0jfeOO3Cu//m2/81FckW2fJtdyjT4K+zlRnEutL5QrlUDkHB2Ndx3u1Qr5a37ddY4kQnwA40VEBWCCNwQeoFal/oj0N/6fZ/8Aed//AFUWJlwpg4TW9kuViztmpRZz69xe1y62UfLRQDtluM0k/HlrUXXrpqG7ZcVLudzkKA35nXVnwHn+4V1kjhPodCsjT0c4+s64R96q2Wy2C0WNsos9thwkkYPYNBJV9p6mpvf6oL+OHX6Ii9ytn/2T6FWcNtNQOFenpOodYSGo9xkpDfJnmLSOoaSB85ZIBOPIDoCa0DX/ABmvF+L0Sxc9otisglCvx7o81KHzfsT8TXQWpdEae1NLbk32399dbTyNlbzgCB6JCgB67b1i2OFOiGHm3W9Px+dtQWnmccUMg53BVgj0NQV5FXJ2WpuX2Jp0WcezraUfuU7wn4RPahS1edTh1i1rPaNR8lLkr8onqlB8+p9BvXQ8ix293T71lTGaZtrrCo3YtpCUpQoYOB76yYwAMYxTNV7sid0uTJ6aIVR0jhC92x+z3ebbJgIfiPKYWfMpOM+8b++uv+E2o/5T6Fts5xXNLbT3eR+cRsT7xhXvr933h1pS+3R643azNSJj2O0dLi0lWAANgoDoBWS0xpezaWYfZsMIQ2n1hbiEuLUCoDAPtE42qxk5UL60tdV+sgx8adM299Gcn8W9PfyZ17c4baOWK6vvUfbbs15OB9h5h7qxeiLE5qbVdstCAeWS6A6R9FsbrP8AhBrr7U2i9PaokMP322NzHmUFttalrSQknOPZIzvXx03oTTGnJ5n2O1NRpRQWu1S4tfsnGRuojwFTx9opVcdPloheA3ZvfTZsrDSGGW2mUBDSEhKEgbJSBgD4VpnGj/hdqL+7f96a3XNeO8WyHerZIt9zYEiHITyOtEkcwznGRv4VmVy4zUn4GjOPKLiji7Qe2utPf9RY/wAwV0H+EUdRr0w3HssRx21LUVXBxnKnAkfNSUjfk8SR5AHA67NB4XaMgTo8yJY2m5MdxLraw84eVSTkHBV5it0z8au35kZ2Rsiu7zKdOLKFcoSff5HE+ktcX/Sij8iXFbTCjlTCwHGlHz5TsD6jBrYdUcX9Taisr1rkmFHjPp5HjGZKVOJ8U5KjgHxxXROoOHGkr86p642WN26t1OsZZWfUlBGffWEicFtEMuBw26Q+OoS7LcUk/AjNTe+Y8nzlDqRe6XxXGMuhQHCfSkrVer4aG2lGBFdQ/Lex7KEpOeXP1lEYA+0+Fdk9a8VotcGzwkQ7XDYhxUfNaZQEpz57dT617apZWQ75b1pIuY1CpjrxYpSlViwDShpQEJqahNTQCqh4vaMvN01LF1Jb3GTCtkJSltlxQc50dooFKQME5Kcb+FW9XjuVth3Jrs50dDyOmFZ/dUldjrlyRHZWrI6Zybqmw6Wi2zWb1rcZW5Cnw2oBS7zZbWjKwN/aBPNvvjlrW9FxZ7NxZujFvnOxmw82mSxGW4lt0tKCTlIO6VKSfTrXUEzg5oSUD/QLbCj4x3nG8fBWK/MThbGtcMRdP6l1NaY4UVJZjzEqbBO5PKpJq+s2Ki49fqUXiS5b/ByqxbHVIHfJrcFwD5kxL6CPfyEffVvcCrJZdVXO9fKkePNaiWyJCaS4kKCApB7RQz0VzZ36jerBl6B1ilJ+TuJV0HkmXEbcHxH8K0+Vwx4lRrrNulv1XbXZsuP3V5wILCnG/AEBBGR4HqPOk8hWxa5a/fQRx3XLet/vqUpY7t8izOeOZQkR3FttSY8xTKwjJGBgEY6/Gtta1oVXBybOcuk512OYjiZjjMlDjPNzcigpsZHNuPWvRb+D+u7Jc25LdhtFzCAU9nIebdZORjJSop91bbF0jrUY7fhtoRQ/KSlP6nDViV9Xjp/UgjRb4bX0NMVqqwnc6ehZ/uEcV97RqZdy1PaIkLvbLbsyKhMVDrbbGEODlHZIQM43PXrvWQ1Jwe1ffbkJcew2GzAoCVMRZmGiR9IJwcHHXHlmt64Q6AvmhkyXJdltsydIUMyflDBbSM4ShPZHHUknO+3lXE76VDaW36nUaLXLTfT0Nq48q5eFt5VzFOFMbg427ZHjWu6ZFotfFO2W/Qs8yLZIgvOXSOzLVIYaIx2a8kkJUTt1q1HojVzt6o13gx3GnMc8dzDyDg5GcjB39KWu0260tKbtcCJCbUcqTHZS2CfXAGazY2qMOHqaEqnKfL0KCtka3TOIWoV3OJZnwi/rSHpt5XFebSFJPsNA4Xg7jPU7Vv8APusK18c3XLnPjw2Dp9ICpDyW0lXbk/SIGcA1uL+lNPSJa5T9itbspa+0U8uIhSyrOeYkjOc+NebV8XTDMVd11PAtzyGkhvtZMVLyzk7ISMEk5JwB61JK6M31Xho5jS4rp57Nevjwc4z6OU06FNLts1aSlWUqGE4PrWiamTPtmorxw8hB4R9STmZcR0E/iY7hJkgHwAKD7s1eLEO3uuRJjcWOXGWuSO72QCm21Aeyk4ykEY2r8zUWxufFmTUwkTEhbTD73KHACkqUlCjv0BJA8ATXELlHXTw/rtHUqnLxKf4xxYidZ6UgrjQHobcCQlLE2eqGzhJSE5cG4IxsPGvrr9mMzwbsUeBGjFg3GMju0GaX21Euq5m0vE5OSSMk7Z9KspljTesoTFwXBhXSOCttp2TFCsYVg8vOM4yPsOxrIoslpRAZgotsJMJlYcbjhhIbQsHIUE4wDnfPnXSv0oryPHTtyfmVZwgiszLzrSKmE5bLUns4blkkSlPraXynnWck4CgcAg4OPSvzw3sk17W0y33eeZcDRqjGt6CTzKLuVJWvzKW8JFW03b4TdwenNxY6JryQhyQlsBxaR0BV1IHrX7YhxY8iQ/HjstPyFBTziEAKdIGAVEbkgbb15K/fLXiI0618jXuKCUL0Bem3Lqi0JWxyd8WVBLeVAblO+D83bzrR+CsiBHu15tEe3Qo81qK087JttwVKivpOQCASeRZzkjqfdVpQ5sC8MS0MKblMNPORXgUZTzoOFp3GFYOx6jII8K+VkgWaAJLNki2+MkOcr6IaEJw5jOFhP0sEbHfeuI2ag4M6lXuamiieB8WAudZpUiHZjK7R4plKvK+9lWVhI7tnHp9m9Y/iIWW9Ta/ku2iTIdblR2mLmiYplFuWtpISpQBzjO+cY29a6Bi6W09EltyoljtbEltXMh1uKhK0nzBAyDUXJFgiKkN3JNsZNyB7ZL4QnvIQgklYPzglIJJPQCp/eVzc9fu9kXu74KO/3RovELvOnIOk9YKeVLds/Zx7i40ciRHdSErV5H2sEH8qsN3WSngVq6/z+ZNwvzT1xcyTlCFHDSR5AJx8aspy6aXXp4NuP21VnP8ANQypILZwM9nyY8E74x036V9n7npyQ41YX5dreVJZSEQFLQrtGiMpwjxSQNvDAqNW6SWu5/bvJHV1b3/srzX7zKo+gLffJbsTS0xGJ7qXC2lawyktIWsdEk58f1Vk4UXS8DRGtGNGXDvEduK8Xmm5Snm46+xVsgknGepwTv8AZViSYESVCMOVFYeiFISWHGwpGB0HKdq+cO0W6Hb1QIkCKxBUClUdplKW1AjBBSBg58a87VcUv9d47J7bKb4FRLemVb5PdLK3NVb8h+PeVvyXCQnm52CcIyNzjodqvKsPbtM2K1yhJttmtsSQAUh1iMhCwD1GQM1mK5us7SXJHdUOEeIpSlREgpQ9KUBAqagdKmgFKUoBSlKAUpSgFKUoBSlKAg0qaUBFVTxDlXS56ybh2FL779nhqlJabKCO8uFKAooWMK5GVuKwSAStI2q168TFrhR7lKnsRWUTZQSl95KfbcCRhIJ9BXsXo8ktlUJg8RJTb0Zp+6W5AkLDbzz7LyiFupQg53yhttC3VdCpbgSMAV47hB1xd4T0G6W66ORXFKSXFqjqcS27JIc5dx7SWEhKemQ64TsADd+K/DzLbzS2nUhTa0lKknoQRgiuufyOeBVHC26Xy4XuTGMd1m2W0PIdbDyFNJecXzIaCk55whtKNx1LqlHwFedSeJYjMzY4lqkOtlT0N4spCJCWnDsQfZY5y2kJGSrs8nHMTVq2e0wrNBTDtkdEeOklXKnJyT1JJySfUmvbgU5de4ceneU/MgcQyXVMyrkljEcpSh1ovKKy2hec+yOzQ2tZxsVPHBIBr5SF8SXkPvdznpdkJfLkdp5pCGnEcxZQ2oqyEKykFYAJ5AOqiRcuBTApz+Q4fMrWTC1BatNaYt1htssrjOtPSWw8hPa4WFLS85zeyVZWs4CgVbZIznBwo/ERKIsxEWU08X0KeihTDYkOBtbjjjpH0FLLbA35ghvJ3xVzYFMCvFL5DiVNGa1y/OtTf9LtRHUNyJLr62Uq7wCntEEJJ7NrAVge1nmOBsKyOtNMu3++XWXKgyQzHhtRIKozba3H3FOJccV7RA5ByNowogYLngasjFMU5eJ7xKSuuj9UvOIU+HH7s7LTce8x1BLKnHSGnmXF5BS0mOhCPZGVE5B2xW46Xt9wY1i/JhRLhbrG5HUZLE5SCFyPYS2GUpzypQ2gpyDykcoGcE1vmKnFHNsKGgKUpXJ0KUpQClKUBB6UqT0pQEDpU1AqaAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgIPSlD0pXgAqa/NTnavQTSozQGgJpUZpnagJpUZpmgJpUZ3oTQE0r85qc0BNKjNM0BNKjNM0BNKjNCaAmlRmmaAmlfnNTmgJpX5zU5oCaVGaZoCaVGaZoCaVANM0BNKjNM0BNKjNR40BJNKilAf//Z";
 
 const ST = [
@@ -198,6 +198,54 @@ function movedWithoutDriver({days,byMotiveId,trucks,drivers,asgn,repairs,minMile
     }
   }
   return out;
+}
+
+/* ── Assign drivers from the Fleet List (v2.33.0) ─────────────────────────────
+   The Driver Board stores a week as driver+day → truck. The Fleet List shows the
+   same week the other way round, truck+day → driver, and now edits it as well. Both
+   write the one fl-asgn-<week> document, so a change made in either shows in the
+   other with nothing to keep in sync.
+   Picking a driver for a truck's day takes the truck from whoever had it that day
+   (the move the board offers on a double-booking), and the driver's own cell becomes
+   this truck. A driver has one truck a day, so the truck they were on that day is
+   left without one, and `fromTruck` names it so the caller can say so. An empty
+   driverName clears the truck's day. Returns null when nothing would change. Pure. */
+function assignTruckOnDay(asgn,driverNames,truckId,day,driverName){
+  const a=asgn||{};
+  const holders=(driverNames||[]).filter(n=>a[`${n}-${day}`]===truckId);
+  if(!driverName){
+    if(!holders.length)return null;
+    const next={...a};holders.forEach(n=>{next[`${n}-${day}`]="";});
+    return{next,removed:holders,fromTruck:"",wasOff:""};
+  }
+  if(holders.length===1&&holders[0]===driverName)return null;
+  const prev=a[`${driverName}-${day}`]||"";
+  const next={...a};
+  const removed=holders.filter(n=>n!==driverName);
+  removed.forEach(n=>{next[`${n}-${day}`]="";});
+  next[`${driverName}-${day}`]=truckId;
+  const wasOff=OFF_OPTS.includes(prev)?prev:"";
+  return{next,removed,fromTruck:prev&&prev!==truckId&&!wasOff?prev:"",wasOff};
+}
+/* The Fleet List's driver choices for one truck on one day, grouped the way they get
+   read: drivers who drive this kind of truck and are free that day (or already on
+   it), then those on another truck, then those marked off, then everyone else. Every
+   driver is somewhere, so the current one can always be shown as selected. */
+function fleetDriverOptions(drivers,asgn,truck,day){
+  const a=asgn||{};
+  const groups={free:[],busy:[],off:[],other:[]};
+  for(const d of drivers||[]){
+    const v=a[`${d.name}-${day}`]||"";
+    const kind=dTT(String(d.role||""));
+    const fits=kind==="all"||kind===truck.type;
+    const note=v===truck.id||!v?"":OFF_OPTS.includes(v)?v:`on ${v}`;
+    const opt={value:d.name,label:note?`${d.name} · ${note}`:d.name};
+    if(!fits)groups.other.push(opt);
+    else if(!note)groups.free.push(opt);
+    else if(OFF_OPTS.includes(v))groups.off.push(opt);
+    else groups.busy.push(opt);
+  }
+  return groups;
 }
 
 /* Drop the trailing run of months where nothing reported. We only fetched those
@@ -629,6 +677,42 @@ function repairCostLedger(entries){
   return{entries:second.kept,duplicatesRemoved:dropped.length,duplicateValue:sum(first.dropped),
     splitDocs,splitRows:second.kept.length-(first.kept.length-splitDocs),
     before:sum(entries||[]),after:sum(second.kept)};
+}
+/* v2.33.0: the Gmail refs the server's reconcile pass reads off one ledger row — a
+   mirror of addRefs() in reconcileFromLedger (netlify/functions/auto-sync.mts).
+   Change one, change both. Most stored refs are the old volatile
+   gmail:<message>:<attachmentId> form, which nothing will produce again; what the
+   crawler actually checks is gmail:<message>:<file name>, rebuilt here from the
+   stored file key exactly the way the server rebuilds it. */
+function entryGmailRefs(e){
+  const ref=e&&e.gmailRef?String(e.gmailRef):"";
+  if(!ref)return[];
+  const out=[ref];
+  const messageId=ref.split(":")[1];
+  if(!messageId)return out;
+  let key=e.fileKey?String(e.fileKey):"";
+  if(!key&&e.fileUrl){
+    const m=/[?&]key=([^&]+)/.exec(String(e.fileUrl));
+    if(m){try{key=decodeURIComponent(m[1]);}catch(_){key=m[1];}}
+  }
+  const name=key.replace(/^\d+-/,"");
+  if(name)out.push(`gmail:${messageId}:${name}`);
+  return out;
+}
+/* Refs the ledger holds before a rewrite and no longer holds after it.
+   This is why the cleanup has to leave tombstones. Every night the server rebuilds
+   its "already imported" list from what the ledger holds, and treats a ref that
+   dropped out as an invoice lost to a bad write, so it fetches and imports that
+   email again. Removing the extra copies of a re-sent FuelFox log leaves exactly
+   that trace: on 2026-10-07 the cleanup dropped every row of 55 emails. Without a
+   tombstone for each of their refs, the next sync would re-parse them, and any copy
+   that came back a cent different would slip past the content check and return. */
+function vanishedGmailRefs(before,after){
+  const keep=new Set();
+  (after||[]).forEach(e=>entryGmailRefs(e).forEach(r=>keep.add(r)));
+  const gone=new Set();
+  (before||[]).forEach(e=>entryGmailRefs(e).forEach(r=>{if(!keep.has(r))gone.add(r);}));
+  return[...gone];
 }
 
 const RG=[
@@ -1276,7 +1360,7 @@ function App(){
     toast("This week hasn't finished loading — reload before editing, so you don't write over it.");
     return true;
   },[toast]);
-  const saveAsgn=useCallback(a=>{if(weekWriteBlocked())return;setAsgn(a);sv(`fl-asgn-${wk}`,a);},[wk,sv,weekWriteBlocked]);
+  const saveAsgn=useCallback(a=>{if(weekWriteBlocked())return false;setAsgn(a);sv(`fl-asgn-${wk}`,a);return true;},[wk,sv,weekWriteBlocked]);
   const saveTStat=useCallback(s=>{if(weekWriteBlocked())return;setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv,weekWriteBlocked]);
   const saveRepairs=useCallback(r=>{setRepairs(r);sv("fl-repairs",r);},[sv]);
   // v2.16.7: write costs to per-month shards (fl-costs-<YYYY-MM>) instead of one
@@ -2582,14 +2666,28 @@ Format your response as clear sections with headers using ** for bold. Use speci
   // the tombstone, the next epoch would re-import the very thing a human just removed.
   // (The Purge-vendor buttons intentionally do NOT tombstone: they exist to re-scan
   // cleanly, and the epoch rebuild is what lets the server re-import after a purge.)
-  const tombstoneGmailRef=useCallback(async(entryOrItem)=>{
-    if(!entryOrItem?.gmailRef)return;
+  // v2.33.0: many refs in one write, and in every form the server checks (see
+  // entryGmailRefs). This is a whole-document replace, so a read that FAILED must
+  // not be treated as an empty list: that would overwrite every earlier "no" with
+  // just these. Only a document that does not exist yet starts from nothing.
+  // Returns false when nothing was written.
+  const tombstoneGmailRefs=useCallback(async(refs)=>{
+    const add=[...new Set((refs||[]).filter(Boolean).map(String))];
+    if(!add.length)return true;
     try{
-      const r=await window.storage.get("fl-rejected-refs").catch(()=>null);
-      const prev=pj(r,[]);
-      await window.storage.set("fl-rejected-refs",JSON.stringify([...(Array.isArray(prev)?prev:[]),entryOrItem.gmailRef].slice(-2000)));
-    }catch(e){/* non-critical — worst case the item comes back after a future sweep */}
+      const r=await readDoc("fl-rejected-refs");
+      if(!r.ok&&!r.notFound)return false;
+      const prev=r.ok?pj(r.rec,[]):[];
+      const list=Array.isArray(prev)?prev:[];
+      const have=new Set(list);
+      const merged=[...list,...add.filter(x=>!have.has(x))].slice(-2000);
+      return !!(await window.storage.set("fl-rejected-refs",JSON.stringify(merged)));
+    }catch(e){return false;}
   },[]);
+  const tombstoneGmailRef=useCallback(async(entryOrItem)=>{
+    // Non-critical here: worst case the item comes back after a future sweep.
+    if(entryOrItem?.gmailRef)await tombstoneGmailRefs(entryGmailRefs(entryOrItem));
+  },[tombstoneGmailRefs]);
   const rejectReviewItem=async(itemId)=>{
     const item=reviewQueue.find(q=>q.id===itemId);
     if(!await uiConfirm("Reject this item? It will be removed from the review queue."))return;
@@ -4452,6 +4550,45 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     }
     return null;
   };
+  // v2.33.0: a driver picked on the Fleet List — the same week document the Driver
+  // Board edits (see assignTruckOnDay), with the board's warning for a truck in the shop.
+  const assignFromFleet=async(truckId,day,driverName,dayOOS)=>{
+    const res=assignTruckOnDay(asgn,drivers.map(d=>d.name),truckId,day,driverName);
+    if(!res)return;
+    if(driverName&&dayOOS){
+      const openR=repairs.find(r=>r.truckId===truckId&&r.status==="open");
+      if(!await uiConfirm(`Truck ${truckId} is OUT OF SERVICE (open repair${openR&&openR.reason?`: ${openR.reason}`:""}).\n\nAssign it to ${driverName} anyway?`))return;
+    }
+    if(!saveAsgn(res.next))return;
+    // Say what else moved: the truck the driver came off, or the day off they had.
+    if(res.fromTruck)toast(`${driverName} moved from ${res.fromTruck} to ${truckId} on ${day}. ${res.fromTruck} has no driver ${day}.`);
+    else if(res.wasOff)toast(`${driverName} was marked ${res.wasOff} on ${day}. Now on ${truckId}.`);
+  };
+  // One truck's day on the Fleet List: who has it, and a picker over the whole cell.
+  // The picker is a real <select> laid over the cell, so it is one tap on a phone and
+  // works from the keyboard.
+  const fleetDriverCell=(t,day,i,{di,weekMon,compact})=>{
+    const holders=drivers.filter(d=>asgn[`${d.name}-${day}`]===t.id);
+    const cur=holders[0]||null;
+    const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
+    const dayOOS=repairOOSOn(t.id,colDate);
+    const g=fleetDriverOptions(drivers,asgn,t,day);
+    const label=cur?`${cur.name.split(" ")[0]}${holders.length>1?` +${holders.length-1}`:""}`:"";
+    return <td key={day} className="fl-drv" data-day={day}
+      title={cur?`${holders.map(h=>h.name).join(", ")} on ${day}${dayOOS?" (truck is out of service)":""}. Click to change.`:`${dayOOS?"Out of service. ":""}Click to assign a driver to #${t.id} on ${day}.`}
+      style={{...s.ltd,position:"relative",cursor:"pointer",textAlign:"center",background:i===di?"#f0f9ff":dayOOS?"#fef2f2":"transparent",fontSize:compact?10:11,whiteSpace:"nowrap",padding:compact?"4px 2px":"4px 6px",overflow:"hidden",textOverflow:"ellipsis"}}>
+      {dayOOS&&<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>}
+      {cur
+        ?<span style={dayOOS?{display:"block",fontSize:9,fontWeight:600,color:C.red,overflow:"hidden",textOverflow:"ellipsis"}:{fontWeight:600,color:C.dark}}>{label}</span>
+        :!dayOOS&&<span style={{color:"#cbd5e1"}}>—</span>}
+      <select aria-label={`Driver for #${t.id} on ${day}`} value={cur?cur.name:""} onChange={e=>assignFromFleet(t.id,day,e.target.value,dayOOS)}
+        style={{position:"absolute",inset:0,width:"100%",height:"100%",margin:0,padding:0,border:0,opacity:0,cursor:"pointer",fontSize:16}}>
+        <option value="">— No driver —</option>
+        {[["free",`Free ${day}`],["busy",`On another truck ${day}`],["off",`Off ${day}`],["other","Other drivers"]].map(([k,lbl])=>g[k].length
+          ?<optgroup key={k} label={lbl}>{g[k].map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</optgroup>:null)}
+      </select>
+    </td>;
+  };
   // Repair functions
   const addRepair=async(truckId)=>{
     // v2.16.14: record WHO opened the ticket (same per-device name that signs notes)
@@ -4781,7 +4918,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 
   return(
     <div style={s.wrap}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box} button{-webkit-tap-highlight-color:transparent;-webkit-appearance:none;-moz-appearance:none;appearance:none;user-select:none;text-decoration:none} button:focus{outline:none;text-decoration:none} button:active{text-decoration:none} button:focus-visible{outline:2px solid ${C.brand};outline-offset:-2px}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box} button{-webkit-tap-highlight-color:transparent;-webkit-appearance:none;-moz-appearance:none;appearance:none;user-select:none;text-decoration:none} button:focus{outline:none;text-decoration:none} button:active{text-decoration:none} button:focus-visible{outline:2px solid ${C.brand};outline-offset:-2px} .fl-drv:hover{background:#eef6ff!important} .fl-drv:focus-within{outline:2px solid ${C.brand};outline-offset:-2px}`}</style>
       {/* Header */}
       <div style={s.header}><div style={s.hInner}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -5687,13 +5824,6 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             // the tables wrap and stack via flexWrap.
             const di=Math.min(todayDI(),4);
             const weekMon=gM(weekDate); // Monday of the displayed week, for per-day OOS dates
-            const truckDayDriver={};
-            DAYS.forEach(day=>{
-              drivers.forEach(d=>{
-                const v=asgn[`${d.name}-${day}`]||"";
-                if(v&&!OFF_OPTS.includes(v)&&v!=="")truckDayDriver[`${v}-${day}`]=d.name.split(" ")[0];
-              });
-            });
             const renderRow=(t)=>{
               const st2=gTS(t.id,dk);
               const openR=repairs.filter(r=>r.truckId===t.id&&r.status==="open").length;
@@ -5737,19 +5867,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 </td>
                 <td style={s.ltd}>{t.ax}</td>
                 <td style={s.ltd}><span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,background:SC[st2]+"18",color:SC[st2]}}>{SL[st2]}</span></td>
-                {DAYS.map((d,i)=>{
-                  const driver=truckDayDriver[`${t.id}-${d}`]||"";
-                  const isToday=i===di;
-                  const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
-                  const dayOOS=repairOOSOn(t.id,colDate);
-                  return <td key={d} title={dayOOS?"":driver} style={{...s.ltd,textAlign:"center",background:isToday?"#f0f9ff":dayOOS?"#fef2f2":"transparent",fontSize:11,whiteSpace:"nowrap",padding:"4px 6px",overflow:"hidden",textOverflow:"ellipsis"}}>
-                    {dayOOS
-                      ?<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>
-                      :driver
-                        ?<span style={{fontWeight:600,color:C.dark}}>{driver}</span>
-                        :<span style={{color:"#cbd5e1"}}>—</span>}
-                  </td>;
-                })}
+                {/* v2.33.0: each day is a driver picker — see fleetDriverCell. */}
+                {DAYS.map((d,i)=>fleetDriverCell(t,d,i,{di,weekMon}))}
                 <td style={s.ltd}>{openR>0?<span style={{color:C.red,fontWeight:700}}>{openR}</span>:"—"}</td>
                 <td style={s.ltd}><button style={s.xBtn} title={`Remove / retire truck ${t.id}`} onClick={()=>removeTruck(t.id)}>×</button></td>
               </tr>;
@@ -5780,24 +5899,17 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             );
             const boxTrucks=filteredTrucks.filter(t=>t.type==="straight");
             const tractors=filteredTrucks.filter(t=>t.type==="tractor");
-            return <div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"flex-start"}}>
-              {renderTable(boxTrucks,"📦 Box Trucks",C.brand)}
-              {renderTable(tractors,"🚛 Tractors",C.accent)}
+            return <div>
+              <div style={{fontSize:11,color:"#6b7785",marginBottom:10}}>Click a day to assign a driver. It updates the Driver Board, and the Driver Board updates here.</div>
+              <div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"flex-start"}}>
+                {renderTable(boxTrucks,"📦 Box Trucks",C.brand)}
+                {renderTable(tractors,"🚛 Tractors",C.accent)}
+              </div>
             </div>;
           })()}
 
           {/* v2.10.28: TRUCK WEEKLY BOARD — rows=trucks, cols=Mon-Fri, cells=assigned driver */}
           {fleetView==="board"&&(()=>{
-            // Build a lookup: truckId+day → driver name from asgn
-            const truckDayDriver={};
-            DAYS.forEach(day=>{
-              drivers.forEach(d=>{
-                const v=asgn[`${d.name}-${day}`]||"";
-                if(v&&!OFF_OPTS.includes(v)&&v!==""){
-                  truckDayDriver[`${v}-${day}`]=d.name.split(" ")[0]; // first name only for space
-                }
-              });
-            });
             const di=Math.min(todayDI(),4);
             const weekMon=gM(weekDate); // Monday of the displayed week, for per-day OOS dates
             const renderTruckRows=(truckList,label,borderColor)=>(
@@ -5818,19 +5930,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                             #{t.id}
                             <div style={{fontSize:9,color:"#94a3b8",fontWeight:400,fontFamily:"sans-serif"}}>{t.mk}{t.md?` ${t.md}`:""}</div>
                           </td>
-                          {DAYS.map((d,i)=>{
-                            const driver=truckDayDriver[`${t.id}-${d}`]||"";
-                            const isToday=i===di;
-                            const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
-                            const dayOOS=repairOOSOn(t.id,colDate);
-                            return <td key={d} style={{...s.ltd,textAlign:"center",background:isToday?"#f0f9ff":dayOOS?"#fef2f2":"transparent",padding:"4px 2px"}}>
-                              {dayOOS
-                                ?<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>
-                                :driver
-                                  ?<span style={{fontSize:10,fontWeight:600,color:C.dark}}>{driver}</span>
-                                  :<span style={{fontSize:9,color:"#cbd5e1"}}>—</span>}
-                            </td>;
-                          })}
+                          {DAYS.map((d,i)=>fleetDriverCell(t,d,i,{di,weekMon,compact:true}))}
                         </tr>;
                       })}
                     </tbody>
@@ -5842,7 +5942,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             const tractors=filteredTrucks.filter(t=>t.type==="tractor");
             return <div>
               <div style={{fontSize:11,color:"#6b7785",marginBottom:12}}>
-                <span style={{fontWeight:700,color:C.brand}}>Today: {DAYS[di]}</span> (highlighted) · Click truck # for history
+                <span style={{fontWeight:700,color:C.brand}}>Today: {DAYS[di]}</span> (highlighted) · Click truck # for history · Click a day to assign a driver
               </div>
               <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
                 {renderTruckRows(boxTrucks,"📦 Box Trucks",C.brand)}
@@ -6490,6 +6590,12 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 +(evidence?`Where the oversized fuel rows sit:\n${evidence}\n\n`:"")
                 +`Export the CSV first if you want a copy of the current ledger.`;
               if(!await uiConfirm(msg))return;
+              // v2.33.0: tombstone every email this pass removes outright, BEFORE the
+              // write, or the next sync re-imports it (see vanishedGmailRefs). If the
+              // tombstones can't be written, write nothing — a cleanup the server
+              // quietly undoes overnight is worse than one that didn't run.
+              const gone=vanishedGmailRefs(costEntries,heal.entries);
+              if(gone.length&&!await tombstoneGmailRefs(gone)){toast("Couldn't record the removed copies, so nothing was changed. Check the connection and try again.");return;}
               saveCosts(heal.entries);
               toast(`Fixed: removed ${r.duplicatesRemoved} duplicate row${r.duplicatesRemoved===1?"":"s"}, split ${r.splitDocs} service log${r.splitDocs===1?"":"s"}, moved ${a.count} oversized fuel row${a.count===1?"":"s"} to Inventory`+(heal.healed?`, re-keyed ${heal.healed} colliding row${heal.healed===1?"":"s"}`:"")+`.`);
             }} disabled={!costEntries.length} style={{fontSize:11,fontWeight:700,padding:"6px 12px",background:costEntries.length?C.purple:"#e2e8f0",color:costEntries.length?"#fff":"#94a3b8",border:"none",borderRadius:6,cursor:costEntries.length?"pointer":"default",whiteSpace:"nowrap"}} title="Find invoices imported more than once, and service logs whose whole multi-truck delivery was charged to a single truck">🧹 Fix duplicate &amp; mis-assigned invoices</button>
@@ -8795,6 +8901,22 @@ function MaintNewView({trucks,repairs,onOpenTicket}){
     return s;
   },[status,open,repairs,sort]);
 
+  // v2.33.0: box trucks and tractors in separate tables, like the Fleet List, each in
+  // the order the buttons above pick. A ticket on a truck that is no longer on the
+  // Fleet List has no type to go by, so it gets a third table instead of being dropped
+  // or guessed into one of the two. The tables stack and share one set of fixed column
+  // widths, so every column lines up with the one above it. "What's wrong" takes what
+  // is left; below SHOP_MIN_W the tables scroll sideways rather than squeezing it.
+  const typeOf=id=>{const t=trucks.find(x=>x.id===id);return t?t.type:null;};
+  const shopGroups=[
+    {key:"straight",label:"📦 Box Trucks",color:C.brand,rows:shown.filter(r=>typeOf(r.truckId)==="straight")},
+    {key:"tractor",label:"🚛 Tractors",color:C.accent,rows:shown.filter(r=>typeOf(r.truckId)==="tractor")},
+  ];
+  const unlisted=shown.filter(r=>{const k=typeOf(r.truckId);return k!=="straight"&&k!=="tractor";});
+  if(unlisted.length)shopGroups.push({key:"other",label:"Not on the Fleet List",color:"#94a3b8",rows:unlisted});
+  const SHOP_COLS=[["Truck",300],["Reason",150],["What's wrong",null],["Shop",170],["Days down",96,true],["Cost",90,true]];
+  const SHOP_MIN_W=960;
+
   const avgDown=closed12.length?closed12.reduce((s,r)=>s+fvDays(r.dateIn,r.dateClosed),0)/closed12.length:0;
   const planned=closed12.filter(r=>r.reason==="Planned Maintenance"||r.reason==="DOT Inspection").length;
   const openRepeat=open.filter(r=>repeats.has(r.id)).length;
@@ -8837,42 +8959,42 @@ function MaintNewView({trucks,repairs,onOpenTicket}){
         <button style={btn(sort==="cost")} onClick={()=>setSort("cost")}>Most expensive</button>
         <button style={btn(sort==="truck")} onClick={()=>setSort("truck")}>By truck</button>
       </div>
-      <div style={{overflowX:"auto",maxHeight:460,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-          <th style={{...th,position:"sticky",top:0}}>Truck</th>
-          <th style={{...th,position:"sticky",top:0}}>Reason</th>
-          <th style={{...th,position:"sticky",top:0}}>What's wrong</th>
-          <th style={{...th,position:"sticky",top:0}}>Shop</th>
-          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Days down</th>
-          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Cost</th>
+      {shopGroups.map(g=><div key={g.key} data-shop-group={g.key}>
+      <div style={{fontSize:12.5,fontWeight:700,color:"#1e293b",margin:"12px 0 6px",paddingBottom:5,borderBottom:`2px solid ${g.color}`}}>{g.label} ({g.rows.length})</div>
+      <div style={{overflowX:"auto",maxHeight:360,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",minWidth:SHOP_MIN_W,tableLayout:"fixed",borderCollapse:"collapse"}}>
+        <colgroup>{SHOP_COLS.map(([h,w])=><col key={h} style={w?{width:w}:undefined}/>)}</colgroup>
+        <thead><tr>
+          {SHOP_COLS.map(([h,,right])=><th key={h} style={{...th,position:"sticky",top:0,...(right?{textAlign:"right"}:null)}}>{h}</th>)}
         </tr></thead><tbody>
-        {shown.length===0
-          ?<tr><td colSpan={6} style={{...td,textAlign:"center",color:"#94a3b8",padding:22}}>Nothing here.</td></tr>
-          :shown.map(r=>{
+        {g.rows.length===0
+          ?<tr><td colSpan={SHOP_COLS.length} style={{...td,textAlign:"center",color:"#94a3b8",padding:16}}>{status==="open"?"None in the shop.":"None recently closed."}</td></tr>
+          :g.rows.map(r=>{
             const t=trucks.find(x=>x.id===r.truckId);
             const d=r.status==="open"?fvDays(r.dateIn,now):fvDays(r.dateIn,r.dateClosed||now);
             const log=r.notesLog&&r.notesLog.length?r.notesLog:(r.notes?[{text:r.notes}]:[]);
             const openItems=log.filter(e=>e&&!e.done).length;
             return <tr key={r.id} style={{cursor:onOpenTicket?"pointer":"default"}}
               onClick={()=>onOpenTicket&&onOpenTicket(r)}>
-              <td style={td}>
+              <td style={{...td,whiteSpace:"normal"}}>
                 <span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{r.truckId}</span>
                 <span style={{fontSize:10.5,color:"#94a3b8"}}> {t?truckDesc(t):""}</span>
                 {repeats.has(r.id)?<FvChip label="⟳ repeat" color={FV.warn}
                   title="Same reason on this truck within 30 days — worth a look before it's a breakdown"/>:null}
               </td>
-              <td style={{...td,fontSize:11.5,color:"#6b7785"}}>{r.reason}</td>
-              <td style={{...td,whiteSpace:"normal",maxWidth:280,fontSize:11.5}}>
+              <td style={{...td,whiteSpace:"normal",fontSize:11.5,color:"#6b7785"}}>{r.reason}</td>
+              <td style={{...td,whiteSpace:"normal",fontSize:11.5}}>
                 {log.length?log[0].text:<span style={{color:"#cbd5e1"}}>—</span>}
                 {log.length>1?<span style={{color:"#94a3b8"}}> +{log.length-1} more{openItems?` · ${openItems} open`:""}</span>:null}
               </td>
-              <td style={{...td,fontSize:11,color:"#6b7785"}}>{r.shop||"—"}</td>
+              <td style={{...td,whiteSpace:"normal",fontSize:11,color:"#6b7785"}}>{r.shop||"—"}</td>
               <td style={{...tdN,fontWeight:800,color:d>7?FV.bad:(d>3?FV.warn:"#334155")}}>{d}</td>
               <td style={tdN}>{Number(r.cost)?fvMoney(r.cost):<span style={{color:"#cbd5e1"}}>—</span>}</td>
             </tr>;
           })}
         </tbody></table>
       </div>
+      </div>)}
     </div>
 
     <div style={{display:"grid",gap:14,gridTemplateColumns:"repeat(auto-fit,minmax(330px,1fr))"}}>
