@@ -7,7 +7,7 @@
  * directly: the button has to find its way through uiConfirm, saveCosts' month
  * sharding and the analytics memo, and the chart has to show the corrected number.
  */
-import puppeteer from "puppeteer";
+import { launch } from "./browser.mjs";
 import * as esbuild from "esbuild";
 import { readFileSync } from "fs";
 import http from "http";
@@ -54,9 +54,14 @@ window.__KV = {
   "fl-repairs": "[]",
   "fl-costs-2026-03": ${JSON.stringify(JSON.stringify(COSTS))}
 };
+// v2.33.0: per-page switches for the tombstone list, armed before any app code runs.
+const T = window.__TOMB || {};
+if (T.seed) window.__KV["fl-rejected-refs"] = JSON.stringify(T.seed);
 window.storage = {
-  async get(k){ return window.__KV[k]!==undefined ? { value: window.__KV[k] } : null; },
-  async set(k,v){ window.__KV[k]=v; return { key:k }; },
+  async get(k){
+    if (k==="fl-rejected-refs" && T.failRead) throw new Error("Failed to get document because the client is offline.");
+    return window.__KV[k]!==undefined ? { value: window.__KV[k] } : null; },
+  async set(k,v){ if (k==="fl-rejected-refs" && T.failWrite) return null; window.__KV[k]=v; return { key:k }; },
   async delete(k){ delete window.__KV[k]; return true; },
   async list(p){ return { keys: Object.keys(window.__KV).filter(k=>!p||k.startsWith(p)) }; }
 };
@@ -80,10 +85,7 @@ const server = http.createServer((req, res) => {
   res.end(PAGE.replace("__APP__", appJs));
 }).listen(8307);
 
-const browser = await puppeteer.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-  args: ["--no-sandbox", "--disable-dev-shm-usage"],
-});
+const browser = await launch();
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 1100 });
 const errors = [];
@@ -145,6 +147,13 @@ t("it persisted to the right month shard", await page.evaluate(() => JSON.parse(
   await page.evaluate(() => Object.keys(window.__KV).filter((k) => /^fl-costs/.test(k))
     .map((k) => `${k}:${JSON.parse(window.__KV[k]).length}`).join(",")));
 
+// v2.33.0: the four copies it removed came from four emails that now have no row
+// left. Each is tombstoned, so the nightly sync doesn't re-import it; the email
+// whose rows were kept is not.
+const tombs = await page.evaluate(() => JSON.parse(window.__KV["fl-rejected-refs"] || "[]"));
+t("the four emails it emptied are tombstoned, so the sync can't re-import them",
+  JSON.stringify([...tombs].sort()) === JSON.stringify(["gmail:msg2:att2", "gmail:msg3:att3", "gmail:msg4:att4", "gmail:msg5:att5"]), JSON.stringify(tombs));
+
 body = await page.$eval("body", (b) => b.innerText);
 t("the chart redrew with the corrected numbers", !/\$1,676|\$4,669/.test(body), (body.match(/#0424[^\n]*\n?[^\n]*/) || [])[0]);
 
@@ -159,6 +168,55 @@ await sleep(400);
 t("nothing changed", JSON.stringify(await ledger()) === snapshot);
 
 t("no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
+
+// v2.33.0: the tombstone list is a whole-document replace, so the button must add to
+// it, never write over it, and must not run the cleanup at all when it can't record
+// what it removes.
+const fresh = async (tomb) => {
+  const p = await browser.newPage();
+  await p.setViewport({ width: 1280, height: 1100 });
+  const errs = [];
+  p.on("pageerror", (e) => errs.push(e.message));
+  await p.evaluateOnNewDocument((x) => { window.__TOMB = x; }, tomb);
+  await p.goto("http://localhost:8307/", { waitUntil: "domcontentloaded" });
+  await sleep(1800);
+  await p.evaluate(() => { const b = [...document.querySelectorAll("button,div,span,a")].filter((e) => (e.textContent || "").trim().startsWith("Costs")).sort((a, b) => a.textContent.length - b.textContent.length)[0]; b && b.click(); });
+  await sleep(900);
+  await p.evaluate(() => { const b = [...document.querySelectorAll("button")].find((e) => (e.textContent || "").trim().startsWith("🧹 Fix duplicate")); b && b.click(); });
+  await sleep(500);
+  await p.evaluate(() => [...document.querySelectorAll("button")].find((b) => (b.textContent || "").trim() === "OK")?.click());
+  await sleep(1200);
+  const kv = await p.evaluate(() => window.__KV);
+  const text = await p.$eval("body", (b) => b.innerText);
+  await p.close();
+  return { kv, text, errs, costs: JSON.parse(kv["fl-costs-2026-03"] || "[]") };
+};
+
+console.log("\n═ Earlier tombstones are kept ═");
+{
+  const r = await fresh({ seed: ["gmail:earlier:rejected.pdf"] });
+  const list = JSON.parse(r.kv["fl-rejected-refs"] || "[]");
+  t("a rejection made before the cleanup is still there", list.includes("gmail:earlier:rejected.pdf"), JSON.stringify(list));
+  t("alongside the four new ones", ["gmail:msg2:att2", "gmail:msg3:att3", "gmail:msg4:att4", "gmail:msg5:att5"].every((x) => list.includes(x)) && list.length === 5);
+  t("and the cleanup ran", r.costs.length === 5, `${r.costs.length} rows`);
+}
+
+console.log("\n═ If the tombstones can't be read, nothing is written ═");
+{
+  const r = await fresh({ seed: ["gmail:earlier:rejected.pdf"], failRead: true });
+  t("the ledger is untouched — all five copies are still there", r.costs.length === COSTS.length, `${r.costs.length} rows`);
+  t("the earlier tombstones are not written over", r.kv["fl-rejected-refs"] === JSON.stringify(["gmail:earlier:rejected.pdf"]), r.kv["fl-rejected-refs"]);
+  t("and it says why", /Couldn.t record the removed copies, so nothing was changed/.test(r.text), (r.text.match(/Couldn.t[^\n]*/) || [""])[0]);
+  t("no page errors", r.errs.length === 0, r.errs.slice(0, 2).join(" | "));
+}
+
+console.log("\n═ If the tombstones can't be written, nothing is written ═");
+{
+  const r = await fresh({ failWrite: true });
+  t("the ledger is untouched", r.costs.length === COSTS.length, `${r.costs.length} rows`);
+  t("and it says why", /Couldn.t record the removed copies, so nothing was changed/.test(r.text));
+}
+
 await page.screenshot({ path: path.join(here, "repair.png"), fullPage: false });
 console.log(`\n${pass + fail} checks: ${pass} passed, ${fail} failed`);
 await browser.close(); server.close();
