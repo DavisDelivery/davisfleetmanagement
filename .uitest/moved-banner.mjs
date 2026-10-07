@@ -37,7 +37,10 @@ const STUB = `<script>
     "fl-drivers":${JSON.stringify(JSON.stringify([{ name: "Alvarez, R", role: "Davis Straight Driver", category: "Davis" }]))},
     "fl-repairs":"[]","fl-review-queue":"[]",
   };
-  window.__KV["fl-asgn-"+wk]=JSON.stringify({["Alvarez, R-"+day]:"0805"});
+  // 0805's driver is on the board EVERY day: Motive reports it driving each day of the
+  // week so far, so assigning it for today alone made Mon and Tue look driverless on a
+  // Wednesday — this check only passed when run on a Monday.
+  window.__KV["fl-asgn-"+wk]=JSON.stringify(Object.fromEntries(["Mon","Tue","Wed","Thu","Fri"].map(x=>["Alvarez, R-"+x,"0805"])));
   window.__KV["fl-stat-"+wk]="{}";
   window.__DAY=day;
 })();
