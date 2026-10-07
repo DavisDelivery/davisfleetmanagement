@@ -200,6 +200,54 @@ function movedWithoutDriver({days,byMotiveId,trucks,drivers,asgn,repairs,minMile
   return out;
 }
 
+/* ── Assign drivers from the Fleet List (v2.33.0) ─────────────────────────────
+   The Driver Board stores a week as driver+day → truck. The Fleet List shows the
+   same week the other way round, truck+day → driver, and now edits it as well. Both
+   write the one fl-asgn-<week> document, so a change made in either shows in the
+   other with nothing to keep in sync.
+   Picking a driver for a truck's day takes the truck from whoever had it that day
+   (the move the board offers on a double-booking), and the driver's own cell becomes
+   this truck. A driver has one truck a day, so the truck they were on that day is
+   left without one, and `fromTruck` names it so the caller can say so. An empty
+   driverName clears the truck's day. Returns null when nothing would change. Pure. */
+function assignTruckOnDay(asgn,driverNames,truckId,day,driverName){
+  const a=asgn||{};
+  const holders=(driverNames||[]).filter(n=>a[`${n}-${day}`]===truckId);
+  if(!driverName){
+    if(!holders.length)return null;
+    const next={...a};holders.forEach(n=>{next[`${n}-${day}`]="";});
+    return{next,removed:holders,fromTruck:"",wasOff:""};
+  }
+  if(holders.length===1&&holders[0]===driverName)return null;
+  const prev=a[`${driverName}-${day}`]||"";
+  const next={...a};
+  const removed=holders.filter(n=>n!==driverName);
+  removed.forEach(n=>{next[`${n}-${day}`]="";});
+  next[`${driverName}-${day}`]=truckId;
+  const wasOff=OFF_OPTS.includes(prev)?prev:"";
+  return{next,removed,fromTruck:prev&&prev!==truckId&&!wasOff?prev:"",wasOff};
+}
+/* The Fleet List's driver choices for one truck on one day, grouped the way they get
+   read: drivers who drive this kind of truck and are free that day (or already on
+   it), then those on another truck, then those marked off, then everyone else. Every
+   driver is somewhere, so the current one can always be shown as selected. */
+function fleetDriverOptions(drivers,asgn,truck,day){
+  const a=asgn||{};
+  const groups={free:[],busy:[],off:[],other:[]};
+  for(const d of drivers||[]){
+    const v=a[`${d.name}-${day}`]||"";
+    const kind=dTT(String(d.role||""));
+    const fits=kind==="all"||kind===truck.type;
+    const note=v===truck.id||!v?"":OFF_OPTS.includes(v)?v:`on ${v}`;
+    const opt={value:d.name,label:note?`${d.name} · ${note}`:d.name};
+    if(!fits)groups.other.push(opt);
+    else if(!note)groups.free.push(opt);
+    else if(OFF_OPTS.includes(v))groups.off.push(opt);
+    else groups.busy.push(opt);
+  }
+  return groups;
+}
+
 /* Drop the trailing run of months where nothing reported. We only fetched those
    to prove Motive has no data that far back; keeping them would show a cliff of
    zero-mile months on every chart. */
@@ -1312,7 +1360,7 @@ function App(){
     toast("This week hasn't finished loading — reload before editing, so you don't write over it.");
     return true;
   },[toast]);
-  const saveAsgn=useCallback(a=>{if(weekWriteBlocked())return;setAsgn(a);sv(`fl-asgn-${wk}`,a);},[wk,sv,weekWriteBlocked]);
+  const saveAsgn=useCallback(a=>{if(weekWriteBlocked())return false;setAsgn(a);sv(`fl-asgn-${wk}`,a);return true;},[wk,sv,weekWriteBlocked]);
   const saveTStat=useCallback(s=>{if(weekWriteBlocked())return;setTStat(s);sv(`fl-stat-${wk}`,s);},[wk,sv,weekWriteBlocked]);
   const saveRepairs=useCallback(r=>{setRepairs(r);sv("fl-repairs",r);},[sv]);
   // v2.16.7: write costs to per-month shards (fl-costs-<YYYY-MM>) instead of one
@@ -4502,6 +4550,45 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
     }
     return null;
   };
+  // v2.33.0: a driver picked on the Fleet List — the same week document the Driver
+  // Board edits (see assignTruckOnDay), with the board's warning for a truck in the shop.
+  const assignFromFleet=async(truckId,day,driverName,dayOOS)=>{
+    const res=assignTruckOnDay(asgn,drivers.map(d=>d.name),truckId,day,driverName);
+    if(!res)return;
+    if(driverName&&dayOOS){
+      const openR=repairs.find(r=>r.truckId===truckId&&r.status==="open");
+      if(!await uiConfirm(`Truck ${truckId} is OUT OF SERVICE (open repair${openR&&openR.reason?`: ${openR.reason}`:""}).\n\nAssign it to ${driverName} anyway?`))return;
+    }
+    if(!saveAsgn(res.next))return;
+    // Say what else moved: the truck the driver came off, or the day off they had.
+    if(res.fromTruck)toast(`${driverName} moved from ${res.fromTruck} to ${truckId} on ${day}. ${res.fromTruck} has no driver ${day}.`);
+    else if(res.wasOff)toast(`${driverName} was marked ${res.wasOff} on ${day}. Now on ${truckId}.`);
+  };
+  // One truck's day on the Fleet List: who has it, and a picker over the whole cell.
+  // The picker is a real <select> laid over the cell, so it is one tap on a phone and
+  // works from the keyboard.
+  const fleetDriverCell=(t,day,i,{di,weekMon,compact})=>{
+    const holders=drivers.filter(d=>asgn[`${d.name}-${day}`]===t.id);
+    const cur=holders[0]||null;
+    const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
+    const dayOOS=repairOOSOn(t.id,colDate);
+    const g=fleetDriverOptions(drivers,asgn,t,day);
+    const label=cur?`${cur.name.split(" ")[0]}${holders.length>1?` +${holders.length-1}`:""}`:"";
+    return <td key={day} className="fl-drv" data-day={day}
+      title={cur?`${holders.map(h=>h.name).join(", ")} on ${day}${dayOOS?" (truck is out of service)":""}. Click to change.`:`${dayOOS?"Out of service. ":""}Click to assign a driver to #${t.id} on ${day}.`}
+      style={{...s.ltd,position:"relative",cursor:"pointer",textAlign:"center",background:i===di?"#f0f9ff":dayOOS?"#fef2f2":"transparent",fontSize:compact?10:11,whiteSpace:"nowrap",padding:compact?"4px 2px":"4px 6px",overflow:"hidden",textOverflow:"ellipsis"}}>
+      {dayOOS&&<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>}
+      {cur
+        ?<span style={dayOOS?{display:"block",fontSize:9,fontWeight:600,color:C.red,overflow:"hidden",textOverflow:"ellipsis"}:{fontWeight:600,color:C.dark}}>{label}</span>
+        :!dayOOS&&<span style={{color:"#cbd5e1"}}>—</span>}
+      <select aria-label={`Driver for #${t.id} on ${day}`} value={cur?cur.name:""} onChange={e=>assignFromFleet(t.id,day,e.target.value,dayOOS)}
+        style={{position:"absolute",inset:0,width:"100%",height:"100%",margin:0,padding:0,border:0,opacity:0,cursor:"pointer",fontSize:16}}>
+        <option value="">— No driver —</option>
+        {[["free",`Free ${day}`],["busy",`On another truck ${day}`],["off",`Off ${day}`],["other","Other drivers"]].map(([k,lbl])=>g[k].length
+          ?<optgroup key={k} label={lbl}>{g[k].map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</optgroup>:null)}
+      </select>
+    </td>;
+  };
   // Repair functions
   const addRepair=async(truckId)=>{
     // v2.16.14: record WHO opened the ticket (same per-device name that signs notes)
@@ -4831,7 +4918,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
 
   return(
     <div style={s.wrap}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box} button{-webkit-tap-highlight-color:transparent;-webkit-appearance:none;-moz-appearance:none;appearance:none;user-select:none;text-decoration:none} button:focus{outline:none;text-decoration:none} button:active{text-decoration:none} button:focus-visible{outline:2px solid ${C.brand};outline-offset:-2px}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box} button{-webkit-tap-highlight-color:transparent;-webkit-appearance:none;-moz-appearance:none;appearance:none;user-select:none;text-decoration:none} button:focus{outline:none;text-decoration:none} button:active{text-decoration:none} button:focus-visible{outline:2px solid ${C.brand};outline-offset:-2px} .fl-drv:hover{background:#eef6ff!important} .fl-drv:focus-within{outline:2px solid ${C.brand};outline-offset:-2px}`}</style>
       {/* Header */}
       <div style={s.header}><div style={s.hInner}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -5737,13 +5824,6 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             // the tables wrap and stack via flexWrap.
             const di=Math.min(todayDI(),4);
             const weekMon=gM(weekDate); // Monday of the displayed week, for per-day OOS dates
-            const truckDayDriver={};
-            DAYS.forEach(day=>{
-              drivers.forEach(d=>{
-                const v=asgn[`${d.name}-${day}`]||"";
-                if(v&&!OFF_OPTS.includes(v)&&v!=="")truckDayDriver[`${v}-${day}`]=d.name.split(" ")[0];
-              });
-            });
             const renderRow=(t)=>{
               const st2=gTS(t.id,dk);
               const openR=repairs.filter(r=>r.truckId===t.id&&r.status==="open").length;
@@ -5787,19 +5867,8 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                 </td>
                 <td style={s.ltd}>{t.ax}</td>
                 <td style={s.ltd}><span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,background:SC[st2]+"18",color:SC[st2]}}>{SL[st2]}</span></td>
-                {DAYS.map((d,i)=>{
-                  const driver=truckDayDriver[`${t.id}-${d}`]||"";
-                  const isToday=i===di;
-                  const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
-                  const dayOOS=repairOOSOn(t.id,colDate);
-                  return <td key={d} title={dayOOS?"":driver} style={{...s.ltd,textAlign:"center",background:isToday?"#f0f9ff":dayOOS?"#fef2f2":"transparent",fontSize:11,whiteSpace:"nowrap",padding:"4px 6px",overflow:"hidden",textOverflow:"ellipsis"}}>
-                    {dayOOS
-                      ?<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>
-                      :driver
-                        ?<span style={{fontWeight:600,color:C.dark}}>{driver}</span>
-                        :<span style={{color:"#cbd5e1"}}>—</span>}
-                  </td>;
-                })}
+                {/* v2.33.0: each day is a driver picker — see fleetDriverCell. */}
+                {DAYS.map((d,i)=>fleetDriverCell(t,d,i,{di,weekMon}))}
                 <td style={s.ltd}>{openR>0?<span style={{color:C.red,fontWeight:700}}>{openR}</span>:"—"}</td>
                 <td style={s.ltd}><button style={s.xBtn} title={`Remove / retire truck ${t.id}`} onClick={()=>removeTruck(t.id)}>×</button></td>
               </tr>;
@@ -5830,24 +5899,17 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             );
             const boxTrucks=filteredTrucks.filter(t=>t.type==="straight");
             const tractors=filteredTrucks.filter(t=>t.type==="tractor");
-            return <div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"flex-start"}}>
-              {renderTable(boxTrucks,"📦 Box Trucks",C.brand)}
-              {renderTable(tractors,"🚛 Tractors",C.accent)}
+            return <div>
+              <div style={{fontSize:11,color:"#6b7785",marginBottom:10}}>Click a day to assign a driver. It updates the Driver Board, and the Driver Board updates here.</div>
+              <div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"flex-start"}}>
+                {renderTable(boxTrucks,"📦 Box Trucks",C.brand)}
+                {renderTable(tractors,"🚛 Tractors",C.accent)}
+              </div>
             </div>;
           })()}
 
           {/* v2.10.28: TRUCK WEEKLY BOARD — rows=trucks, cols=Mon-Fri, cells=assigned driver */}
           {fleetView==="board"&&(()=>{
-            // Build a lookup: truckId+day → driver name from asgn
-            const truckDayDriver={};
-            DAYS.forEach(day=>{
-              drivers.forEach(d=>{
-                const v=asgn[`${d.name}-${day}`]||"";
-                if(v&&!OFF_OPTS.includes(v)&&v!==""){
-                  truckDayDriver[`${v}-${day}`]=d.name.split(" ")[0]; // first name only for space
-                }
-              });
-            });
             const di=Math.min(todayDI(),4);
             const weekMon=gM(weekDate); // Monday of the displayed week, for per-day OOS dates
             const renderTruckRows=(truckList,label,borderColor)=>(
@@ -5868,19 +5930,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
                             #{t.id}
                             <div style={{fontSize:9,color:"#94a3b8",fontWeight:400,fontFamily:"sans-serif"}}>{t.mk}{t.md?` ${t.md}`:""}</div>
                           </td>
-                          {DAYS.map((d,i)=>{
-                            const driver=truckDayDriver[`${t.id}-${d}`]||"";
-                            const isToday=i===di;
-                            const colDate=new Date(weekMon);colDate.setDate(colDate.getDate()+i);
-                            const dayOOS=repairOOSOn(t.id,colDate);
-                            return <td key={d} style={{...s.ltd,textAlign:"center",background:isToday?"#f0f9ff":dayOOS?"#fef2f2":"transparent",padding:"4px 2px"}}>
-                              {dayOOS
-                                ?<span style={{fontSize:9,fontWeight:700,color:C.red}}>OOS</span>
-                                :driver
-                                  ?<span style={{fontSize:10,fontWeight:600,color:C.dark}}>{driver}</span>
-                                  :<span style={{fontSize:9,color:"#cbd5e1"}}>—</span>}
-                            </td>;
-                          })}
+                          {DAYS.map((d,i)=>fleetDriverCell(t,d,i,{di,weekMon,compact:true}))}
                         </tr>;
                       })}
                     </tbody>
@@ -5892,7 +5942,7 @@ Always match to the closest fleet number. Use the TOTAL line (including tax) for
             const tractors=filteredTrucks.filter(t=>t.type==="tractor");
             return <div>
               <div style={{fontSize:11,color:"#6b7785",marginBottom:12}}>
-                <span style={{fontWeight:700,color:C.brand}}>Today: {DAYS[di]}</span> (highlighted) · Click truck # for history
+                <span style={{fontWeight:700,color:C.brand}}>Today: {DAYS[di]}</span> (highlighted) · Click truck # for history · Click a day to assign a driver
               </div>
               <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
                 {renderTruckRows(boxTrucks,"📦 Box Trucks",C.brand)}
