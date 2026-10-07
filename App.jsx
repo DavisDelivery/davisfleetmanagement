@@ -8901,6 +8901,22 @@ function MaintNewView({trucks,repairs,onOpenTicket}){
     return s;
   },[status,open,repairs,sort]);
 
+  // v2.33.0: box trucks and tractors in separate tables, like the Fleet List, each in
+  // the order the buttons above pick. A ticket on a truck that is no longer on the
+  // Fleet List has no type to go by, so it gets a third table instead of being dropped
+  // or guessed into one of the two. The tables stack and share one set of fixed column
+  // widths, so every column lines up with the one above it. "What's wrong" takes what
+  // is left; below SHOP_MIN_W the tables scroll sideways rather than squeezing it.
+  const typeOf=id=>{const t=trucks.find(x=>x.id===id);return t?t.type:null;};
+  const shopGroups=[
+    {key:"straight",label:"📦 Box Trucks",color:C.brand,rows:shown.filter(r=>typeOf(r.truckId)==="straight")},
+    {key:"tractor",label:"🚛 Tractors",color:C.accent,rows:shown.filter(r=>typeOf(r.truckId)==="tractor")},
+  ];
+  const unlisted=shown.filter(r=>{const k=typeOf(r.truckId);return k!=="straight"&&k!=="tractor";});
+  if(unlisted.length)shopGroups.push({key:"other",label:"Not on the Fleet List",color:"#94a3b8",rows:unlisted});
+  const SHOP_COLS=[["Truck",300],["Reason",150],["What's wrong",null],["Shop",170],["Days down",96,true],["Cost",90,true]];
+  const SHOP_MIN_W=960;
+
   const avgDown=closed12.length?closed12.reduce((s,r)=>s+fvDays(r.dateIn,r.dateClosed),0)/closed12.length:0;
   const planned=closed12.filter(r=>r.reason==="Planned Maintenance"||r.reason==="DOT Inspection").length;
   const openRepeat=open.filter(r=>repeats.has(r.id)).length;
@@ -8943,42 +8959,42 @@ function MaintNewView({trucks,repairs,onOpenTicket}){
         <button style={btn(sort==="cost")} onClick={()=>setSort("cost")}>Most expensive</button>
         <button style={btn(sort==="truck")} onClick={()=>setSort("truck")}>By truck</button>
       </div>
-      <div style={{overflowX:"auto",maxHeight:460,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-          <th style={{...th,position:"sticky",top:0}}>Truck</th>
-          <th style={{...th,position:"sticky",top:0}}>Reason</th>
-          <th style={{...th,position:"sticky",top:0}}>What's wrong</th>
-          <th style={{...th,position:"sticky",top:0}}>Shop</th>
-          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Days down</th>
-          <th style={{...th,position:"sticky",top:0,textAlign:"right"}}>Cost</th>
+      {shopGroups.map(g=><div key={g.key} data-shop-group={g.key}>
+      <div style={{fontSize:12.5,fontWeight:700,color:"#1e293b",margin:"12px 0 6px",paddingBottom:5,borderBottom:`2px solid ${g.color}`}}>{g.label} ({g.rows.length})</div>
+      <div style={{overflowX:"auto",maxHeight:360,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:8}}>
+        <table style={{width:"100%",minWidth:SHOP_MIN_W,tableLayout:"fixed",borderCollapse:"collapse"}}>
+        <colgroup>{SHOP_COLS.map(([h,w])=><col key={h} style={w?{width:w}:undefined}/>)}</colgroup>
+        <thead><tr>
+          {SHOP_COLS.map(([h,,right])=><th key={h} style={{...th,position:"sticky",top:0,...(right?{textAlign:"right"}:null)}}>{h}</th>)}
         </tr></thead><tbody>
-        {shown.length===0
-          ?<tr><td colSpan={6} style={{...td,textAlign:"center",color:"#94a3b8",padding:22}}>Nothing here.</td></tr>
-          :shown.map(r=>{
+        {g.rows.length===0
+          ?<tr><td colSpan={SHOP_COLS.length} style={{...td,textAlign:"center",color:"#94a3b8",padding:16}}>{status==="open"?"None in the shop.":"None recently closed."}</td></tr>
+          :g.rows.map(r=>{
             const t=trucks.find(x=>x.id===r.truckId);
             const d=r.status==="open"?fvDays(r.dateIn,now):fvDays(r.dateIn,r.dateClosed||now);
             const log=r.notesLog&&r.notesLog.length?r.notesLog:(r.notes?[{text:r.notes}]:[]);
             const openItems=log.filter(e=>e&&!e.done).length;
             return <tr key={r.id} style={{cursor:onOpenTicket?"pointer":"default"}}
               onClick={()=>onOpenTicket&&onOpenTicket(r)}>
-              <td style={td}>
+              <td style={{...td,whiteSpace:"normal"}}>
                 <span style={{fontFamily:"ui-monospace,Menlo,monospace",fontWeight:800,color:C.brand}}>#{r.truckId}</span>
                 <span style={{fontSize:10.5,color:"#94a3b8"}}> {t?truckDesc(t):""}</span>
                 {repeats.has(r.id)?<FvChip label="⟳ repeat" color={FV.warn}
                   title="Same reason on this truck within 30 days — worth a look before it's a breakdown"/>:null}
               </td>
-              <td style={{...td,fontSize:11.5,color:"#6b7785"}}>{r.reason}</td>
-              <td style={{...td,whiteSpace:"normal",maxWidth:280,fontSize:11.5}}>
+              <td style={{...td,whiteSpace:"normal",fontSize:11.5,color:"#6b7785"}}>{r.reason}</td>
+              <td style={{...td,whiteSpace:"normal",fontSize:11.5}}>
                 {log.length?log[0].text:<span style={{color:"#cbd5e1"}}>—</span>}
                 {log.length>1?<span style={{color:"#94a3b8"}}> +{log.length-1} more{openItems?` · ${openItems} open`:""}</span>:null}
               </td>
-              <td style={{...td,fontSize:11,color:"#6b7785"}}>{r.shop||"—"}</td>
+              <td style={{...td,whiteSpace:"normal",fontSize:11,color:"#6b7785"}}>{r.shop||"—"}</td>
               <td style={{...tdN,fontWeight:800,color:d>7?FV.bad:(d>3?FV.warn:"#334155")}}>{d}</td>
               <td style={tdN}>{Number(r.cost)?fvMoney(r.cost):<span style={{color:"#cbd5e1"}}>—</span>}</td>
             </tr>;
           })}
         </tbody></table>
       </div>
+      </div>)}
     </div>
 
     <div style={{display:"grid",gap:14,gridTemplateColumns:"repeat(auto-fit,minmax(330px,1fr))"}}>
