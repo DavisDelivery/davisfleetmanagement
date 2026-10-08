@@ -145,6 +145,9 @@ jobs:
       - name: the Shop board keeps box trucks and tractors in separate tables that line up
         run: node shop-board.mjs
         working-directory: .uitest
+      - name: the Fleet List's Make / Model / Year drawer closes on a phone, so Status sits beside the truck
+        run: node fleet-drawer.mjs
+        working-directory: .uitest
       - name: the ledger cleanup button tombstones what it removes, and writes nothing if it can't
         run: node repair.mjs
         working-directory: .uitest
